@@ -276,7 +276,7 @@ const ALL_TURNS = [
   {label:'Google STUN',         urls:'stun:stun.l.google.com:19302'},
   {label:'Metered STUN',        urls:'stun:stun.relay.metered.ca:80'},
   // ExpressTurn — preferred, tested first
-  {label:'ExpressTurn',         urls:'turn:free.expressturn.com:3478',               username:'000000002089490852',       credential:'47MfC+I9nOTiijmLTIGyZ32gXqQ='},
+  {label:'ExpressTurn',         urls:'turn:free.expressturn.com:3478',               username:'000000002089490852',       credential:'47MfC+l9nOTiijmLTIGyZ32gXqQ='},
   {label:'Metered TURN :80',    urls:'turn:eu.relay.metered.ca:80',                  username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
   {label:'Metered TURN TCP80',  urls:'turn:eu.relay.metered.ca:80?transport=tcp',    username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
   {label:'Metered TURN :443',   urls:'turn:eu.relay.metered.ca:443',                 username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
@@ -293,7 +293,7 @@ const ALL_TURNS = [
 // Active ICE config — auto-selected on load, overridable via test menu
 let ICE = [
   {urls:'stun:stun.l.google.com:19302'},
-  {urls:'turn:free.expressturn.com:3478', username:'000000002089490852', credential:'47MfC+I9nOTiijmLTIGyZ32gXqQ='},
+  {urls:'turn:free.expressturn.com:3478', username:'000000002089490852', credential:'47MfC+l9nOTiijmLTIGyZ32gXqQ='},
   {urls:'turn:eu.relay.metered.ca:443?transport=tcp', username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'}
 ];
 let turnAutoSelected = false; // set to true once auto-test completes
