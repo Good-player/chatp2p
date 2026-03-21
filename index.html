@@ -10,8 +10,6 @@
 :root{--bg:#0d0d12;--card:#171720;--b:#23232e;--g:#4ade80;--bl:#60a5fa;--y:#fbbf24;--r:#f87171;--t:#e2e2ec;--m:#55556a;--f:'JetBrains Mono',monospace}
 body{background:var(--bg);color:var(--t);font-family:var(--f);font-size:13px;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
 .box{width:100%;max-width:460px;display:flex;flex-direction:column;gap:10px}
-
-/* header */
 .hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card);border:1px solid var(--b);border-radius:10px}
 .logo{font-size:16px;font-weight:700;color:var(--g)}
 .logo span{color:var(--m);font-weight:400;font-size:11px;margin-left:5px}
@@ -20,20 +18,14 @@ body{background:var(--bg);color:var(--t);font-family:var(--f);font-size:13px;min
 .dot{width:5px;height:5px;border-radius:50%;background:currentColor}
 .pill.on .dot{box-shadow:0 0 5px var(--g);animation:bl 2s infinite}
 @keyframes bl{0%,100%{opacity:1}50%{opacity:.3}}
-
-/* card / screens */
 .card{background:var(--card);border:1px solid var(--b);border-radius:10px;overflow:hidden}
 .scr{display:none;flex-direction:column;gap:14px;padding:20px 16px}
 .scr.on{display:flex}
 h2{font-size:15px;font-weight:700}
 p{font-size:11px;color:var(--m);line-height:1.8}
 p b{color:var(--t)}
-
-/* back link */
 .back{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--m);cursor:pointer;width:fit-content;transition:color .15s}
 .back:hover{color:var(--t)}
-
-/* inputs */
 .ninp{background:var(--bg);border:1px solid var(--b);color:var(--t);font-family:var(--f);font-size:13px;padding:10px 12px;width:100%;border-radius:7px;outline:none;transition:border-color .2s}
 .ninp:focus{border-color:var(--bl)}
 .cinpbig{background:var(--bg);border:2px solid var(--b);color:var(--g);font-family:var(--f);font-size:26px;font-weight:700;padding:14px;width:100%;border-radius:8px;outline:none;text-align:center;letter-spacing:3px;text-transform:uppercase;transition:border-color .2s}
@@ -42,8 +34,6 @@ p b{color:var(--t)}
 .ta{background:var(--bg);border:1px solid var(--b);color:var(--t);font-family:var(--f);font-size:10px;padding:8px;width:100%;border-radius:6px;outline:none;resize:none;line-height:1.4}
 .ta:focus{border-color:var(--bl)}
 .ta[readonly]{color:var(--g);border-color:rgba(74,222,128,.3)}
-
-/* buttons */
 .btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:12px;border:1px solid var(--b);background:var(--bg);color:var(--t);font-family:var(--f);font-size:13px;font-weight:700;border-radius:8px;cursor:pointer;width:100%;transition:.15s;user-select:none}
 .btn:hover:not(:disabled){border-color:var(--bl);color:var(--bl)}
 .btn.g{background:rgba(74,222,128,.07);border-color:var(--g);color:var(--g)}
@@ -57,45 +47,31 @@ p b{color:var(--t)}
 .row{display:flex;gap:8px}.row .btn{flex:1}
 .spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
-
-/* code display */
 .codebox{background:var(--bg);border:2px solid var(--g);border-radius:10px;padding:18px 14px;text-align:center;position:relative}
 .codetop{font-size:10px;color:var(--m);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
 .codeword{font-size:36px;font-weight:700;color:var(--g);letter-spacing:3px;text-shadow:0 0 24px rgba(74,222,128,.35)}
 .codecopy{position:absolute;top:10px;right:10px;font-size:10px;color:var(--m);cursor:pointer;border:1px solid var(--b);padding:3px 7px;border-radius:5px;transition:.2s}
 .codecopy:hover{color:var(--g);border-color:var(--g)}
-
-/* waiting dots */
 .waiting{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--y)}
 .wdot{width:6px;height:6px;border-radius:50%;background:var(--y);animation:wd .9s infinite}
 .wdot:nth-child(2){animation-delay:.15s}.wdot:nth-child(3){animation-delay:.3s}
 @keyframes wd{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
-
-/* divider */
 .div{display:flex;align-items:center;gap:8px}
 .div-line{flex:1;height:1px;background:var(--b)}
 .div-txt{font-size:10px;color:var(--m);white-space:nowrap}
 .step{font-size:10px;color:var(--m)}
-
-/* TURN test panel */
 .turn-panel{display:flex;flex-direction:column;gap:8px;background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:12px}
 .turn-row{display:flex;align-items:center;gap:8px}
 .turn-name{font-size:10px;color:var(--m);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.turn-ping{font-size:10px;font-weight:700;width:54px;text-align:right;flex-shrink:0}
 .turn-bar-wrap{flex:1;height:4px;background:var(--b);border-radius:2px;overflow:hidden}
 .turn-bar{height:100%;width:0;border-radius:2px;transition:width .4s}
-.turn-bar.ok{background:var(--g)}
-.turn-bar.fail{background:var(--r)}
+.turn-bar.ok{background:var(--g)}.turn-bar.fail{background:var(--r)}
 .turn-bar.testing{background:var(--y);animation:tpulse .8s infinite}
 @keyframes tpulse{0%,100%{opacity:.4}50%{opacity:1}}
 .chosen-turn{font-size:10px;color:var(--g);display:flex;align-items:center;gap:5px}
-
-/* peer list in chat */
 .peer-list{display:flex;gap:5px;flex-wrap:wrap;padding:6px 10px;border-bottom:1px solid var(--b);background:var(--bg)}
 .peer-chip{display:flex;align-items:center;gap:4px;font-size:10px;padding:3px 8px;border-radius:99px;border:1px solid var(--b);color:var(--m)}
 .peer-chip.on{color:var(--g);border-color:var(--g)}
-
-/* stats */
 .stats{display:flex;gap:5px;padding:8px 10px;border-bottom:1px solid var(--b);background:var(--bg);overflow-x:auto}
 .stats::-webkit-scrollbar{height:2px}
 .stats::-webkit-scrollbar-thumb{background:var(--b)}
@@ -103,6 +79,37 @@ p b{color:var(--t)}
 .slbl{font-size:8px;color:var(--m);text-transform:uppercase;letter-spacing:.05em}
 .sval{font-size:11px;font-weight:700}
 .sg{color:var(--g)}.sb{color:var(--bl)}.sy{color:var(--y)}.sr{color:var(--r)}.sp{color:#a78bfa}.sc{color:#22d3ee}.sm{color:var(--m)}
+
+/* ── VOICE CALL UI ── */
+/* incoming call banner */
+.call-banner{display:none;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(74,222,128,.08);border-bottom:1px solid var(--g);gap:10px}
+.call-banner.show{display:flex}
+.call-banner-txt{font-size:11px;color:var(--g);display:flex;align-items:center;gap:6px}
+.call-banner-btns{display:flex;gap:6px}
+.cbtn{padding:5px 12px;border-radius:6px;font-family:var(--f);font-size:11px;font-weight:700;cursor:pointer;border:none;transition:.15s}
+.cbtn.ans{background:var(--g);color:var(--bg)}
+.cbtn.ans:hover{opacity:.85}
+.cbtn.dec{background:var(--r);color:var(--bg)}
+.cbtn.dec:hover{opacity:.85}
+/* active call bar */
+.call-bar{display:none;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(74,222,128,.06);border-bottom:1px solid rgba(74,222,128,.2);gap:8px}
+.call-bar.show{display:flex}
+.call-bar-left{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--g)}
+.call-timer{font-size:11px;color:var(--m);font-variant-numeric:tabular-nums}
+.call-vol{display:flex;align-items:center;gap:3px;height:16px}
+.vol-bar{width:3px;border-radius:2px;background:var(--g);animation:vol .6s ease-in-out infinite}
+.vol-bar:nth-child(1){height:4px;animation-delay:0s}
+.vol-bar:nth-child(2){height:10px;animation-delay:.1s}
+.vol-bar:nth-child(3){height:7px;animation-delay:.2s}
+.vol-bar:nth-child(4){height:13px;animation-delay:.15s}
+.vol-bar:nth-child(5){height:5px;animation-delay:.05s}
+@keyframes vol{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+.call-bar-right{display:flex;gap:5px}
+.ctl-btn{width:30px;height:30px;border-radius:50%;border:1px solid var(--b);background:var(--bg);color:var(--t);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.ctl-btn:hover{border-color:var(--bl);color:var(--bl)}
+.ctl-btn.active{background:rgba(248,113,113,.15);border-color:var(--r);color:var(--r)}
+.ctl-btn.end{background:rgba(248,113,113,.1);border-color:var(--r);color:var(--r)}
+.ctl-btn.end:hover{background:rgba(248,113,113,.25)}
 
 /* messages */
 .msgs{padding:12px;min-height:220px;max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;scroll-behavior:smooth}
@@ -117,6 +124,15 @@ p b{color:var(--t)}
 .mb{padding:8px 11px;font-size:12px;line-height:1.6;word-break:break-word;border-radius:7px}
 .msg.me .mb{background:rgba(74,222,128,.09);border:1px solid rgba(74,222,128,.18);border-bottom-right-radius:2px}
 .msg.them .mb{background:rgba(96,165,250,.09);border:1px solid rgba(96,165,250,.18);border-bottom-left-radius:2px}
+/* markdown inside bubbles */
+.mb strong{font-weight:700;color:var(--t)}
+.mb em{font-style:italic;color:var(--t)}
+.mb code{background:rgba(255,255,255,.07);padding:1px 5px;border-radius:3px;font-family:var(--f);font-size:11px}
+.mb pre{background:rgba(0,0,0,.4);padding:8px;border-radius:5px;margin-top:4px;overflow-x:auto;font-size:11px}
+.mb pre code{background:none;padding:0}
+.mb a{color:var(--bl);text-decoration:underline}
+.mb hr{border:none;border-top:1px solid var(--b);margin:6px 0}
+.mb blockquote{border-left:2px solid var(--m);padding-left:8px;color:var(--m);margin:3px 0}
 .mr{font-size:9px;color:var(--m);margin-top:2px}
 .ri.read{color:var(--bl)}
 .sys{align-self:center;font-size:10px;color:var(--m);background:var(--bg);border:1px solid var(--b);padding:2px 10px;border-radius:99px;margin:3px 0}
@@ -126,14 +142,14 @@ p b{color:var(--t)}
 .td{width:4px;height:4px;border-radius:50%;background:var(--bl);animation:td .9s infinite}
 .td:nth-child(2){animation-delay:.15s}.td:nth-child(3){animation-delay:.3s}
 @keyframes td{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
-
 .ci{border-top:1px solid var(--b);padding:10px;display:flex;gap:8px;align-items:flex-end}
 .ci textarea{flex:1;min-height:38px;max-height:80px;resize:none;font-size:12px;background:var(--bg);border:1px solid var(--b);color:var(--t);font-family:var(--f);padding:10px;border-radius:7px;outline:none;line-height:1.5;transition:border-color .2s}
 .ci textarea:focus{border-color:var(--bl)}
 .cright{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
 #sndBtn{width:auto;padding:0 14px;height:38px}
+/* call button in input row */
+#callBtn{width:auto;padding:0 10px;height:38px;font-size:16px}
 #dscBtn{width:auto;padding:0 10px;height:26px;font-size:10px}
-
 .toast{position:fixed;bottom:14px;right:14px;background:var(--card);border:1px solid var(--g);color:var(--g);font-family:var(--f);font-size:11px;padding:8px 14px;border-radius:7px;animation:ti .2s ease;z-index:9}
 .toast.e{border-color:var(--r);color:var(--r)}
 @keyframes ti{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
@@ -141,22 +157,18 @@ p b{color:var(--t)}
 </head>
 <body>
 <div class="box">
-
 <div class="hdr">
   <div class="logo">DIRECT <span>// p2p room</span></div>
   <div class="pill" id="pill"><div class="dot"></div><span id="ptxt">offline</span></div>
 </div>
 
 <div class="card" id="mainCard">
-
-  <!-- S0: TURN test / settings -->
+  <!-- S0: TURN test -->
   <div class="scr" id="s0">
     <div class="back" onclick="scr('s1')">← back</div>
     <h2>TURN Server Test</h2>
     <p>Tests which relay servers are reachable and picks the fastest one automatically.</p>
-    <div class="turn-panel" id="turnPanel">
-      <div style="font-size:11px;color:var(--m)">Press Test to start</div>
-    </div>
+    <div class="turn-panel" id="turnPanel"><div style="font-size:11px;color:var(--m)">Press Test to start</div></div>
     <div id="chosenTurn" style="display:none" class="chosen-turn">✓ <span id="chosenTurnName"></span> selected</div>
     <div class="row">
       <button class="btn b" onclick="runTurnTest()">⚡ Test All Servers</button>
@@ -186,8 +198,7 @@ p b{color:var(--t)}
       <div class="codeword" id="myWord">…</div>
       <div class="codecopy" onclick="copyCode()" id="cpyBtn">copy</div>
     </div>
-    <div class="waiting" id="waitingMsg"><div class="wdot"></div><div class="wdot"></div><div class="wdot"></div><span id="waitingTxt">Waiting for people to join…</span></div>
-
+    <div class="waiting"><div class="wdot"></div><div class="wdot"></div><div class="wdot"></div><span>Waiting for people to join…</span></div>
     <div class="div"><div class="div-line"></div><div class="div-txt">old version compatibility</div><div class="div-line"></div></div>
     <div class="step">① Copy and send this to someone with the old version:</div>
     <textarea class="ta" id="rawOffer" rows="3" readonly placeholder="⏳ Generating…"></textarea>
@@ -202,20 +213,15 @@ p b{color:var(--t)}
     <div class="back" onclick="goBackFromJoin()">← back</div>
     <h2>Join a room</h2>
     <input class="ninp" id="nick2" placeholder="Your name" maxlength="20"/>
-
     <div style="display:flex;gap:4px;background:var(--bg);padding:4px;border-radius:8px;border:1px solid var(--b)">
       <button id="tab-word" onclick="joinTab('word')" style="flex:1;padding:8px;border:none;border-radius:6px;background:var(--g);color:var(--bg);font-family:var(--f);font-size:11px;font-weight:700;cursor:pointer">Word code</button>
       <button id="tab-raw"  onclick="joinTab('raw')"  style="flex:1;padding:8px;border:none;border-radius:6px;background:transparent;color:var(--m);font-family:var(--f);font-size:11px;font-weight:700;cursor:pointer">Paste code</button>
     </div>
-
     <div id="join-word" style="display:flex;flex-direction:column;gap:10px">
       <p>Type the room code.</p>
-      <input id="codeInp" class="cinpbig" placeholder="STORM" maxlength="15"
-        oninput="this.value=this.value.toUpperCase()"
-        onkeydown="if(event.key==='Enter')doJoin()"/>
+      <input id="codeInp" class="cinpbig" placeholder="STORM" maxlength="15" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')doJoin()"/>
       <button class="btn b" id="joinBtn" onclick="doJoin()">Join room →</button>
     </div>
-
     <div id="join-raw" style="display:none;flex-direction:column;gap:8px">
       <p>Paste the offer code from the host.</p>
       <div class="step">① Paste offer code:</div>
@@ -229,11 +235,30 @@ p b{color:var(--t)}
       </div>
     </div>
   </div>
-
-</div><!-- /mainCard -->
+</div>
 
 <!-- CHAT -->
 <div class="card" id="chatCard" style="display:none">
+  <!-- Incoming call banner -->
+  <div class="call-banner" id="callBanner">
+    <div class="call-banner-txt">📞 <span id="callCallerName">Someone</span> is calling…</div>
+    <div class="call-banner-btns">
+      <button class="cbtn ans" onclick="answerCall()">Answer</button>
+      <button class="cbtn dec" onclick="declineCall()">Decline</button>
+    </div>
+  </div>
+  <!-- Active call bar -->
+  <div class="call-bar" id="callBar">
+    <div class="call-bar-left">
+      <div class="call-vol" id="callVol"><div class="vol-bar"></div><div class="vol-bar"></div><div class="vol-bar"></div><div class="vol-bar"></div><div class="vol-bar"></div></div>
+      <span id="callPeerName">Call</span>
+      <span class="call-timer" id="callTimer">0:00</span>
+    </div>
+    <div class="call-bar-right">
+      <button class="ctl-btn" id="muteBtn" onclick="toggleMute()" title="Mute">🎙</button>
+      <button class="ctl-btn end" onclick="endCall()" title="End call">📵</button>
+    </div>
+  </div>
   <!-- peer list -->
   <div class="peer-list" id="peerList"></div>
   <!-- stats -->
@@ -259,639 +284,707 @@ p b{color:var(--t)}
   <div class="msgs" id="msgs"><div class="sys">🟢 Room open!</div></div>
   <div class="typi" id="typi"><div class="td"></div><div class="td"></div><div class="td"></div><span id="typiName">Someone</span></div>
   <div class="ci">
-    <textarea id="msgIn" placeholder="Message… Enter to send" rows="1" disabled></textarea>
+    <textarea id="msgIn" placeholder="Message… supports **bold**, *italic*, \`code\`" rows="1" disabled></textarea>
     <div class="cright">
       <button class="btn g" id="sndBtn" onclick="send()" disabled>Send</button>
+      <button class="btn b" id="callBtn" onclick="startCall()" disabled title="Voice call">📞</button>
       <button class="btn r" id="dscBtn" onclick="disc()" disabled>⏏</button>
     </div>
   </div>
 </div>
 
-</div><!-- /box -->
+<!-- hidden audio elements -->
+<audio id="remoteAudio" autoplay playsinline style="display:none"></audio>
+
+</div>
 <script>
 'use strict';
 
-// ── ALL TURN SERVER OPTIONS ────────────────────────────────────────────────
+// ── TURN SERVERS ───────────────────────────────────────────────────────────
 const ALL_TURNS = [
-  {label:'Google STUN',         urls:'stun:stun.l.google.com:19302'},
-  {label:'Metered STUN',        urls:'stun:stun.relay.metered.ca:80'},
-  // ExpressTurn — preferred, tested first
-  {label:'ExpressTurn',         urls:'turn:free.expressturn.com:3478',               username:'000000002089490852',       credential:'47MfC+l9nOTiijmLTIGyZ32gXqQ='},
-  {label:'Metered TURN :80',    urls:'turn:eu.relay.metered.ca:80',                  username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
-  {label:'Metered TURN TCP80',  urls:'turn:eu.relay.metered.ca:80?transport=tcp',    username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
-  {label:'Metered TURN :443',   urls:'turn:eu.relay.metered.ca:443',                 username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
-  {label:'Metered TURNS TCP',   urls:'turns:eu.relay.metered.ca:443?transport=tcp',  username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
-  {label:'Hubl UDP',            urls:'turn:turn01.hubl.in?transport=udp'},
-  {label:'Hubl TCP',            urls:'turn:turn02.hubl.in?transport=tcp'},
-  {label:'Viagenie',            urls:'turn:numb.viagenie.ca',                         username:'webrtc@live.com',          credential:'muazkh'},
-  {label:'192.158 UDP',         urls:'turn:192.158.29.39:3478?transport=udp',         username:'28224511:1379330808',       credential:'JZEOEt2V3Qb0y27GRntt2u2PAYA='},
-  {label:'192.158 TCP',         urls:'turn:192.158.29.39:3478?transport=tcp',         username:'28224511:1379330808',       credential:'JZEOEt2V3Qb0y27GRntt2u2PAYA='},
-  {label:'Bistri :80',          urls:'turn:turn.bistri.com:80',                       username:'homeo',                    credential:'homeo'},
-  {label:'Anyfirewall TCP443',  urls:'turn:turn.anyfirewall.com:443?transport=tcp',   username:'webrtc',                   credential:'webrtc'},
+  {label:'Google STUN',        urls:'stun:stun.l.google.com:19302'},
+  {label:'Metered STUN',       urls:'stun:stun.relay.metered.ca:80'},
+  {label:'ExpressTurn',        urls:'turn:free.expressturn.com:3478',              username:'000000002089490852',       credential:'47MfC+l9nOTiijmLTIGyZ32gXqQ='},
+  {label:'Metered TURN :80',   urls:'turn:eu.relay.metered.ca:80',                 username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
+  {label:'Metered TURN TCP80', urls:'turn:eu.relay.metered.ca:80?transport=tcp',   username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
+  {label:'Metered TURN :443',  urls:'turn:eu.relay.metered.ca:443',                username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
+  {label:'Metered TURNS TCP',  urls:'turns:eu.relay.metered.ca:443?transport=tcp', username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
+  {label:'Hubl UDP',           urls:'turn:turn01.hubl.in?transport=udp'},
+  {label:'Hubl TCP',           urls:'turn:turn02.hubl.in?transport=tcp'},
+  {label:'Viagenie',           urls:'turn:numb.viagenie.ca',                        username:'webrtc@live.com',          credential:'muazkh'},
+  {label:'192.158 UDP',        urls:'turn:192.158.29.39:3478?transport=udp',        username:'28224511:1379330808',       credential:'JZEOEt2V3Qb0y27GRntt2u2PAYA='},
+  {label:'192.158 TCP',        urls:'turn:192.158.29.39:3478?transport=tcp',        username:'28224511:1379330808',       credential:'JZEOEt2V3Qb0y27GRntt2u2PAYA='},
+  {label:'Bistri :80',         urls:'turn:turn.bistri.com:80',                      username:'homeo',                    credential:'homeo'},
+  {label:'Anyfirewall TCP443', urls:'turn:turn.anyfirewall.com:443?transport=tcp',  username:'webrtc',                   credential:'webrtc'},
 ];
 
-// Active ICE config — auto-selected on load, overridable via test menu
 let ICE = [
   {urls:'stun:stun.l.google.com:19302'},
   {urls:'turn:free.expressturn.com:3478', username:'000000002089490852', credential:'47MfC+l9nOTiijmLTIGyZ32gXqQ='},
   {urls:'turn:eu.relay.metered.ca:443?transport=tcp', username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'}
 ];
-let turnAutoSelected = false; // set to true once auto-test completes
+let turnAutoSelected = false;
 
-// Run silently in background on page load — pick best server before user even clicks Start
+// ── SIMPLE MARKDOWN RENDERER ───────────────────────────────────────────────
+function renderMD(text) {
+  let s = esc(text);
+  // fenced code blocks
+  s = s.replace(/```([^`]*?)```/gs, (_, c) => `<pre><code>${c.trim()}</code></pre>`);
+  // inline code
+  s = s.replace(/`([^`]+?)`/g, '<code>$1</code>');
+  // bold
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/__(.+?)__/g, '<strong>$1</strong>');
+  // italic
+  s = s.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  s = s.replace(/_(.+?)_/g, '<em>$1</em>');
+  // strikethrough
+  s = s.replace(/~~(.+?)~~/g, '<del>$1</del>');
+  // blockquote
+  s = s.replace(/^&gt; ?(.+)$/gm, '<blockquote>$1</blockquote>');
+  // hr
+  s = s.replace(/^---$/gm, '<hr>');
+  // links [text](url) — only allow http/https
+  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  // line breaks
+  s = s.replace(/\n/g, '<br>');
+  return s;
+}
+
+// ── RINGTONE (Web Audio API — no external files) ───────────────────────────
+let ringInterval = null;
+function playRing() {
+  stopRing();
+  const ring = () => {
+    try {
+      const ctx = new (window.AudioContext||window.webkitAudioContext)();
+      // Two-tone phone ring: 440Hz + 480Hz, 2s on / 4s off pattern
+      [440, 480].forEach(freq => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.value = freq;
+        g.gain.setValueAtTime(0.15, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.8);
+        o.start(); o.stop(ctx.currentTime + 1.8);
+      });
+      setTimeout(() => ctx.close(), 2000);
+    } catch(e) {}
+  };
+  ring();
+  ringInterval = setInterval(ring, 4000);
+}
+function stopRing() {
+  if (ringInterval) { clearInterval(ringInterval); ringInterval = null; }
+}
+
+// Call-connected sound (short beep)
+function playBeep(freq=880, dur=0.15) {
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.2, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    o.start(); o.stop(ctx.currentTime + dur);
+    setTimeout(() => ctx.close(), dur * 1000 + 100);
+  } catch(e) {}
+}
+
+// ── VOICE CALL STATE ───────────────────────────────────────────────────────
+let localStream = null;       // microphone MediaStream
+let callPeerId = null;        // who we're in a call with
+let callStartedAt = null;
+let callTimerTmr = null;
+let isMuted = false;
+let pendingCallFrom = null;   // peerId of incoming unanswered call
+// For multi-peer: voice goes on the FIRST connected peer's PC (simplest model)
+// Track senders so we can remove them on hang-up
+const audioSenders = new Map(); // peerId → RTCRtpSender
+
+// ── VOICE CALL FUNCTIONS ───────────────────────────────────────────────────
+async function startCall() {
+  if (peers.size === 0) { toast('No peers connected'); return; }
+  if (callPeerId) { toast('Already in a call'); return; }
+
+  // Pick first connected peer to call
+  const targetId = [...peers.keys()][0];
+  const peer = peers.get(targetId);
+  if (!peer) return;
+
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 48000 }
+    });
+  } catch(e) {
+    toast('Microphone access denied', 'e'); return;
+  }
+
+  // Signal call request via data channel
+  wireOne(targetId, {t:'call-req', nick:myNick});
+  // Add audio track to existing PC
+  await addAudioToPeer(targetId);
+  toast('Calling ' + (peer.nick || 'peer') + '…');
+  callPeerId = targetId;
+  g('callBtn').innerHTML = '📞';
+}
+
+async function addAudioToPeer(peerId) {
+  const peer = peers.get(peerId);
+  if (!peer || !peer.pc) return;
+  localStream.getAudioTracks().forEach(track => {
+    const sender = peer.pc.addTrack(track, localStream);
+    audioSenders.set(peerId, sender);
+    // Set 128kbps Opus after renegotiation settles
+    setTimeout(() => setOpusBitrate(sender, 128000), 1000);
+  });
+}
+
+async function setOpusBitrate(sender, bitrate) {
+  try {
+    const params = sender.getParameters();
+    if (!params.encodings) params.encodings = [{}];
+    params.encodings[0].maxBitrate = bitrate;
+    params.encodings[0].priority = 'high';
+    await sender.setParameters(params);
+  } catch(e) {}
+}
+
+function answerCall() {
+  if (!pendingCallFrom) return;
+  stopRing();
+  g('callBanner').classList.remove('show');
+  const peerId = pendingCallFrom;
+  pendingCallFrom = null;
+  callPeerId = peerId;
+  // Get mic and add to existing PC
+  navigator.mediaDevices.getUserMedia({
+    audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 48000 }
+  }).then(async stream => {
+    localStream = stream;
+    await addAudioToPeer(peerId);
+    wireOne(peerId, {t:'call-ans', nick:myNick});
+    onCallConnected(peerId);
+    playBeep(880, 0.1);
+  }).catch(() => {
+    toast('Microphone access denied', 'e');
+    wireOne(peerId, {t:'call-dec'});
+  });
+}
+
+function declineCall() {
+  if (!pendingCallFrom) return;
+  stopRing();
+  wireOne(pendingCallFrom, {t:'call-dec'});
+  pendingCallFrom = null;
+  g('callBanner').classList.remove('show');
+}
+
+function onCallConnected(peerId) {
+  const peer = peers.get(peerId);
+  callStartedAt = Date.now();
+  callPeerId = peerId;
+  g('callPeerName').textContent = peer?.nick || 'Peer';
+  g('callBar').classList.add('show');
+  g('callBtn').innerHTML = '🔴';
+  g('callBtn').title = 'In call';
+  // Start call timer
+  callTimerTmr = setInterval(() => {
+    const s = Math.floor((Date.now() - callStartedAt) / 1000);
+    const m = Math.floor(s / 60), sec = s % 60;
+    g('callTimer').textContent = m + ':' + String(sec).padStart(2,'0');
+  }, 1000);
+  // Animate vol bars only when not muted
+  const bars = g('callVol');
+  if (isMuted) bars.style.opacity = '0.3';
+}
+
+function endCall() {
+  stopRing();
+  if (callPeerId) {
+    wireOne(callPeerId, {t:'call-end'});
+    _cleanupCall();
+  }
+  playBeep(440, 0.2);
+}
+
+function toggleMute() {
+  if (!localStream) return;
+  isMuted = !isMuted;
+  localStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
+  const btn = g('muteBtn');
+  btn.textContent = isMuted ? '🔇' : '🎙';
+  btn.classList.toggle('active', isMuted);
+  g('callVol').style.opacity = isMuted ? '0.3' : '1';
+}
+
+function _cleanupCall() {
+  clearInterval(callTimerTmr); callTimerTmr = null;
+  // Remove audio senders from PCs
+  audioSenders.forEach((sender, peerId) => {
+    const peer = peers.get(peerId);
+    if (peer && peer.pc) try { peer.pc.removeTrack(sender); } catch(e) {}
+  });
+  audioSenders.clear();
+  // Stop mic
+  if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+  callPeerId = null; callStartedAt = null; isMuted = false;
+  g('callBar').classList.remove('show');
+  g('callBtn').innerHTML = '📞'; g('callBtn').title = 'Voice call';
+  g('muteBtn').textContent = '🎙'; g('muteBtn').classList.remove('active');
+  g('callTimer').textContent = '0:00';
+  g('callVol').style.opacity = '1';
+  g('remoteAudio').srcObject = null;
+}
+
+// ── AUTO TURN SELECT ───────────────────────────────────────────────────────
 async function autoSelectTurn() {
   const btn = g('turnStatusBtn');
   if (btn) { btn.textContent = '⚙ Testing servers…'; btn.disabled = true; }
-
-  // Test all in parallel, 3s timeout per server (faster than manual 4s)
   const results = await Promise.all(ALL_TURNS.map(async srv => {
     const start = performance.now();
-    try {
-      const ok = await testOneTurn(srv, 3000);
-      return {srv, ms: ok ? Math.round(performance.now()-start) : Infinity, ok};
-    } catch(e) { return {srv, ms:Infinity, ok:false}; }
+    try { const ok = await testOneTurn(srv, 3000); return {srv, ms: ok ? Math.round(performance.now()-start) : Infinity, ok}; }
+    catch(e) { return {srv, ms:Infinity, ok:false}; }
   }));
-
-  const turns = results.filter(r=>r.ok && r.srv.username).sort((a,b)=>a.ms-b.ms);
-  const stuns = results.filter(r=>r.ok && !r.srv.username).sort((a,b)=>a.ms-b.ms);
-
-  // Always prefer ExpressTurn if it's working, regardless of ping
+  const turns = results.filter(r=>r.ok&&r.srv.username).sort((a,b)=>a.ms-b.ms);
+  const stuns = results.filter(r=>r.ok&&!r.srv.username).sort((a,b)=>a.ms-b.ms);
   const expressTurn = turns.find(r=>r.srv.label==='ExpressTurn');
-  const bestTurn = expressTurn || (turns.length>0 ? turns[0] : null);
-
-  if (bestTurn || stuns.length > 0) {
-    const newIce = [];
-    if (stuns.length > 0) newIce.push({urls: stuns[0].srv.urls});
-    if (bestTurn) newIce.push({urls:bestTurn.srv.urls, username:bestTurn.srv.username, credential:bestTurn.srv.credential});
-    ICE = newIce;
-    turnAutoSelected = true;
-    const best = bestTurn || stuns[0];
-    if (btn) { btn.textContent = `⚙ TURN: ${best.srv.label} (${best.ms}ms)`; btn.disabled = false; btn.style.color='var(--g)'; btn.style.borderColor='var(--g)'; }
-    if (g('chosenTurnName')) { g('chosenTurnName').textContent = best.srv.label; g('chosenTurn').style.display='flex'; }
+  const bestTurn = expressTurn || (turns.length>0?turns[0]:null);
+  if (bestTurn||stuns.length>0) {
+    const newIce=[];
+    if (stuns.length>0) newIce.push({urls:stuns[0].srv.urls});
+    if (bestTurn) newIce.push({urls:bestTurn.srv.urls,username:bestTurn.srv.username,credential:bestTurn.srv.credential});
+    ICE=newIce; turnAutoSelected=true;
+    const best=bestTurn||stuns[0];
+    if (btn){btn.textContent=`⚙ TURN: ${best.srv.label} (${best.ms}ms)`;btn.disabled=false;btn.style.color='var(--g)';btn.style.borderColor='var(--g)';}
+    if (g('chosenTurnName')){g('chosenTurnName').textContent=best.srv.label;g('chosenTurn').style.display='flex';}
   } else {
-    if (btn) { btn.textContent = '⚙ No TURN found — check manually'; btn.disabled = false; btn.style.color='var(--r)'; }
+    if (btn){btn.textContent='⚙ No TURN found — check manually';btn.disabled=false;btn.style.color='var(--r)';}
   }
 }
 
-const SIG = 'https://ntfy.sh';
-const WORDS = ['APPLE','BRICK','CLOUD','DELTA','EAGLE','FLAME','GHOST','HONEY','IVORY','JOKER',
-'KITE','LEMON','MANGO','NOBLE','OCEAN','PIANO','QUEEN','RIVER','STORM','TIGER',
-'ULTRA','VITAL','WHALE','AMBER','BLAZE','CHESS','DRIFT','EMBER','FROST','GROVE',
-'HATCH','KARMA','LUNAR','MAPLE','ORBIT','PEACH','QUEST','RADAR','SCOUT','TORCH',
-'VAPOR','WALTZ','ARROW','CRANE','ELBOW','FLUTE','GRANT','INDEX','LANCE','MERIT',
-'NORTH','OLIVE','PLUMB','RAVEN','SOUTH','TRAIL','VAULT','AGENT','CABLE','FOCUS'];
-
-// ── MULTI-PEER STATE ───────────────────────────────────────────────────────
-// Each peer connection is stored in the `peers` map: peerId → {pc, dc, nick}
-const peers = new Map();
-let myNick = 'Me', myCode = '', isHost = false;
-let sigPoll = null, sigPollAnswer = null;
-let msgN = 0, sent = 0, recv = 0, reads = 0, sbytes = 0, rbytes = 0, pS = 0, pL = 0;
-const pings = {}, hist = [];
-let connAt = null, upTmr = null, lastPres = null, myTyping = false, typOff = null;
-const MAX = 200;
-
-// ── TURN TEST ──────────────────────────────────────────────────────────────
 async function runTurnTest() {
-  const panel = g('turnPanel');
-  panel.innerHTML = '';
-  const results = [];
-
+  const panel = g('turnPanel'); panel.innerHTML='';
   for (const srv of ALL_TURNS) {
-    // Create a row immediately with testing state
-    const row = document.createElement('div');
-    row.className = 'turn-row';
-    row.innerHTML = `
-      <div class="turn-name" title="${srv.urls}">${srv.label}</div>
-      <div class="turn-bar-wrap"><div class="turn-bar testing" id="tb-${srv.label.replace(/\s/g,'_')}"></div></div>
-      <div class="turn-ping sm" id="tp-${srv.label.replace(/\s/g,'_')}" style="font-size:10px;color:var(--y);width:54px;text-align:right">…</div>
-    `;
+    const row=document.createElement('div'); row.className='turn-row';
+    row.innerHTML=`<div class="turn-name" title="${srv.urls}">${srv.label}</div><div class="turn-bar-wrap"><div class="turn-bar testing" id="tb-${srv.label.replace(/\s/g,'_')}"></div></div><div id="tp-${srv.label.replace(/\s/g,'_')}" style="font-size:10px;color:var(--y);width:54px;text-align:right">…</div>`;
     panel.appendChild(row);
   }
-
-  // Test all in parallel
   const tests = ALL_TURNS.map(async srv => {
-    const id = srv.label.replace(/\s/g,'_');
-    const bar = g('tb-'+id), ping = g('tp-'+id);
-    const start = performance.now();
+    const id=srv.label.replace(/\s/g,'_');
+    const bar=g('tb-'+id),ping=g('tp-'+id);
+    const start=performance.now();
     try {
-      const ok = await testOneTurn(srv);
-      const ms = Math.round(performance.now() - start);
-      if (ok) {
-        bar.className = 'turn-bar ok'; bar.style.width = Math.min(100, Math.max(10, 100 - ms/20))+'%';
-        ping.textContent = ms+'ms'; ping.style.color = ms<300?'var(--g)':ms<600?'var(--y)':'var(--r)';
-        return {srv, ms, ok:true};
-      } else {
-        bar.className = 'turn-bar fail'; bar.style.width = '100%';
-        ping.textContent = 'fail'; ping.style.color = 'var(--r)';
-        return {srv, ms:Infinity, ok:false};
-      }
-    } catch(e) {
-      bar.className = 'turn-bar fail'; bar.style.width = '100%';
-      ping.textContent = 'err'; ping.style.color = 'var(--r)';
-      return {srv, ms:Infinity, ok:false};
-    }
+      const ok=await testOneTurn(srv);
+      const ms=Math.round(performance.now()-start);
+      if(ok){bar.className='turn-bar ok';bar.style.width=Math.min(100,Math.max(10,100-ms/20))+'%';ping.textContent=ms+'ms';ping.style.color=ms<300?'var(--g)':ms<600?'var(--y)':'var(--r)';return{srv,ms,ok:true};}
+      else{bar.className='turn-bar fail';bar.style.width='100%';ping.textContent='fail';ping.style.color='var(--r)';return{srv,ms:Infinity,ok:false};}
+    } catch(e){bar.className='turn-bar fail';bar.style.width='100%';ping.textContent='err';ping.style.color='var(--r)';return{srv,ms:Infinity,ok:false};}
   });
-
-  const allResults = await Promise.all(tests);
-
-  // Pick best: prefer ExpressTurn if available, then fastest TURN, then STUN
-  const turns = allResults.filter(r => r.ok && r.srv.username).sort((a,b)=>a.ms-b.ms);
-  const stuns = allResults.filter(r => r.ok && !r.srv.username).sort((a,b)=>a.ms-b.ms);
-  const expressTurn = turns.find(r=>r.srv.label==='ExpressTurn');
-  const bestTurn = expressTurn || (turns.length>0 ? turns[0] : null);
-
-  if (bestTurn || stuns.length > 0) {
-    const newIce = [];
-    if (stuns.length > 0) newIce.push({urls: stuns[0].srv.urls});
-    if (bestTurn) newIce.push({urls:bestTurn.srv.urls, username:bestTurn.srv.username, credential:bestTurn.srv.credential});
-    ICE = newIce;
-    turnAutoSelected = true;
-    const best = bestTurn || stuns[0];
-    g('chosenTurnName').textContent = best.srv.label;
-    g('chosenTurn').style.display = 'flex';
-    const btn = g('turnStatusBtn');
-    if (btn) { btn.textContent=`⚙ TURN: ${best.srv.label} (${best.ms}ms)`; btn.style.color='var(--g)'; btn.style.borderColor='var(--g)'; }
+  const allResults=await Promise.all(tests);
+  const turns=allResults.filter(r=>r.ok&&r.srv.username).sort((a,b)=>a.ms-b.ms);
+  const stuns=allResults.filter(r=>r.ok&&!r.srv.username).sort((a,b)=>a.ms-b.ms);
+  const expressTurn=turns.find(r=>r.srv.label==='ExpressTurn');
+  const bestTurn=expressTurn||(turns.length>0?turns[0]:null);
+  if(bestTurn||stuns.length>0){
+    const newIce=[];
+    if(stuns.length>0)newIce.push({urls:stuns[0].srv.urls});
+    if(bestTurn)newIce.push({urls:bestTurn.srv.urls,username:bestTurn.srv.username,credential:bestTurn.srv.credential});
+    ICE=newIce;turnAutoSelected=true;
+    const best=bestTurn||stuns[0];
+    g('chosenTurnName').textContent=best.srv.label;g('chosenTurn').style.display='flex';
+    const btn=g('turnStatusBtn');if(btn){btn.textContent=`⚙ TURN: ${best.srv.label} (${best.ms}ms)`;btn.style.color='var(--g)';btn.style.borderColor='var(--g)';}
     toast(`Best: ${best.srv.label} — ${best.ms}ms`);
-  } else {
-    toast('No servers reachable!', 'e');
-    const btn=g('turnStatusBtn'); if(btn){btn.textContent='⚙ No TURN found';btn.style.color='var(--r)';}
-  }
+  } else {toast('No servers reachable!','e');const btn=g('turnStatusBtn');if(btn){btn.textContent='⚙ No TURN found';btn.style.color='var(--r)';}}
 }
 
-function testOneTurn(srv, timeoutMs=4000) {
-  return new Promise(res => {
-    let done = false;
-    const fin = v => { if(!done){done=true; try{tp.close();}catch(e){} res(v);} };
-    const timeout = setTimeout(()=>fin(false), timeoutMs);
-    const iceEntry = srv.username
-      ? {urls:srv.urls, username:srv.username, credential:srv.credential}
-      : {urls:srv.urls};
-    const tp = new RTCPeerConnection({iceServers:[iceEntry]});
+function testOneTurn(srv,timeoutMs=4000){
+  return new Promise(res=>{
+    let done=false;
+    const fin=v=>{if(!done){done=true;try{tp.close();}catch(e){}res(v);}};
+    const timeout=setTimeout(()=>fin(false),timeoutMs);
+    const iceEntry=srv.username?{urls:srv.urls,username:srv.username,credential:srv.credential}:{urls:srv.urls};
+    const tp=new RTCPeerConnection({iceServers:[iceEntry]});
     tp.createDataChannel('t');
-    tp.onicecandidate = e => {
-      if (e.candidate) { clearTimeout(timeout); fin(true); }
-      else if (!done) { clearTimeout(timeout); fin(false); }
-    };
+    tp.onicecandidate=e=>{if(e.candidate){clearTimeout(timeout);fin(true);}else if(!done){clearTimeout(timeout);fin(false);}};
     tp.createOffer().then(o=>tp.setLocalDescription(o)).catch(()=>fin(false));
   });
 }
 
 // ── SCREENS ────────────────────────────────────────────────────────────────
-function scr(id) {
-  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
-  g(id).classList.add('on');
-}
+const SIG='https://ntfy.sh';
+const WORDS=['APPLE','BRICK','CLOUD','DELTA','EAGLE','FLAME','GHOST','HONEY','IVORY','JOKER','KITE','LEMON','MANGO','NOBLE','OCEAN','PIANO','QUEEN','RIVER','STORM','TIGER','ULTRA','VITAL','WHALE','AMBER','BLAZE','CHESS','DRIFT','EMBER','FROST','GROVE','HATCH','KARMA','LUNAR','MAPLE','ORBIT','PEACH','QUEST','RADAR','SCOUT','TORCH','VAPOR','WALTZ','ARROW','CRANE','ELBOW','FLUTE','GRANT','INDEX','LANCE','MERIT','NORTH','OLIVE','PLUMB','RAVEN','SOUTH','TRAIL','VAULT','AGENT','CABLE','FOCUS'];
 
-function goJoin() {
-  myNick = g('nick').value.trim() || 'Me';
-  scr('s3');
-  joinTab('word');
-  g('codeInp').value = '';
-  g('nick2').value = g('nick').value;
-  g('joinBtn').disabled = false; g('joinBtn').innerHTML = 'Join room →';
-  g('rawOfferIn').value = ''; g('rawAnsOut').value = '';
-  g('legacyAnsArea').style.display = 'none';
-  g('genAnsBtn').disabled = false; g('genAnsBtn').innerHTML = 'Generate reply code →';
+const peers=new Map();
+let myNick='Me',myCode='',isHost=false;
+let sigPoll=null,sigPollAnswer=null;
+let msgN=0,sent=0,recv=0,reads=0,sbytes=0,rbytes=0,pS=0,pL=0;
+const pings={},hist=[];
+let connAt=null,upTmr=null,lastPres=null,myTyping=false,typOff=null;
+const MAX=200;
+
+function scr(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));g(id).classList.add('on');}
+
+function goJoin(){
+  myNick=g('nick').value.trim()||'Me';
+  scr('s3');joinTab('word');
+  g('codeInp').value='';g('nick2').value=g('nick').value;
+  g('joinBtn').disabled=false;g('joinBtn').innerHTML='Join room →';
+  g('rawOfferIn').value='';g('rawAnsOut').value='';
+  g('legacyAnsArea').style.display='none';
+  g('genAnsBtn').disabled=false;g('genAnsBtn').innerHTML='Generate reply code →';
   g('nick2').focus();
 }
 
-function goBackFromHost() {
-  // Stop hosting, clean up
-  fullReset();
-  g('startBtn').disabled = false; g('startBtn').innerHTML = '🟢 Start room';
-  scr('s1'); pstat('offline', false);
+function goBackFromHost(){fullReset();g('startBtn').disabled=false;g('startBtn').innerHTML='🟢 Start room';scr('s1');pstat('offline',false);}
+function goBackFromJoin(){fullReset();g('joinBtn').disabled=false;g('joinBtn').innerHTML='Join room →';scr('s1');pstat('offline',false);}
+
+function joinTab(t){
+  const w=(t==='word');
+  g('tab-word').style.cssText=`flex:1;padding:8px;border:none;border-radius:6px;background:${w?'var(--g)':'transparent'};color:${w?'var(--bg)':'var(--m)'};font-family:var(--f);font-size:11px;font-weight:700;cursor:pointer`;
+  g('tab-raw').style.cssText=`flex:1;padding:8px;border:none;border-radius:6px;background:${w?'transparent':'var(--bl)'};color:${w?'var(--m)':'var(--bg)'};font-family:var(--f);font-size:11px;font-weight:700;cursor:pointer`;
+  g('join-word').style.display=w?'flex':'none';
+  g('join-raw').style.display=w?'none':'flex';
 }
 
-function goBackFromJoin() {
-  fullReset();
-  g('joinBtn').disabled = false; g('joinBtn').innerHTML = 'Join room →';
-  scr('s1'); pstat('offline', false);
-}
-
-function joinTab(t) {
-  const w = (t==='word');
-  g('tab-word').style.cssText = `flex:1;padding:8px;border:none;border-radius:6px;background:${w?'var(--g)':'transparent'};color:${w?'var(--bg)':'var(--m)'};font-family:var(--f);font-size:11px;font-weight:700;cursor:pointer`;
-  g('tab-raw').style.cssText  = `flex:1;padding:8px;border:none;border-radius:6px;background:${w?'transparent':'var(--bl)'};color:${w?'var(--m)':'var(--bg)'};font-family:var(--f);font-size:11px;font-weight:700;cursor:pointer`;
-  g('join-word').style.display = w?'flex':'none';
-  g('join-raw').style.display  = w?'none':'flex';
-}
-
-// ── FULL RESET ─────────────────────────────────────────────────────────────
-function fullReset() {
-  clearInterval(upTmr); clearTimeout(typOff); upTmr=null; typOff=null;
+function fullReset(){
+  clearInterval(upTmr);clearTimeout(typOff);upTmr=null;typOff=null;
   stopSig();
-  // Close all peer connections
-  peers.forEach(p => { try{if(p.dc)p.dc.close();}catch(e){} try{if(p.pc)p.pc.close();}catch(e){} });
+  _cleanupCall();
+  stopRing();
+  peers.forEach(p=>{try{if(p.dc)p.dc.close();}catch(e){}try{if(p.pc)p.pc.close();}catch(e){}});
   peers.clear();
   msgN=sent=recv=reads=sbytes=rbytes=pS=pL=0;
-  hist.length=0; Object.keys(pings).forEach(k=>delete pings[k]);
-  connAt=null; lastPres=null; myTyping=false; myCode=''; isHost=false;
+  hist.length=0;Object.keys(pings).forEach(k=>delete pings[k]);
+  connAt=null;lastPres=null;myTyping=false;myCode='';isHost=false;
+  pendingCallFrom=null;
+  g('callBanner').classList.remove('show');
 }
 
-// ── ICE GATHER (max 2s) ────────────────────────────────────────────────────
-function gatherICE(pc) {
-  return new Promise(res => {
-    if (pc.iceGatheringState === 'complete') { res(); return; }
-    let done = false;
-    const finish = () => { if(!done){done=true;res();} };
-    pc.onicecandidate = e => { if(e.candidate===null) finish(); };
-    setTimeout(finish, 2000);
+function gatherICE(pc){
+  return new Promise(res=>{
+    if(pc.iceGatheringState==='complete'){res();return;}
+    let done=false;
+    const finish=()=>{if(!done){done=true;res();}};
+    pc.onicecandidate=e=>{if(e.candidate===null)finish();};
+    setTimeout(finish,2000);
   });
 }
 
-// ── HOST FLOW ──────────────────────────────────────────────────────────────
-async function doStart() {
-  myNick = g('nick').value.trim() || 'Me';
-  myCode = WORDS[Math.floor(Math.random()*WORDS.length)];
-  isHost = true;
-  g('myWord').textContent = myCode;
-  g('s-code').textContent = myCode;
-  g('rawOffer').value = ''; g('rawOffer').placeholder = '⏳ Generating…';
-  g('rawAnswer').value = '';
-  g('startBtn').disabled = true; g('startBtn').innerHTML = '<span class="spin"></span>';
-  scr('s2'); pstat('hosting…', false);
-
-  // Generate the offer for legacy compatibility
+// ── HOST FLOW ─────────────────────────────────────────────────────────────
+async function doStart(){
+  myNick=g('nick').value.trim()||'Me';
+  myCode=WORDS[Math.floor(Math.random()*WORDS.length)];
+  isHost=true;
+  g('myWord').textContent=myCode;g('s-code').textContent=myCode;
+  g('rawOffer').value='';g('rawOffer').placeholder='⏳ Generating…';g('rawAnswer').value='';
+  g('startBtn').disabled=true;g('startBtn').innerHTML='<span class="spin"></span>';
+  scr('s2');pstat('hosting…',false);
   await generateHostOffer();
-
-  // Keep listening for new joiners on ntfy (multi-peer: each joiner posts an answer)
   hostListenLoop();
 }
 
-async function generateHostOffer() {
-  // We create a "template" PC just to get our ICE candidates for the raw offer
-  // Each actual joiner gets their own fresh PC
-  const tpc = new RTCPeerConnection({iceServers: ICE});
+async function generateHostOffer(){
+  const tpc=new RTCPeerConnection({iceServers:ICE});
   tpc.createDataChannel('x');
-  try {
+  try{
     await tpc.setLocalDescription(await tpc.createOffer());
     await gatherICE(tpc);
-    g('rawOffer').value = JSON.stringify(tpc.localDescription);
-    g('rawOffer').placeholder = '';
-  } catch(e) {}
+    g('rawOffer').value=JSON.stringify(tpc.localDescription);
+    g('rawOffer').placeholder='';
+  }catch(e){}
   try{tpc.close();}catch(e){}
 }
 
-// Keep listening for new peer answers on ntfy
-function hostListenLoop() {
+function hostListenLoop(){
   stopSig();
-  const topic = `direct-${myCode.toLowerCase()}`;
-
-  // Post a beacon so joiners know the room exists
-  sigPost(myCode, {type:'beacon', nick:myNick}).catch(()=>{});
-
-  const es = new EventSource(`${SIG}/${topic}/sse`);
-  sigPoll = es;
-  es.onmessage = async e => {
-    try {
-      const outer = JSON.parse(e.data);
-      const msg = JSON.parse(outer.message);
-      if (msg.type === 'join-request') {
-        // A peer wants to join: they sent us their offer
-        await handleNewPeer(msg);
-      }
-    } catch(_) {}
+  sigPost(myCode,{type:'beacon',nick:myNick}).catch(()=>{});
+  const es=new EventSource(`${SIG}/direct-${myCode.toLowerCase()}/sse`);
+  sigPoll=es;
+  es.onmessage=async e=>{
+    try{
+      const outer=JSON.parse(e.data);
+      const msg=JSON.parse(outer.message);
+      if(msg.type==='join-request') await handleNewPeer(msg);
+    }catch(_){}
   };
-  es.onerror = () => {};
+  es.onerror=()=>{};
 }
 
-async function handleNewPeer(msg) {
-  const peerId = msg.peerId;
-  if (peers.has(peerId)) return; // already connected
-
-  // Create a fresh PC for this peer
-  const pc = makePeerConnection(peerId);
-  try {
+async function handleNewPeer(msg){
+  const peerId=msg.peerId;
+  if(peers.has(peerId))return;
+  const pc=makePeerConnection(peerId);
+  try{
     await pc.setRemoteDescription(msg.sdp);
     await pc.setLocalDescription(await pc.createAnswer());
     await gatherICE(pc);
-    // Send answer back tagged with peerId so peer knows it's for them
-    await sigPost(myCode, {type:'host-answer', peerId, sdp:stripSDP(pc.localDescription), nick:myNick});
-  } catch(e) {
-    try{pc.close();}catch(ex){}
-  }
+    await sigPost(myCode,{type:'host-answer',peerId,sdp:stripSDP(pc.localDescription),nick:myNick});
+  }catch(e){try{pc.close();}catch(ex){}}
 }
 
-// ── PEER FLOW — word code ──────────────────────────────────────────────────
-async function doJoin() {
-  const code = g('codeInp').value.trim().toUpperCase();
-  if (!code) { toast('Type the code first!'); return; }
-  myNick = g('nick2').value.trim() || 'Me';
-  myCode = code;
-  isHost = false;
-  const btn = g('joinBtn');
-  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Joining…';
-  pstat('connecting…', false);
-
-  // Generate a unique peerId for this connection attempt
-  const peerId = Math.random().toString(36).slice(2,10);
-
-  // Create our PC and offer
-  const pc = makePeerConnection(peerId);
-  const dc = pc.createDataChannel('chat');
-  setupDC(peerId, dc);
-
-  try {
+// ── PEER FLOW ─────────────────────────────────────────────────────────────
+async function doJoin(){
+  const code=g('codeInp').value.trim().toUpperCase();
+  if(!code){toast('Type the code first!');return;}
+  myNick=g('nick2').value.trim()||'Me';myCode=code;isHost=false;
+  const btn=g('joinBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Joining…';
+  pstat('connecting…',false);
+  const peerId=Math.random().toString(36).slice(2,10);
+  const pc=makePeerConnection(peerId);
+  const dc=pc.createDataChannel('chat');
+  setupDC(peerId,dc);
+  try{
     await pc.setLocalDescription(await pc.createOffer());
     await gatherICE(pc);
-    // Post our join request (offer) to the room topic
-    sigPost(myCode, {type:'join-request', peerId, sdp:stripSDP(pc.localDescription), nick:myNick});
-  } catch(e) {
-    toast('Failed to connect','e');
-    btn.disabled=false; btn.innerHTML='Join room →'; pstat('offline',false);
-    return;
+    sigPost(myCode,{type:'join-request',peerId,sdp:stripSDP(pc.localDescription),nick:myNick});
+  }catch(e){
+    toast('Failed to connect','e');btn.disabled=false;btn.innerHTML='Join room →';pstat('offline',false);return;
   }
-
-  // Listen for the host's answer addressed to our peerId
-  let got = false;
-  const listenForAnswer = async () => {
-    // Poll first
-    try {
-      const r = await fetch(`${SIG}/direct-${code.toLowerCase()}/json?poll=1&since=all`);
-      const txt = await r.text();
-      for (const line of txt.trim().split('\n')) {
-        if (!line) continue;
-        try {
-          const msg = JSON.parse(JSON.parse(line).message);
-          if (msg.type==='host-answer' && msg.peerId===peerId && !got) {
-            got=true; await pc.setRemoteDescription(msg.sdp);
-            return;
-          }
-        } catch(_) {}
+  let got=false;
+  const listenForAnswer=async()=>{
+    try{
+      const r=await fetch(`${SIG}/direct-${code.toLowerCase()}/json?poll=1&since=all`);
+      const txt=await r.text();
+      for(const line of txt.trim().split('\n')){
+        if(!line)continue;
+        try{
+          const msg=JSON.parse(JSON.parse(line).message);
+          if(msg.type==='host-answer'&&msg.peerId===peerId&&!got){got=true;await pc.setRemoteDescription(msg.sdp);return;}
+        }catch(_){}
       }
-    } catch(_) {}
-
-    // SSE fallback
-    if (!got) {
-      const es = new EventSource(`${SIG}/direct-${code.toLowerCase()}/sse`);
-      sigPollAnswer = es;
-      es.onmessage = async e => {
-        if (got) return;
-        try {
-          const outer = JSON.parse(e.data);
-          const msg = JSON.parse(outer.message);
-          if (msg.type==='host-answer' && msg.peerId===peerId) {
-            got=true; es.close(); sigPollAnswer=null;
-            await pc.setRemoteDescription(msg.sdp);
-          }
-        } catch(_) {}
+    }catch(_){}
+    if(!got){
+      const es=new EventSource(`${SIG}/direct-${code.toLowerCase()}/sse`);
+      sigPollAnswer=es;
+      es.onmessage=async e=>{
+        if(got)return;
+        try{const outer=JSON.parse(e.data);const msg=JSON.parse(outer.message);if(msg.type==='host-answer'&&msg.peerId===peerId){got=true;es.close();sigPollAnswer=null;await pc.setRemoteDescription(msg.sdp);}}catch(_){}
       };
-      es.onerror = ()=>{};
+      es.onerror=()=>{};
     }
   };
-
   await listenForAnswer();
-
-  // 30s timeout
-  setTimeout(() => {
-    if (!got) {
-      stopSig(); if(sigPollAnswer){sigPollAnswer.close();sigPollAnswer=null;}
+  setTimeout(()=>{
+    if(!got){
+      stopSig();if(sigPollAnswer){sigPollAnswer.close();sigPollAnswer=null;}
       toast('Room not found or timed out','e');
-      btn.disabled=false; btn.innerHTML='Join room →'; pstat('offline',false);
-      peers.delete(peerId);
+      btn.disabled=false;btn.innerHTML='Join room →';pstat('offline',false);peers.delete(peerId);
     }
-  }, 30000);
+  },30000);
 }
 
-// ── PEER FLOW — legacy paste ───────────────────────────────────────────────
-async function doJoinLegacy() {
-  const offerJson = g('rawOfferIn').value.trim();
-  if (!offerJson) { toast('Paste the offer code first!'); return; }
-  myNick = g('nick2').value.trim() || 'Me';
-  isHost = false;
-  const btn = g('genAnsBtn');
-  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Generating…';
+async function doJoinLegacy(){
+  const offerJson=g('rawOfferIn').value.trim();
+  if(!offerJson){toast('Paste the offer code first!');return;}
+  myNick=g('nick2').value.trim()||'Me';isHost=false;
+  const btn=g('genAnsBtn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Generating…';
   g('rawAnsOut').placeholder='⏳ Generating…';
-  const peerId = 'legacy-'+Math.random().toString(36).slice(2,8);
-  try {
-    const pc = makePeerConnection(peerId);
+  const peerId='legacy-'+Math.random().toString(36).slice(2,8);
+  try{
+    const pc=makePeerConnection(peerId);
     await pc.setRemoteDescription(JSON.parse(offerJson));
     await pc.setLocalDescription(await pc.createAnswer());
     await gatherICE(pc);
-    g('rawAnsOut').value = JSON.stringify(pc.localDescription);
-    g('rawAnsOut').placeholder='';
-    g('legacyAnsArea').style.display='flex';
-    btn.innerHTML='✓ Done'; pstat('waiting…',false);
-  } catch(e) {
-    btn.disabled=false; btn.innerHTML='Generate reply code →';
-    toast('Bad offer code','e');
-  }
+    g('rawAnsOut').value=JSON.stringify(pc.localDescription);g('rawAnsOut').placeholder='';
+    g('legacyAnsArea').style.display='flex';btn.innerHTML='✓ Done';pstat('waiting…',false);
+  }catch(e){btn.disabled=false;btn.innerHTML='Generate reply code →';toast('Bad offer code','e');}
 }
 
-async function acceptRawAnswer() {
-  const str = g('rawAnswer').value.trim();
-  if (!str) { toast('Paste reply code first'); return; }
-  // Find a PC waiting for a remote description
-  const peerId = 'raw-'+Math.random().toString(36).slice(2,8);
-  const pc = makePeerConnection(peerId);
-  const dc = pc.createDataChannel('chat');
-  setupDC(peerId, dc);
-  try {
-    // Host's "offer" for this peer needs to be created fresh
+async function acceptRawAnswer(){
+  const str=g('rawAnswer').value.trim();
+  if(!str){toast('Paste reply code first');return;}
+  const peerId='raw-'+Math.random().toString(36).slice(2,8);
+  const pc=makePeerConnection(peerId);
+  const dc=pc.createDataChannel('chat');
+  setupDC(peerId,dc);
+  try{
     await pc.setLocalDescription(await pc.createOffer());
     await gatherICE(pc);
     await pc.setRemoteDescription(JSON.parse(str));
-  } catch(e) { toast('Invalid reply code','e'); }
+  }catch(e){toast('Invalid reply code','e');}
 }
 
-// ── WEBRTC: one PC per peer ────────────────────────────────────────────────
-function makePeerConnection(peerId) {
-  const pc = new RTCPeerConnection({iceServers: ICE});
-  peers.set(peerId, {pc, dc:null, nick:'?', online:true});
-
-  pc.oniceconnectionstatechange = () => {
-    if (!pc) return;
-    sv('s-ice', pc.iceConnectionState, {connected:'sg',completed:'sg',failed:'sr',disconnected:'sr',checking:'sy'}[pc.iceConnectionState]||'sm');
-    if (pc.iceConnectionState==='connected'||pc.iceConnectionState==='completed') detectRelay(pc);
+// ── WEBRTC ────────────────────────────────────────────────────────────────
+function makePeerConnection(peerId){
+  const pc=new RTCPeerConnection({iceServers:ICE});
+  peers.set(peerId,{pc,dc:null,nick:'?',online:true});
+  pc.oniceconnectionstatechange=()=>{
+    if(!pc)return;
+    sv('s-ice',pc.iceConnectionState,{connected:'sg',completed:'sg',failed:'sr',disconnected:'sr',checking:'sy'}[pc.iceConnectionState]||'sm');
+    if(pc.iceConnectionState==='connected'||pc.iceConnectionState==='completed')detectRelay(pc);
   };
-
-  pc.onconnectionstatechange = () => {
-    if (!pc) return;
-    const s = pc.connectionState;
-    if (s==='connected') onPeerConnected(peerId);
-    if (s==='failed'||s==='closed') removePeer(peerId, 'Connection failed');
-    if (s==='disconnected') {
-      const p=peers.get(peerId); if(p){p.online=false; updatePeerList();}
-      sys(`⚠️ ${peers.get(peerId)?.nick||'Peer'} disconnected`);
+  pc.onconnectionstatechange=()=>{
+    if(!pc)return;
+    const s=pc.connectionState;
+    if(s==='connected')onPeerConnected(peerId);
+    if(s==='failed'||s==='closed')removePeer(peerId,'Connection failed');
+    if(s==='disconnected'){const p=peers.get(peerId);if(p){p.online=false;updatePeerList();}sys(`⚠️ ${peers.get(peerId)?.nick||'Peer'} disconnected`);}
+  };
+  pc.ondatachannel=e=>setupDC(peerId,e.channel);
+  // Handle incoming audio tracks
+  pc.ontrack=e=>{
+    if(e.track.kind==='audio'){
+      const audio=g('remoteAudio');
+      if(!audio.srcObject){audio.srcObject=e.streams[0]||new MediaStream([e.track]);}
+      else{audio.srcObject.addTrack(e.track);}
     }
   };
-
-  pc.ondatachannel = e => setupDC(peerId, e.channel);
   return pc;
 }
 
 // ── COMPACT WIRE PROTOCOL ─────────────────────────────────────────────────
-// Array format saves ~40% vs JSON objects over TURN relay
-// [0]=hi nick, [1]=msg text nick id, [2]=ack id, [3]=typ, [4]=styp,
-// [5]=pres 0/1, [6]=ping id, [7]=pong id, [8]=relay-msg text nick id
-const W = {
-  enc(obj) {
-    switch(obj.t) {
-      case 'hi':        return JSON.stringify([0, obj.nick]);
-      case 'msg':       return JSON.stringify([1, obj.v, obj.nick, obj.id]);
-      case 'ack':       return JSON.stringify([2, obj.id]);
+const W={
+  enc(obj){
+    switch(obj.t){
+      case 'hi':        return JSON.stringify([0,obj.nick]);
+      case 'msg':       return JSON.stringify([1,obj.v,obj.nick,obj.id]);
+      case 'ack':       return JSON.stringify([2,obj.id]);
       case 'typ':       return '[3]';
       case 'styp':      return '[4]';
-      case 'pres':      return JSON.stringify([5, obj.s==='online'?1:obj.s==='away'?2:0]);
-      case 'ping':      return JSON.stringify([6, obj.id]);
-      case 'pong':      return JSON.stringify([7, obj.id]);
-      case 'relay-msg': return JSON.stringify([8, obj.v, obj.nick, obj.id]);
+      case 'pres':      return JSON.stringify([5,obj.s==='online'?1:obj.s==='away'?2:0]);
+      case 'ping':      return JSON.stringify([6,obj.id]);
+      case 'pong':      return JSON.stringify([7,obj.id]);
+      case 'relay-msg': return JSON.stringify([8,obj.v,obj.nick,obj.id]);
+      case 'call-req':  return JSON.stringify([9,obj.nick]);
+      case 'call-ans':  return JSON.stringify([10,obj.nick]);
+      case 'call-dec':  return '[11]';
+      case 'call-end':  return '[12]';
       default:          return JSON.stringify(obj);
     }
   },
-  dec(s) {
-    const a = JSON.parse(s);
-    if (!Array.isArray(a)) return a; // legacy fallback
-    switch(a[0]) {
-      case 0: return {t:'hi',    nick:a[1]};
-      case 1: return {t:'msg',   v:a[1], nick:a[2], id:a[3]};
-      case 2: return {t:'ack',   id:a[1]};
-      case 3: return {t:'typ'};
-      case 4: return {t:'styp'};
-      case 5: return {t:'pres',  s:a[1]===1?'online':a[1]===2?'away':'offline'};
-      case 6: return {t:'ping',  id:a[1]};
-      case 7: return {t:'pong',  id:a[1]};
-      case 8: return {t:'relay-msg', v:a[1], nick:a[2], id:a[3]};
+  dec(s){
+    const a=JSON.parse(s);
+    if(!Array.isArray(a))return a;
+    switch(a[0]){
+      case 0:  return {t:'hi',       nick:a[1]};
+      case 1:  return {t:'msg',      v:a[1],nick:a[2],id:a[3]};
+      case 2:  return {t:'ack',      id:a[1]};
+      case 3:  return {t:'typ'};
+      case 4:  return {t:'styp'};
+      case 5:  return {t:'pres',     s:a[1]===1?'online':a[1]===2?'away':'offline'};
+      case 6:  return {t:'ping',     id:a[1]};
+      case 7:  return {t:'pong',     id:a[1]};
+      case 8:  return {t:'relay-msg',v:a[1],nick:a[2],id:a[3]};
+      case 9:  return {t:'call-req', nick:a[1]};
+      case 10: return {t:'call-ans', nick:a[1]};
+      case 11: return {t:'call-dec'};
+      case 12: return {t:'call-end'};
       default: return {t:'?'};
     }
   }
 };
 
-function setupDC(peerId, ch) {
-  const peer = peers.get(peerId);
-  if (peer) peer.dc = ch;
-
-  ch.onopen = () => {
-    wireOne(peerId, {t:'hi',   nick:myNick});
-    wireOne(peerId, {t:'pres', s:'online'});
-  };
-  ch.onmessage = e => { try { onMsg(peerId, W.dec(e.data)); } catch(_) {} };
-  ch.onclose   = () => { removePeer(peerId, null); };
-  ch.onerror   = () => {};
+function setupDC(peerId,ch){
+  const peer=peers.get(peerId);
+  if(peer)peer.dc=ch;
+  ch.onopen=()=>{wireOne(peerId,{t:'hi',nick:myNick});wireOne(peerId,{t:'pres',s:'online'});};
+  ch.onmessage=e=>{try{onMsg(peerId,W.dec(e.data));}catch(_){}};
+  ch.onclose=()=>{removePeer(peerId,null);};
+  ch.onerror=()=>{};
 }
 
-function wireOne(peerId, obj) {
-  const peer = peers.get(peerId);
-  if (!peer||!peer.dc||peer.dc.readyState!=='open') return;
-  try {
-    const s = W.enc(obj);
-    peer.dc.send(s);
-    sbytes += s.length;
-    sv('s-bup', (sbytes/1024).toFixed(1), 'sg');
-  } catch(e) {}
+function wireOne(peerId,obj){
+  const peer=peers.get(peerId);
+  if(!peer||!peer.dc||peer.dc.readyState!=='open')return;
+  try{const s=W.enc(obj);peer.dc.send(s);sbytes+=s.length;sv('s-bup',(sbytes/1024).toFixed(1),'sg');}catch(e){}
 }
 
-// Broadcast to all connected peers
-function broadcast(obj, exceptId=null) {
-  peers.forEach((peer, id) => {
-    if (id !== exceptId) wireOne(id, obj);
-  });
+function broadcast(obj,exceptId=null){
+  peers.forEach((peer,id)=>{if(id!==exceptId)wireOne(id,obj);});
 }
 
-// ── PEER CONNECTED ─────────────────────────────────────────────────────────
-function onPeerConnected(peerId) {
-  sv('s-status','connected','sg');
-  pstat('connected', true);
-  if (!connAt) {
-    connAt = Date.now();
-    g('mainCard').style.display='none';
-    g('chatCard').style.display='block';
+function onPeerConnected(peerId){
+  sv('s-status','connected','sg');pstat('connected',true);
+  if(!connAt){
+    connAt=Date.now();
+    g('mainCard').style.display='none';g('chatCard').style.display='block';
     enableIn();
-    upTmr = setInterval(()=>{
+    upTmr=setInterval(()=>{
       sv('s-up',upt(Math.floor((Date.now()-connAt)/1000)),'sp');
-      sv('s-peers', countOnline(), 'sg');
-      const now=performance.now();
-      for(const id in pings){if(now-pings[id]>8000){delete pings[id];pL++;}}
+      sv('s-peers',countOnline(),'sg');
+      const now=performance.now();for(const id in pings){if(now-pings[id]>8000){delete pings[id];pL++;}}
     },5000);
-    sv('s-code', myCode, 'sg');
+    sv('s-code',myCode,'sg');
   }
-  sv('s-peers', countOnline()+1, 'sg');
+  sv('s-peers',countOnline()+1,'sg');
   updatePeerList();
-
-  // If we're the host, keep the room open for more joiners
-  if (isHost && !sigPoll) hostListenLoop();
+  if(isHost&&!sigPoll)hostListenLoop();
 }
 
-function removePeer(peerId, reason) {
-  const peer = peers.get(peerId);
-  if (!peer) return;
-  if (reason) sys(`❌ ${peer.nick||'Peer'}: ${reason}`);
+function removePeer(peerId,reason){
+  const peer=peers.get(peerId);if(!peer)return;
+  if(reason)sys(`❌ ${peer.nick||'Peer'}: ${reason}`);
+  // If in call with this peer, clean up
+  if(callPeerId===peerId){_cleanupCall();sys('📵 Call ended — peer left');}
   try{if(peer.dc)peer.dc.close();}catch(e){}
   try{if(peer.pc)peer.pc.close();}catch(e){}
-  peers.delete(peerId);
-  updatePeerList();
-  sv('s-peers', countOnline(), 'sg');
-  if (peers.size === 0 && !isHost) {
-    pstat('offline', false); disableIn();
-  }
+  peers.delete(peerId);updatePeerList();sv('s-peers',countOnline(),'sg');
+  if(peers.size===0&&!isHost){pstat('offline',false);disableIn();}
 }
 
-function countOnline() {
-  let n=0; peers.forEach(p=>{ if(p.online!==false) n++; }); return n;
-}
+function countOnline(){let n=0;peers.forEach(p=>{if(p.online!==false)n++;});return n;}
 
-function updatePeerList() {
-  const list = g('peerList');
-  list.innerHTML = '';
-  // Self chip
-  const me = document.createElement('div');
-  me.className='peer-chip on';
-  me.textContent='👤 '+myNick+' (you)';
-  list.appendChild(me);
-  // Each peer
-  peers.forEach((peer, id) => {
-    const chip = document.createElement('div');
-    chip.className='peer-chip '+(peer.online!==false?'on':'');
-    chip.textContent=(peer.online!==false?'👤 ':'💤 ')+peer.nick;
-    list.appendChild(chip);
+function updatePeerList(){
+  const list=g('peerList');list.innerHTML='';
+  const me=document.createElement('div');me.className='peer-chip on';me.textContent='👤 '+myNick+' (you)';list.appendChild(me);
+  peers.forEach((peer,id)=>{
+    const chip=document.createElement('div');chip.className='peer-chip '+(peer.online!==false?'on':'');
+    chip.textContent=(peer.online!==false?'👤 ':'💤 ')+peer.nick;list.appendChild(chip);
   });
 }
 
-// ── MESSAGES ───────────────────────────────────────────────────────────────
-function onMsg(fromId, d) {
-  if (!d||!d.t) return;
-  const peer = peers.get(fromId);
-
-  if (d.t==='hi') {
-    if (peer) { peer.nick=d.nick||'?'; peer.online=true; }
-    updatePeerList();
-    sys('👋 '+d.nick+' joined!');
-    sv('s-peers', countOnline(), 'sg');
-  } else if (d.t==='msg') {
-    recv++; rbytes+=String(d.v||'').length;
-    sv('s-recv',recv,'sb'); sv('s-bdn',(rbytes/1024).toFixed(1),'sb');
-    addMsg(d.v, d.nick||(peer?.nick||'?'), d.id, false);
-    wireOne(fromId, {t:'ack',id:d.id});
-    // Relay to all other peers (host acts as relay for multi-peer)
-    if (isHost) broadcast({t:'relay-msg', v:d.v, nick:d.nick, id:d.id}, fromId);
-  } else if (d.t==='relay-msg') {
-    // Message relayed through host from another peer
-    recv++; rbytes+=String(d.v||'').length;
-    sv('s-recv',recv,'sb'); sv('s-bdn',(rbytes/1024).toFixed(1),'sb');
-    addMsg(d.v, d.nick||'?', d.id, false);
-  } else if (d.t==='ack') {
-    const n=document.querySelector(`[data-mid="${d.id}"] .ri`);
-    if(n){n.textContent='✓✓';n.classList.add('read');}
+// ── MESSAGES ─────────────────────────────────────────────────────────────
+function onMsg(fromId,d){
+  if(!d||!d.t)return;
+  const peer=peers.get(fromId);
+  if(d.t==='hi'){
+    if(peer){peer.nick=d.nick||'?';peer.online=true;}
+    updatePeerList();sys('👋 '+d.nick+' joined!');sv('s-peers',countOnline(),'sg');
+  } else if(d.t==='msg'){
+    recv++;rbytes+=String(d.v||'').length;sv('s-recv',recv,'sb');sv('s-bdn',(rbytes/1024).toFixed(1),'sb');
+    addMsg(d.v,d.nick||(peer?.nick||'?'),d.id,false);
+    wireOne(fromId,{t:'ack',id:d.id});
+    if(isHost)broadcast({t:'relay-msg',v:d.v,nick:d.nick,id:d.id},fromId);
+  } else if(d.t==='relay-msg'){
+    recv++;rbytes+=String(d.v||'').length;sv('s-recv',recv,'sb');sv('s-bdn',(rbytes/1024).toFixed(1),'sb');
+    addMsg(d.v,d.nick||'?',d.id,false);
+  } else if(d.t==='ack'){
+    const n=document.querySelector(`[data-mid="${d.id}"] .ri`);if(n){n.textContent='✓✓';n.classList.add('read');}
     reads++;sv('s-read',reads,'sc');
     if(pings[d.id]){rtt(Math.round(performance.now()-pings[d.id]));delete pings[d.id];}
-  } else if (d.t==='ping') {
-    wireOne(fromId, {t:'pong',id:d.id});
-  } else if (d.t==='pong') {
-    if(pings[d.id]){rtt(Math.round(performance.now()-pings[d.id]));delete pings[d.id];}
-  } else if (d.t==='pres') {
-    if(peer){peer.online=(d.s==='online'); updatePeerList();}
-    sv('s-status',countOnline()+' online','sg');
-  } else if (d.t==='typ') {
-    g('typiName').textContent=peer?.nick||'Someone';
-    g('typi').classList.add('on'); sv('s-typing','yes ✍️','sb');
+  } else if(d.t==='ping'){wireOne(fromId,{t:'pong',id:d.id});
+  } else if(d.t==='pong'){if(pings[d.id]){rtt(Math.round(performance.now()-pings[d.id]));delete pings[d.id];}
+  } else if(d.t==='pres'){if(peer){peer.online=(d.s==='online');updatePeerList();}sv('s-status',countOnline()+' online','sg');
+  } else if(d.t==='typ'){
+    g('typiName').textContent=peer?.nick||'Someone';g('typi').classList.add('on');sv('s-typing','yes ✍️','sb');
     clearTimeout(window._pt);window._pt=setTimeout(()=>{g('typi').classList.remove('on');sv('s-typing','no','sm');},2500);
-  } else if (d.t==='styp') {
-    clearTimeout(window._pt);g('typi').classList.remove('on');sv('s-typing','no','sm');
+  } else if(d.t==='styp'){clearTimeout(window._pt);g('typi').classList.remove('on');sv('s-typing','no','sm');
+  // ── CALL SIGNALS ──
+  } else if(d.t==='call-req'){
+    if(callPeerId){wireOne(fromId,{t:'call-dec'});return;} // busy
+    pendingCallFrom=fromId;
+    const callerName=d.nick||(peer?.nick)||'Someone';
+    g('callCallerName').textContent=callerName;
+    g('callBanner').classList.add('show');
+    playRing();
+    sys(`📞 Incoming call from ${callerName}…`);
+  } else if(d.t==='call-ans'){
+    // Our call was answered
+    onCallConnected(fromId);
+    sys(`📞 Call connected with ${d.nick||peer?.nick||'peer'}`);
+    playBeep(880,0.1);
+  } else if(d.t==='call-dec'){
+    stopRing();_cleanupCall();sys('📵 Call declined.');toast('Call declined');
+  } else if(d.t==='call-end'){
+    stopRing();_cleanupCall();sys('📵 Call ended.');playBeep(440,0.2);
   }
 }
 
-function rtt(ms) {
+function rtt(ms){
   hist.push(ms);if(hist.length>50)hist.shift();
   const mn=Math.min(...hist),mx=Math.max(...hist),av=Math.round(hist.reduce((a,b)=>a+b,0)/hist.length);
   const jt=hist.length>1?Math.abs(ms-hist[hist.length-2]):0;
@@ -901,19 +994,18 @@ function rtt(ms) {
   sv('s-jitter',jt+'ms','sy');sv('s-loss',ls+'%',ls===0?'sg':ls<10?'sy':'sr');
 }
 
-function onType() {
-  if (peers.size===0) return;
-  if (!myTyping) { myTyping=true; broadcast({t:'typ'}); }
-  clearTimeout(typOff);
-  typOff=setTimeout(()=>{ myTyping=false; broadcast({t:'styp'}); },1500);
+function onType(){
+  if(peers.size===0)return;
+  if(!myTyping){myTyping=true;broadcast({t:'typ'});}
+  clearTimeout(typOff);typOff=setTimeout(()=>{myTyping=false;broadcast({t:'styp'});},1500);
 }
 
-// ── SEND ───────────────────────────────────────────────────────────────────
-function send() {
+// ── SEND ──────────────────────────────────────────────────────────────────
+function send(){
   const inp=g('msgIn'),txt=inp.value.trim();
-  if (!txt||peers.size===0) return;
+  if(!txt||peers.size===0)return;
   const id='m'+(++msgN);
-  if (myTyping){myTyping=false;clearTimeout(typOff);broadcast({t:'styp'});}
+  if(myTyping){myTyping=false;clearTimeout(typOff);broadcast({t:'styp'});}
   pings[id]=performance.now();pS++;
   broadcast({t:'msg',v:txt,nick:myNick,id});
   sent++;sv('s-sent',sent,'sg');
@@ -928,122 +1020,67 @@ function addMsg(text,nick,id,isMe){
   const d=document.createElement('div');
   d.className='msg '+(isMe?'me':'them');
   if(id)d.setAttribute('data-mid',id);
-  // Assign a color per nick for multi-peer
-  const col = isMe ? 'var(--g)' : nickColor(nick);
-  d.innerHTML=`<div class="mw" style="color:${col}">${esc(nick)} · ${t}</div><div class="mb">${esc(text).replace(/\n/g,'<br>')}</div>${isMe?`<div class="mr"><span class="ri">✓</span> sent</div>`:''}`;
+  const col=isMe?'var(--g)':nickColor(nick);
+  const rendered=renderMD(text);
+  d.innerHTML=`<div class="mw" style="color:${col}">${esc(nick)} · ${t}</div><div class="mb">${rendered}</div>${isMe?`<div class="mr"><span class="ri">✓</span> sent</div>`:''}`;
   box.appendChild(d);box.scrollTop=box.scrollHeight;
 }
 
 const nickColors=['#60a5fa','#a78bfa','#fb923c','#22d3ee','#f472b6','#34d399'];
 const nickColorMap={};
-function nickColor(nick){
-  if(!nickColorMap[nick]){
-    const keys=Object.keys(nickColorMap);
-    nickColorMap[nick]=nickColors[keys.length%nickColors.length];
-  }
-  return nickColorMap[nick];
-}
+function nickColor(nick){if(!nickColorMap[nick]){const keys=Object.keys(nickColorMap);nickColorMap[nick]=nickColors[keys.length%nickColors.length];}return nickColorMap[nick];}
 
-function sys(txt){
-  const box=g('msgs'),d=document.createElement('div');
-  d.className='sys';d.textContent=txt;box.appendChild(d);box.scrollTop=box.scrollHeight;
-}
+function sys(txt){const box=g('msgs'),d=document.createElement('div');d.className='sys';d.textContent=txt;box.appendChild(d);box.scrollTop=box.scrollHeight;}
 
-// ── DISCONNECT ─────────────────────────────────────────────────────────────
-function disc() {
+// ── DISCONNECT ────────────────────────────────────────────────────────────
+function disc(){
   if(!confirm('Leave room?'))return;
+  if(callPeerId)endCall();
   broadcast({t:'pres',s:'offline'});
   setTimeout(()=>{
     fullReset();
-    g('chatCard').style.display='none';
-    g('mainCard').style.display='block';
+    g('chatCard').style.display='none';g('mainCard').style.display='block';
     g('msgs').innerHTML='<div class="sys">🟢 Room open!</div>';
-    g('startBtn').disabled=false; g('startBtn').innerHTML='🟢 Start room';
-    scr('s1'); pstat('offline',false);
-    toast('Left room.');
+    g('startBtn').disabled=false;g('startBtn').innerHTML='🟢 Start room';
+    scr('s1');pstat('offline',false);toast('Left room.');
   },200);
 }
 
-// ── RELAY DETECTION ────────────────────────────────────────────────────────
+// ── RELAY / SIGNALING ─────────────────────────────────────────────────────
 async function detectRelay(pc){
   if(!pc)return;
-  try{
-    const s=await pc.getStats();
-    s.forEach(r=>{if(r.type==='candidate-pair'&&r.state==='succeeded'){
-      s.forEach(c=>{if(c.id===r.localCandidateId){
-        const t=c.candidateType==='relay'?'TURN':c.candidateType==='srflx'?'STUN':'Direct';
-        sv('s-relay',t,t==='TURN'?'sg':t==='STUN'?'sb':'sc');
-      }});
-    }});
-  }catch(e){}
+  try{const s=await pc.getStats();s.forEach(r=>{if(r.type==='candidate-pair'&&r.state==='succeeded'){s.forEach(c=>{if(c.id===r.localCandidateId){const t=c.candidateType==='relay'?'TURN':c.candidateType==='srflx'?'STUN':'Direct';sv('s-relay',t,t==='TURN'?'sg':t==='STUN'?'sb':'sc');}});}});}catch(e){}
 }
 
-// Strip bloat from SDP before sending to ntfy — saves ~40% on signaling size
-function stripSDP(sdp) {
-  if (!sdp || !sdp.sdp) return sdp;
-  const keep = sdp.sdp.split('\r\n').filter(l =>
-    !l.startsWith('a=extmap') &&
-    !l.startsWith('a=msid') &&
-    !l.startsWith('a=rtpmap') &&
-    !l.startsWith('a=fmtp') &&
-    !l.startsWith('a=rtcp-fb') &&
-    !l.startsWith('a=ssrc') &&
-    !l.startsWith('b=')
-  ).join('\r\n');
-  return {type: sdp.type, sdp: keep};
+function stripSDP(sdp){
+  if(!sdp||!sdp.sdp)return sdp;
+  const keep=sdp.sdp.split('\r\n').filter(l=>!l.startsWith('a=extmap')&&!l.startsWith('a=msid')&&!l.startsWith('a=rtpmap')&&!l.startsWith('a=fmtp')&&!l.startsWith('a=rtcp-fb')&&!l.startsWith('a=ssrc')&&!l.startsWith('b=')).join('\r\n');
+  return{type:sdp.type,sdp:keep};
 }
 
-// ── SIGNALING ──────────────────────────────────────────────────────────────
-function sigPost(code,data){
-  return fetch(`${SIG}/direct-${code.toLowerCase()}`,{
-    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)
-  });
-}
+function sigPost(code,data){return fetch(`${SIG}/direct-${code.toLowerCase()}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});}
+function stopSig(){if(sigPoll){sigPoll.close();sigPoll=null;}if(sigPollAnswer){sigPollAnswer.close();sigPollAnswer=null;}}
 
-function stopSig(){
-  if(sigPoll){sigPoll.close();sigPoll=null;}
-  if(sigPollAnswer){sigPollAnswer.close();sigPollAnswer=null;}
-}
+// ── COPY HELPERS ──────────────────────────────────────────────────────────
+function copyCode(){if(!myCode)return;navigator.clipboard.writeText(myCode).then(()=>{const b=g('cpyBtn');b.textContent='copied!';setTimeout(()=>b.textContent='copy',2000);});}
+function cpyEl(srcId,btnId){const el=g(srcId);if(!el)return;const v=el.value;if(!v||v.startsWith('⏳')){toast('Not ready yet');return;}navigator.clipboard.writeText(v).then(()=>{const b=g(btnId);const o=b.textContent;b.textContent='✓ Copied!';setTimeout(()=>b.textContent=o,2000);});}
 
-// ── COPY HELPERS ───────────────────────────────────────────────────────────
-function copyCode(){
-  if(!myCode)return;
-  navigator.clipboard.writeText(myCode).then(()=>{
-    const b=g('cpyBtn');b.textContent='copied!';setTimeout(()=>b.textContent='copy',2000);
-  });
-}
-function cpyEl(srcId,btnId){
-  const el=g(srcId);if(!el)return;
-  const v=el.value;
-  if(!v||v.startsWith('⏳')){toast('Not ready yet');return;}
-  navigator.clipboard.writeText(v).then(()=>{
-    const b=g(btnId);const o=b.textContent;b.textContent='✓ Copied!';setTimeout(()=>b.textContent=o,2000);
-  });
-}
-
-// ── HELPERS ────────────────────────────────────────────────────────────────
-function enableIn(){g('msgIn').disabled=false;g('sndBtn').disabled=false;g('dscBtn').disabled=false;g('msgIn').focus();}
-function disableIn(){g('msgIn').disabled=true;g('sndBtn').disabled=true;}
+// ── HELPERS ───────────────────────────────────────────────────────────────
+function enableIn(){g('msgIn').disabled=false;g('sndBtn').disabled=false;g('dscBtn').disabled=false;g('callBtn').disabled=false;g('msgIn').focus();}
+function disableIn(){g('msgIn').disabled=true;g('sndBtn').disabled=true;g('callBtn').disabled=true;}
 function pstat(txt,on){g('ptxt').textContent=txt;g('pill').classList.toggle('on',on);}
 function sv(id,val,cls){const e=g(id);if(!e)return;e.textContent=val;e.className='sval '+(cls||'');}
 function upt(s){return s<60?s+'s':s<3600?Math.floor(s/60)+'m'+Math.floor(s%60)+'s':Math.floor(s/3600)+'h'+Math.floor((s%3600)/60)+'m';}
 function g(id){return document.getElementById(id);}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 let _tt;
-function toast(msg,type=''){
-  document.querySelectorAll('.toast').forEach(t=>t.remove());clearTimeout(_tt);
-  const t=document.createElement('div');t.className='toast '+(type==='e'?'e':'');t.textContent=msg;
-  document.body.appendChild(t);_tt=setTimeout(()=>t.remove(),3000);
-}
+function toast(msg,type=''){document.querySelectorAll('.toast').forEach(t=>t.remove());clearTimeout(_tt);const t=document.createElement('div');t.className='toast '+(type==='e'?'e':'');t.textContent=msg;document.body.appendChild(t);_tt=setTimeout(()=>t.remove(),3000);}
 
 g('msgIn').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
 g('msgIn').addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px';onType();});
-window.addEventListener('beforeunload',()=>broadcast({t:'pres',s:'offline'}));
-document.addEventListener('visibilitychange',()=>{
-  if(peers.size>0) broadcast({t:'pres',s:document.hidden?'away':'online'});
-});
+window.addEventListener('beforeunload',()=>{if(callPeerId)endCall();broadcast({t:'pres',s:'offline'});});
+document.addEventListener('visibilitychange',()=>{if(peers.size>0)broadcast({t:'pres',s:document.hidden?'away':'online'});});
 
-// Auto-test TURN servers silently on load
 autoSelectTurn();
 </script>
 </body>
