@@ -9,7 +9,9 @@
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#0d0d12;--card:#171720;--b:#23232e;--g:#4ade80;--bl:#60a5fa;--y:#fbbf24;--r:#f87171;--t:#e2e2ec;--m:#55556a;--f:'JetBrains Mono',monospace}
 body{background:var(--bg);color:var(--t);font-family:var(--f);font-size:13px;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
-.box{width:100%;max-width:440px;display:flex;flex-direction:column;gap:10px}
+.box{width:100%;max-width:460px;display:flex;flex-direction:column;gap:10px}
+
+/* header */
 .hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card);border:1px solid var(--b);border-radius:10px}
 .logo{font-size:16px;font-weight:700;color:var(--g)}
 .logo span{color:var(--m);font-weight:400;font-size:11px;margin-left:5px}
@@ -18,26 +20,30 @@ body{background:var(--bg);color:var(--t);font-family:var(--f);font-size:13px;min
 .dot{width:5px;height:5px;border-radius:50%;background:currentColor}
 .pill.on .dot{box-shadow:0 0 5px var(--g);animation:bl 2s infinite}
 @keyframes bl{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* card / screens */
 .card{background:var(--card);border:1px solid var(--b);border-radius:10px;overflow:hidden}
 .scr{display:none;flex-direction:column;gap:14px;padding:20px 16px}
 .scr.on{display:flex}
 h2{font-size:15px;font-weight:700}
 p{font-size:11px;color:var(--m);line-height:1.8}
 p b{color:var(--t)}
-.codebox{background:var(--bg);border:2px solid var(--g);border-radius:10px;padding:18px 14px;text-align:center;position:relative}
-.codetop{font-size:10px;color:var(--m);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
-.codeword{font-size:36px;font-weight:700;color:var(--g);letter-spacing:3px;text-shadow:0 0 24px rgba(74,222,128,.35)}
-.codecopy{position:absolute;top:10px;right:10px;font-size:10px;color:var(--m);cursor:pointer;border:1px solid var(--b);padding:3px 7px;border-radius:5px;transition:.2s}
-.codecopy:hover{color:var(--g);border-color:var(--g)}
-.waiting{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--y)}
-.wdot{width:6px;height:6px;border-radius:50%;background:var(--y);animation:wd .9s infinite}
-.wdot:nth-child(2){animation-delay:.15s}.wdot:nth-child(3){animation-delay:.3s}
-@keyframes wd{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+
+/* back link */
+.back{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--m);cursor:pointer;width:fit-content;transition:color .15s}
+.back:hover{color:var(--t)}
+
+/* inputs */
 .ninp{background:var(--bg);border:1px solid var(--b);color:var(--t);font-family:var(--f);font-size:13px;padding:10px 12px;width:100%;border-radius:7px;outline:none;transition:border-color .2s}
 .ninp:focus{border-color:var(--bl)}
 .cinpbig{background:var(--bg);border:2px solid var(--b);color:var(--g);font-family:var(--f);font-size:26px;font-weight:700;padding:14px;width:100%;border-radius:8px;outline:none;text-align:center;letter-spacing:3px;text-transform:uppercase;transition:border-color .2s}
 .cinpbig:focus{border-color:var(--bl)}
 .cinpbig::placeholder{color:var(--m);font-size:13px;font-weight:400;letter-spacing:0}
+.ta{background:var(--bg);border:1px solid var(--b);color:var(--t);font-family:var(--f);font-size:10px;padding:8px;width:100%;border-radius:6px;outline:none;resize:none;line-height:1.4}
+.ta:focus{border-color:var(--bl)}
+.ta[readonly]{color:var(--g);border-color:rgba(74,222,128,.3)}
+
+/* buttons */
 .btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:12px;border:1px solid var(--b);background:var(--bg);color:var(--t);font-family:var(--f);font-size:13px;font-weight:700;border-radius:8px;cursor:pointer;width:100%;transition:.15s;user-select:none}
 .btn:hover:not(:disabled){border-color:var(--bl);color:var(--bl)}
 .btn.g{background:rgba(74,222,128,.07);border-color:var(--g);color:var(--g)}
@@ -45,18 +51,51 @@ p b{color:var(--t)}
 .btn.b{background:rgba(96,165,250,.07);border-color:var(--bl);color:var(--bl)}
 .btn.b:hover:not(:disabled){background:rgba(96,165,250,.14)}
 .btn.r{background:rgba(248,113,113,.07);border-color:var(--r);color:var(--r)}
+.btn.r:hover:not(:disabled){background:rgba(248,113,113,.14)}
+.btn.sm{padding:8px 12px;font-size:11px}
 .btn:disabled{opacity:.3;cursor:not-allowed}
 .row{display:flex;gap:8px}.row .btn{flex:1}
 .spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
+
+/* code display */
+.codebox{background:var(--bg);border:2px solid var(--g);border-radius:10px;padding:18px 14px;text-align:center;position:relative}
+.codetop{font-size:10px;color:var(--m);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.codeword{font-size:36px;font-weight:700;color:var(--g);letter-spacing:3px;text-shadow:0 0 24px rgba(74,222,128,.35)}
+.codecopy{position:absolute;top:10px;right:10px;font-size:10px;color:var(--m);cursor:pointer;border:1px solid var(--b);padding:3px 7px;border-radius:5px;transition:.2s}
+.codecopy:hover{color:var(--g);border-color:var(--g)}
+
+/* waiting dots */
+.waiting{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--y)}
+.wdot{width:6px;height:6px;border-radius:50%;background:var(--y);animation:wd .9s infinite}
+.wdot:nth-child(2){animation-delay:.15s}.wdot:nth-child(3){animation-delay:.3s}
+@keyframes wd{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+
+/* divider */
 .div{display:flex;align-items:center;gap:8px}
 .div-line{flex:1;height:1px;background:var(--b)}
 .div-txt{font-size:10px;color:var(--m);white-space:nowrap}
-.ta{background:var(--bg);border:1px solid var(--b);color:var(--t);font-family:var(--f);font-size:10px;padding:8px;width:100%;border-radius:6px;outline:none;resize:none;line-height:1.4}
-.ta:focus{border-color:var(--bl)}
-.ta[readonly]{color:var(--g);border-color:rgba(74,222,128,.3)}
-.ta.gen{color:var(--m)}
 .step{font-size:10px;color:var(--m)}
+
+/* TURN test panel */
+.turn-panel{display:flex;flex-direction:column;gap:8px;background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:12px}
+.turn-row{display:flex;align-items:center;gap:8px}
+.turn-name{font-size:10px;color:var(--m);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.turn-ping{font-size:10px;font-weight:700;width:54px;text-align:right;flex-shrink:0}
+.turn-bar-wrap{flex:1;height:4px;background:var(--b);border-radius:2px;overflow:hidden}
+.turn-bar{height:100%;width:0;border-radius:2px;transition:width .4s}
+.turn-bar.ok{background:var(--g)}
+.turn-bar.fail{background:var(--r)}
+.turn-bar.testing{background:var(--y);animation:tpulse .8s infinite}
+@keyframes tpulse{0%,100%{opacity:.4}50%{opacity:1}}
+.chosen-turn{font-size:10px;color:var(--g);display:flex;align-items:center;gap:5px}
+
+/* peer list in chat */
+.peer-list{display:flex;gap:5px;flex-wrap:wrap;padding:6px 10px;border-bottom:1px solid var(--b);background:var(--bg)}
+.peer-chip{display:flex;align-items:center;gap:4px;font-size:10px;padding:3px 8px;border-radius:99px;border:1px solid var(--b);color:var(--m)}
+.peer-chip.on{color:var(--g);border-color:var(--g)}
+
+/* stats */
 .stats{display:flex;gap:5px;padding:8px 10px;border-bottom:1px solid var(--b);background:var(--bg);overflow-x:auto}
 .stats::-webkit-scrollbar{height:2px}
 .stats::-webkit-scrollbar-thumb{background:var(--b)}
@@ -64,7 +103,9 @@ p b{color:var(--t)}
 .slbl{font-size:8px;color:var(--m);text-transform:uppercase;letter-spacing:.05em}
 .sval{font-size:11px;font-weight:700}
 .sg{color:var(--g)}.sb{color:var(--bl)}.sy{color:var(--y)}.sr{color:var(--r)}.sp{color:#a78bfa}.sc{color:#22d3ee}.sm{color:var(--m)}
-.msgs{padding:12px;min-height:240px;max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;scroll-behavior:smooth}
+
+/* messages */
+.msgs{padding:12px;min-height:220px;max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;scroll-behavior:smooth}
 .msgs::-webkit-scrollbar{width:3px}
 .msgs::-webkit-scrollbar-thumb{background:var(--b);border-radius:2px}
 .msg{display:flex;flex-direction:column;max-width:80%;animation:mi .15s ease}
@@ -72,7 +113,7 @@ p b{color:var(--t)}
 .msg.me{align-self:flex-end;align-items:flex-end}
 .msg.them{align-self:flex-start;align-items:flex-start}
 .mw{font-size:9px;color:var(--m);margin-bottom:2px}
-.msg.me .mw{color:var(--g)}.msg.them .mw{color:var(--bl)}
+.msg.me .mw{color:var(--g)}
 .mb{padding:8px 11px;font-size:12px;line-height:1.6;word-break:break-word;border-radius:7px}
 .msg.me .mb{background:rgba(74,222,128,.09);border:1px solid rgba(74,222,128,.18);border-bottom-right-radius:2px}
 .msg.them .mb{background:rgba(96,165,250,.09);border:1px solid rgba(96,165,250,.18);border-bottom-left-radius:2px}
@@ -85,12 +126,14 @@ p b{color:var(--t)}
 .td{width:4px;height:4px;border-radius:50%;background:var(--bl);animation:td .9s infinite}
 .td:nth-child(2){animation-delay:.15s}.td:nth-child(3){animation-delay:.3s}
 @keyframes td{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+
 .ci{border-top:1px solid var(--b);padding:10px;display:flex;gap:8px;align-items:flex-end}
 .ci textarea{flex:1;min-height:38px;max-height:80px;resize:none;font-size:12px;background:var(--bg);border:1px solid var(--b);color:var(--t);font-family:var(--f);padding:10px;border-radius:7px;outline:none;line-height:1.5;transition:border-color .2s}
 .ci textarea:focus{border-color:var(--bl)}
 .cright{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
 #sndBtn{width:auto;padding:0 14px;height:38px}
 #dscBtn{width:auto;padding:0 10px;height:26px;font-size:10px}
+
 .toast{position:fixed;bottom:14px;right:14px;background:var(--card);border:1px solid var(--g);color:var(--g);font-family:var(--f);font-size:11px;padding:8px 14px;border-radius:7px;animation:ti .2s ease;z-index:9}
 .toast.e{border-color:var(--r);color:var(--r)}
 @keyframes ti{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
@@ -100,72 +143,89 @@ p b{color:var(--t)}
 <div class="box">
 
 <div class="hdr">
-  <div class="logo">DIRECT <span>// p2p</span></div>
+  <div class="logo">DIRECT <span>// p2p room</span></div>
   <div class="pill" id="pill"><div class="dot"></div><span id="ptxt">offline</span></div>
 </div>
 
 <div class="card" id="mainCard">
 
+  <!-- S0: TURN test / settings -->
+  <div class="scr" id="s0">
+    <div class="back" onclick="scr('s1')">← back</div>
+    <h2>TURN Server Test</h2>
+    <p>Tests which relay servers are reachable and picks the fastest one automatically.</p>
+    <div class="turn-panel" id="turnPanel">
+      <div style="font-size:11px;color:var(--m)">Press Test to start</div>
+    </div>
+    <div id="chosenTurn" style="display:none" class="chosen-turn">✓ <span id="chosenTurnName"></span> selected</div>
+    <div class="row">
+      <button class="btn b" onclick="runTurnTest()">⚡ Test All Servers</button>
+      <button class="btn g" onclick="scr('s1')">Use Selected →</button>
+    </div>
+  </div>
+
   <!-- S1: pick role -->
   <div class="scr on" id="s1">
     <h2>Start or join?</h2>
-    <p>One person starts and shares a word code. The other types it to join.</p>
+    <p>One person starts a room and shares the code. Others type it to join. <b>Multiple people</b> can join the same room.</p>
     <input class="ninp" id="nick" placeholder="Your name" maxlength="20"/>
     <div class="row">
-      <button class="btn g" id="startBtn" onclick="doStart()">🟢 Start</button>
-      <button class="btn b" onclick="goJoin()">🔵 Join</button>
+      <button class="btn g" id="startBtn" onclick="doStart()">🟢 Start room</button>
+      <button class="btn b" onclick="goJoin()">🔵 Join room</button>
     </div>
+    <button class="btn sm" onclick="scr('s0')" style="background:transparent;border-color:var(--b);color:var(--m);font-size:10px">⚙ Test TURN servers</button>
   </div>
 
   <!-- S2: host waiting -->
   <div class="scr" id="s2">
-    <h2>Share your code</h2>
-    <p>Tell your friend this word. They open the app, click Join, and type it.</p>
+    <div class="back" onclick="goBackFromHost()">← back</div>
+    <h2>Room is open</h2>
+    <p>Share this code. Anyone who types it joins your room. <b>Multiple people</b> can join.</p>
     <div class="codebox">
-      <div class="codetop">Your code</div>
+      <div class="codetop">Room code</div>
       <div class="codeword" id="myWord">…</div>
       <div class="codecopy" onclick="copyCode()" id="cpyBtn">copy</div>
     </div>
-    <div class="waiting"><div class="wdot"></div><div class="wdot"></div><div class="wdot"></div><span>Waiting for friend…</span></div>
+    <div class="waiting" id="waitingMsg"><div class="wdot"></div><div class="wdot"></div><div class="wdot"></div><span id="waitingTxt">Waiting for people to join…</span></div>
 
-    <div class="div"><div class="div-line"></div><div class="div-txt">friend has the OLD version?</div><div class="div-line"></div></div>
-    <p>If their app shows a text box instead of a word input, use these codes:</p>
-    <div class="step">① Copy this and send to friend:</div>
-    <textarea class="ta" id="rawOffer" rows="3" readonly placeholder="⏳ Generating offer code…"></textarea>
+    <div class="div"><div class="div-line"></div><div class="div-txt">old version compatibility</div><div class="div-line"></div></div>
+    <div class="step">① Copy and send this to someone with the old version:</div>
+    <textarea class="ta" id="rawOffer" rows="3" readonly placeholder="⏳ Generating…"></textarea>
     <button class="btn g" id="cpyRaw" onclick="cpyEl('rawOffer','cpyRaw')">📋 Copy offer code</button>
-    <div class="step">② Paste what they send back, then connect:</div>
-    <textarea class="ta" id="rawAnswer" rows="3" placeholder="Paste friend's reply code here…"></textarea>
-    <button class="btn b" onclick="acceptRawAnswer()">✓ Connect with reply code</button>
+    <div class="step">② Paste their reply code here:</div>
+    <textarea class="ta" id="rawAnswer" rows="3" placeholder="Paste reply code…"></textarea>
+    <button class="btn b" onclick="acceptRawAnswer()">✓ Connect old-version peer</button>
   </div>
 
   <!-- S3: join -->
   <div class="scr" id="s3">
-    <h2>Join chat</h2>
+    <div class="back" onclick="goBackFromJoin()">← back</div>
+    <h2>Join a room</h2>
     <input class="ninp" id="nick2" placeholder="Your name" maxlength="20"/>
 
     <div style="display:flex;gap:4px;background:var(--bg);padding:4px;border-radius:8px;border:1px solid var(--b)">
-      <button id="tab-word" onclick="joinTab('word')" style="flex:1;padding:8px;border:none;border-radius:6px;background:var(--g);color:var(--bg);font-family:var(--f);font-size:11px;font-weight:700;cursor:pointer;transition:.15s">Word code</button>
-      <button id="tab-raw"  onclick="joinTab('raw')"  style="flex:1;padding:8px;border:none;border-radius:6px;background:transparent;color:var(--m);font-family:var(--f);font-size:11px;font-weight:700;cursor:pointer;transition:.15s">Paste code</button>
+      <button id="tab-word" onclick="joinTab('word')" style="flex:1;padding:8px;border:none;border-radius:6px;background:var(--g);color:var(--bg);font-family:var(--f);font-size:11px;font-weight:700;cursor:pointer">Word code</button>
+      <button id="tab-raw"  onclick="joinTab('raw')"  style="flex:1;padding:8px;border:none;border-radius:6px;background:transparent;color:var(--m);font-family:var(--f);font-size:11px;font-weight:700;cursor:pointer">Paste code</button>
     </div>
 
     <div id="join-word" style="display:flex;flex-direction:column;gap:10px">
-      <p>Type the word your friend told you.</p>
-      <input id="codeInp" class="cinpbig" placeholder="e.g. STORM" maxlength="15"
+      <p>Type the room code.</p>
+      <input id="codeInp" class="cinpbig" placeholder="STORM" maxlength="15"
         oninput="this.value=this.value.toUpperCase()"
         onkeydown="if(event.key==='Enter')doJoin()"/>
-      <button class="btn b" id="joinBtn" onclick="doJoin()">Connect →</button>
+      <button class="btn b" id="joinBtn" onclick="doJoin()">Join room →</button>
     </div>
 
     <div id="join-raw" style="display:none;flex-direction:column;gap:8px">
-      <p>Your friend sent you a long code. Paste it, generate your reply, send it back.</p>
-      <div class="step">① Paste their offer code:</div>
-      <textarea class="ta" id="rawOfferIn" rows="3" placeholder="Paste long offer code here…"></textarea>
+      <p>Paste the offer code from the host.</p>
+      <div class="step">① Paste offer code:</div>
+      <textarea class="ta" id="rawOfferIn" rows="3" placeholder="Paste offer code…"></textarea>
       <button class="btn b" id="genAnsBtn" onclick="doJoinLegacy()">Generate reply code →</button>
       <div id="legacyAnsArea" style="display:none;flex-direction:column;gap:8px">
-        <div class="step">② Copy this and send back to friend:</div>
+        <div class="step">② Send this back to host:</div>
         <textarea class="ta" id="rawAnsOut" rows="3" readonly placeholder="⏳ Generating…"></textarea>
         <button class="btn g" id="cpyAnsBtn" onclick="cpyEl('rawAnsOut','cpyAnsBtn')">📋 Copy reply code</button>
-        <p style="color:var(--y)">⏳ Waiting for friend to connect…</p>
+        <p style="color:var(--y)">⏳ Waiting for host to accept…</p>
       </div>
     </div>
   </div>
@@ -174,6 +234,9 @@ p b{color:var(--t)}
 
 <!-- CHAT -->
 <div class="card" id="chatCard" style="display:none">
+  <!-- peer list -->
+  <div class="peer-list" id="peerList"></div>
+  <!-- stats -->
   <div class="stats">
     <div class="stk"><div class="slbl">Ping</div><div class="sval sg" id="s-ping">—</div></div>
     <div class="stk"><div class="slbl">Avg</div><div class="sval sb" id="s-avg">—</div></div>
@@ -182,22 +245,19 @@ p b{color:var(--t)}
     <div class="stk"><div class="slbl">Jitter</div><div class="sval sy" id="s-jitter">—</div></div>
     <div class="stk"><div class="slbl">Loss</div><div class="sval sr" id="s-loss">0%</div></div>
     <div class="stk"><div class="slbl">Uptime</div><div class="sval sp" id="s-up">0s</div></div>
+    <div class="stk"><div class="slbl">Peers</div><div class="sval sg" id="s-peers">0</div></div>
     <div class="stk"><div class="slbl">Sent</div><div class="sval sg" id="s-sent">0</div></div>
     <div class="stk"><div class="slbl">Recv</div><div class="sval sb" id="s-recv">0</div></div>
     <div class="stk"><div class="slbl">Read✓</div><div class="sval sc" id="s-read">0</div></div>
     <div class="stk"><div class="slbl">kB↑</div><div class="sval sg" id="s-bup">0</div></div>
     <div class="stk"><div class="slbl">kB↓</div><div class="sval sb" id="s-bdn">0</div></div>
-    <div class="stk"><div class="slbl">Online</div><div class="sval sg" id="s-online">—</div></div>
-    <div class="stk"><div class="slbl">Seen</div><div class="sval sm" id="s-seen">—</div></div>
-    <div class="stk"><div class="slbl">Typing</div><div class="sval sm" id="s-typing">no</div></div>
-    <div class="stk"><div class="slbl">Peer</div><div class="sval sb" id="s-peer">—</div></div>
     <div class="stk"><div class="slbl">ICE</div><div class="sval sy" id="s-ice">—</div></div>
     <div class="stk"><div class="slbl">Relay</div><div class="sval sc" id="s-relay">—</div></div>
     <div class="stk"><div class="slbl">Code</div><div class="sval sg" id="s-code">—</div></div>
     <div class="stk"><div class="slbl">Status</div><div class="sval sg" id="s-status">—</div></div>
   </div>
-  <div class="msgs" id="msgs"><div class="sys">🟢 Connected!</div></div>
-  <div class="typi" id="typi"><div class="td"></div><div class="td"></div><div class="td"></div><span id="typiName">Friend</span></div>
+  <div class="msgs" id="msgs"><div class="sys">🟢 Room open!</div></div>
+  <div class="typi" id="typi"><div class="td"></div><div class="td"></div><div class="td"></div><span id="typiName">Someone</span></div>
   <div class="ci">
     <textarea id="msgIn" placeholder="Message… Enter to send" rows="1" disabled></textarea>
     <div class="cright">
@@ -207,322 +267,547 @@ p b{color:var(--t)}
   </div>
 </div>
 
-</div>
+</div><!-- /box -->
 <script>
 'use strict';
 
-const WORDS=['APPLE','BRICK','CLOUD','DELTA','EAGLE','FLAME','GHOST','HONEY','IVORY','JOKER',
+// ── ALL TURN SERVER OPTIONS ────────────────────────────────────────────────
+const ALL_TURNS = [
+  {label:'Google STUN',        urls:'stun:stun.l.google.com:19302'},
+  {label:'Metered STUN',       urls:'stun:stun.relay.metered.ca:80'},
+  {label:'Metered TURN :80',   urls:'turn:eu.relay.metered.ca:80',                username:'2cf116991a6a04cbee8fcd9a',credential:'/NmwpIw3nexKDXIi'},
+  {label:'Metered TURN TCP80', urls:'turn:eu.relay.metered.ca:80?transport=tcp',  username:'2cf116991a6a04cbee8fcd9a',credential:'/NmwpIw3nexKDXIi'},
+  {label:'Metered TURN :443',  urls:'turn:eu.relay.metered.ca:443',               username:'2cf116991a6a04cbee8fcd9a',credential:'/NmwpIw3nexKDXIi'},
+  {label:'Metered TURNS TCP',  urls:'turns:eu.relay.metered.ca:443?transport=tcp',username:'2cf116991a6a04cbee8fcd9a',credential:'/NmwpIw3nexKDXIi'},
+];
+
+// Active ICE config — starts with a sensible default, updated by TURN test
+let ICE = [
+  {urls:'stun:stun.l.google.com:19302'},
+  {urls:'turn:eu.relay.metered.ca:443?transport=tcp', username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'}
+];
+
+const SIG = 'https://ntfy.sh';
+const WORDS = ['APPLE','BRICK','CLOUD','DELTA','EAGLE','FLAME','GHOST','HONEY','IVORY','JOKER',
 'KITE','LEMON','MANGO','NOBLE','OCEAN','PIANO','QUEEN','RIVER','STORM','TIGER',
 'ULTRA','VITAL','WHALE','AMBER','BLAZE','CHESS','DRIFT','EMBER','FROST','GROVE',
 'HATCH','KARMA','LUNAR','MAPLE','ORBIT','PEACH','QUEST','RADAR','SCOUT','TORCH',
 'VAPOR','WALTZ','ARROW','CRANE','ELBOW','FLUTE','GRANT','INDEX','LANCE','MERIT',
 'NORTH','OLIVE','PLUMB','RAVEN','SOUTH','TRAIL','VAULT','AGENT','CABLE','FOCUS'];
 
-const ICE=[
-  {urls:'stun:stun.l.google.com:19302'},
-  {urls:'turn:eu.relay.metered.ca:443?transport=tcp',
-   username:'2cf116991a6a04cbee8fcd9a',credential:'/NmwpIw3nexKDXIi'}
-];
-const SIG='https://ntfy.sh';
+// ── MULTI-PEER STATE ───────────────────────────────────────────────────────
+// Each peer connection is stored in the `peers` map: peerId → {pc, dc, nick}
+const peers = new Map();
+let myNick = 'Me', myCode = '', isHost = false;
+let sigPoll = null, sigPollAnswer = null;
+let msgN = 0, sent = 0, recv = 0, reads = 0, sbytes = 0, rbytes = 0, pS = 0, pL = 0;
+const pings = {}, hist = [];
+let connAt = null, upTmr = null, lastPres = null, myTyping = false, typOff = null;
+const MAX = 200;
 
-// ── STATE ──────────────────────────────────────────────────────────────────
-let pc=null,dc=null,myNick='Me',peerNick='Friend',myCode='';
-let msgN=0,sent=0,recv=0,reads=0,sbytes=0,rbytes=0,pS=0,pL=0;
-const pings={},hist=[];
-let connAt=null,upTmr=null,lastPres=null,myTyping=false,typOff=null,peerSeen=null,sigPoll=null;
-const MAX=200;
+// ── TURN TEST ──────────────────────────────────────────────────────────────
+async function runTurnTest() {
+  const panel = g('turnPanel');
+  panel.innerHTML = '';
+  const results = [];
 
-// ── RESET — call before every new session ─────────────────────────────────
-function fullReset() {
-  clearInterval(upTmr); clearTimeout(typOff); upTmr=null; typOff=null;
-  stopSig();
-  if (dc) { try{dc.close();}catch(e){} dc=null; }
-  if (pc) { try{pc.close();}catch(e){} pc=null; }
-  msgN=sent=recv=reads=sbytes=rbytes=pS=pL=0;
-  hist.length=0; Object.keys(pings).forEach(k=>delete pings[k]);
-  connAt=null; lastPres=null; myTyping=false; peerSeen=null; peerNick='Friend'; myCode='';
+  for (const srv of ALL_TURNS) {
+    // Create a row immediately with testing state
+    const row = document.createElement('div');
+    row.className = 'turn-row';
+    row.innerHTML = `
+      <div class="turn-name" title="${srv.urls}">${srv.label}</div>
+      <div class="turn-bar-wrap"><div class="turn-bar testing" id="tb-${srv.label.replace(/\s/g,'_')}"></div></div>
+      <div class="turn-ping sm" id="tp-${srv.label.replace(/\s/g,'_')}" style="font-size:10px;color:var(--y);width:54px;text-align:right">…</div>
+    `;
+    panel.appendChild(row);
+  }
+
+  // Test all in parallel
+  const tests = ALL_TURNS.map(async srv => {
+    const id = srv.label.replace(/\s/g,'_');
+    const bar = g('tb-'+id), ping = g('tp-'+id);
+    const start = performance.now();
+    try {
+      const ok = await testOneTurn(srv);
+      const ms = Math.round(performance.now() - start);
+      if (ok) {
+        bar.className = 'turn-bar ok'; bar.style.width = Math.min(100, Math.max(10, 100 - ms/20))+'%';
+        ping.textContent = ms+'ms'; ping.style.color = ms<300?'var(--g)':ms<600?'var(--y)':'var(--r)';
+        return {srv, ms, ok:true};
+      } else {
+        bar.className = 'turn-bar fail'; bar.style.width = '100%';
+        ping.textContent = 'fail'; ping.style.color = 'var(--r)';
+        return {srv, ms:Infinity, ok:false};
+      }
+    } catch(e) {
+      bar.className = 'turn-bar fail'; bar.style.width = '100%';
+      ping.textContent = 'err'; ping.style.color = 'var(--r)';
+      return {srv, ms:Infinity, ok:false};
+    }
+  });
+
+  const allResults = await Promise.all(tests);
+
+  // Pick best: prefer fastest TURN (relay) over STUN
+  const turns = allResults.filter(r => r.ok && r.srv.username); // has auth = is TURN
+  const stuns = allResults.filter(r => r.ok && !r.srv.username);
+  turns.sort((a,b)=>a.ms-b.ms);
+  stuns.sort((a,b)=>a.ms-b.ms);
+
+  if (turns.length > 0 || stuns.length > 0) {
+    // Always include best STUN + best TURN
+    const newIce = [];
+    if (stuns.length > 0) newIce.push({urls: stuns[0].srv.urls});
+    if (turns.length > 0) {
+      const t = turns[0].srv;
+      newIce.push({urls: t.urls, username: t.username, credential: t.credential});
+    }
+    ICE = newIce;
+    g('chosenTurnName').textContent = turns.length>0 ? turns[0].srv.label : stuns[0].srv.label;
+    g('chosenTurn').style.display = 'flex';
+    toast(`Best server: ${turns.length>0 ? turns[0].srv.label : stuns[0].srv.label}`);
+  } else {
+    toast('No servers reachable!', 'e');
+  }
+}
+
+function testOneTurn(srv) {
+  return new Promise(res => {
+    let done = false;
+    const fin = v => { if(!done){done=true; try{tp.close();}catch(e){} res(v);} };
+    const timeout = setTimeout(()=>fin(false), 4000);
+    const iceEntry = srv.username
+      ? {urls:srv.urls, username:srv.username, credential:srv.credential}
+      : {urls:srv.urls};
+    const tp = new RTCPeerConnection({iceServers:[iceEntry]});
+    tp.createDataChannel('t');
+    tp.onicecandidate = e => {
+      if (e.candidate) { clearTimeout(timeout); fin(true); }
+      else if (!done) { clearTimeout(timeout); fin(false); }
+    };
+    tp.createOffer().then(o=>tp.setLocalDescription(o)).catch(()=>fin(false));
+  });
 }
 
 // ── SCREENS ────────────────────────────────────────────────────────────────
-function scr(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));g(id).classList.add('on');}
+function scr(id) {
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  g(id).classList.add('on');
+}
 
 function goJoin() {
+  myNick = g('nick').value.trim() || 'Me';
   scr('s3');
   joinTab('word');
-  g('codeInp').value='';
-  g('nick2').value=g('nick').value||'';
-  g('joinBtn').disabled=false; g('joinBtn').innerHTML='Connect →';
-  g('rawOfferIn').value='';
-  g('rawAnsOut').value='';
-  g('legacyAnsArea').style.display='none';
-  g('genAnsBtn').disabled=false; g('genAnsBtn').innerHTML='Generate reply code →';
+  g('codeInp').value = '';
+  g('nick2').value = g('nick').value;
+  g('joinBtn').disabled = false; g('joinBtn').innerHTML = 'Join room →';
+  g('rawOfferIn').value = ''; g('rawAnsOut').value = '';
+  g('legacyAnsArea').style.display = 'none';
+  g('genAnsBtn').disabled = false; g('genAnsBtn').innerHTML = 'Generate reply code →';
   g('nick2').focus();
 }
 
-function joinTab(t) {
-  const w=(t==='word');
-  g('tab-word').style.cssText=`flex:1;padding:8px;border:none;border-radius:6px;background:${w?'var(--g)':'transparent'};color:${w?'var(--bg)':'var(--m)'};font-family:var(--f);font-size:11px;font-weight:700;cursor:pointer;transition:.15s`;
-  g('tab-raw').style.cssText=`flex:1;padding:8px;border:none;border-radius:6px;background:${w?'transparent':'var(--bl)'};color:${w?'var(--m)':'var(--bg)'};font-family:var(--f);font-size:11px;font-weight:700;cursor:pointer;transition:.15s`;
-  g('join-word').style.display=w?'flex':'none';
-  g('join-raw').style.display=w?'none':'flex';
+function goBackFromHost() {
+  // Stop hosting, clean up
+  fullReset();
+  g('startBtn').disabled = false; g('startBtn').innerHTML = '🟢 Start room';
+  scr('s1'); pstat('offline', false);
 }
 
-// Wait for ICE — max 2s, then send whatever we have.
-// Sending partial SDP is fine; browser handles relay fallback internally.
-function gatherICE(pc){
-  return new Promise(res=>{
-    // Already done
-    if(pc.iceGatheringState==='complete'){res();return;}
-    let done=false;
-    const finish=()=>{if(!done){done=true;res();}};
-    // Resolve on null candidate (natural completion)
-    pc.onicecandidate=e=>{if(e.candidate===null)finish();};
-    // Hard 2s cap — don't wait forever for slow TURN
-    setTimeout(finish,2000);
+function goBackFromJoin() {
+  fullReset();
+  g('joinBtn').disabled = false; g('joinBtn').innerHTML = 'Join room →';
+  scr('s1'); pstat('offline', false);
+}
+
+function joinTab(t) {
+  const w = (t==='word');
+  g('tab-word').style.cssText = `flex:1;padding:8px;border:none;border-radius:6px;background:${w?'var(--g)':'transparent'};color:${w?'var(--bg)':'var(--m)'};font-family:var(--f);font-size:11px;font-weight:700;cursor:pointer`;
+  g('tab-raw').style.cssText  = `flex:1;padding:8px;border:none;border-radius:6px;background:${w?'transparent':'var(--bl)'};color:${w?'var(--m)':'var(--bg)'};font-family:var(--f);font-size:11px;font-weight:700;cursor:pointer`;
+  g('join-word').style.display = w?'flex':'none';
+  g('join-raw').style.display  = w?'none':'flex';
+}
+
+// ── FULL RESET ─────────────────────────────────────────────────────────────
+function fullReset() {
+  clearInterval(upTmr); clearTimeout(typOff); upTmr=null; typOff=null;
+  stopSig();
+  // Close all peer connections
+  peers.forEach(p => { try{if(p.dc)p.dc.close();}catch(e){} try{if(p.pc)p.pc.close();}catch(e){} });
+  peers.clear();
+  msgN=sent=recv=reads=sbytes=rbytes=pS=pL=0;
+  hist.length=0; Object.keys(pings).forEach(k=>delete pings[k]);
+  connAt=null; lastPres=null; myTyping=false; myCode=''; isHost=false;
+}
+
+// ── ICE GATHER (max 2s) ────────────────────────────────────────────────────
+function gatherICE(pc) {
+  return new Promise(res => {
+    if (pc.iceGatheringState === 'complete') { res(); return; }
+    let done = false;
+    const finish = () => { if(!done){done=true;res();} };
+    pc.onicecandidate = e => { if(e.candidate===null) finish(); };
+    setTimeout(finish, 2000);
   });
 }
 
-// ── HOST ───────────────────────────────────────────────────────────────────
+// ── HOST FLOW ──────────────────────────────────────────────────────────────
 async function doStart() {
-  myNick=g('nick').value.trim()||'Me';
-  myCode=WORDS[Math.floor(Math.random()*WORDS.length)];
-  g('myWord').textContent=myCode;
-  g('s-code').textContent=myCode;
-  g('rawOffer').value='';
-  g('rawOffer').placeholder='⏳ Generating…';
-  g('rawAnswer').value='';
-  g('startBtn').disabled=true; g('startBtn').innerHTML='<span class="spin"></span>';
-  scr('s2'); pstat('waiting…',false);
+  myNick = g('nick').value.trim() || 'Me';
+  myCode = WORDS[Math.floor(Math.random()*WORDS.length)];
+  isHost = true;
+  g('myWord').textContent = myCode;
+  g('s-code').textContent = myCode;
+  g('rawOffer').value = ''; g('rawOffer').placeholder = '⏳ Generating…';
+  g('rawAnswer').value = '';
+  g('startBtn').disabled = true; g('startBtn').innerHTML = '<span class="spin"></span>';
+  scr('s2'); pstat('hosting…', false);
 
-  makePC();
-  dc=pc.createDataChannel('chat');
-  setupDC(dc);
+  // Generate the offer for legacy compatibility
+  await generateHostOffer();
+
+  // Keep listening for new joiners on ntfy (multi-peer: each joiner posts an answer)
+  hostListenLoop();
+}
+
+async function generateHostOffer() {
+  // We create a "template" PC just to get our ICE candidates for the raw offer
+  // Each actual joiner gets their own fresh PC
+  const tpc = new RTCPeerConnection({iceServers: ICE});
+  tpc.createDataChannel('x');
+  try {
+    await tpc.setLocalDescription(await tpc.createOffer());
+    await gatherICE(tpc);
+    g('rawOffer').value = JSON.stringify(tpc.localDescription);
+    g('rawOffer').placeholder = '';
+  } catch(e) {}
+  try{tpc.close();}catch(e){}
+}
+
+// Keep listening for new peer answers on ntfy
+function hostListenLoop() {
+  stopSig();
+  const topic = `direct-${myCode.toLowerCase()}`;
+
+  // Post a beacon so joiners know the room exists
+  sigPost(myCode, {type:'beacon', nick:myNick}).catch(()=>{});
+
+  const es = new EventSource(`${SIG}/${topic}/sse`);
+  sigPoll = es;
+  es.onmessage = async e => {
+    try {
+      const outer = JSON.parse(e.data);
+      const msg = JSON.parse(outer.message);
+      if (msg.type === 'join-request') {
+        // A peer wants to join: they sent us their offer
+        await handleNewPeer(msg);
+      }
+    } catch(_) {}
+  };
+  es.onerror = () => {};
+}
+
+async function handleNewPeer(msg) {
+  const peerId = msg.peerId;
+  if (peers.has(peerId)) return; // already connected
+
+  // Create a fresh PC for this peer
+  const pc = makePeerConnection(peerId);
+  try {
+    await pc.setRemoteDescription(msg.sdp);
+    await pc.setLocalDescription(await pc.createAnswer());
+    await gatherICE(pc);
+    // Send answer back tagged with peerId so peer knows it's for them
+    await sigPost(myCode, {type:'host-answer', peerId, sdp:pc.localDescription, nick:myNick});
+  } catch(e) {
+    try{pc.close();}catch(ex){}
+  }
+}
+
+// ── PEER FLOW — word code ──────────────────────────────────────────────────
+async function doJoin() {
+  const code = g('codeInp').value.trim().toUpperCase();
+  if (!code) { toast('Type the code first!'); return; }
+  myNick = g('nick2').value.trim() || 'Me';
+  myCode = code;
+  isHost = false;
+  const btn = g('joinBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Joining…';
+  pstat('connecting…', false);
+
+  // Generate a unique peerId for this connection attempt
+  const peerId = Math.random().toString(36).slice(2,10);
+
+  // Create our PC and offer
+  const pc = makePeerConnection(peerId);
+  const dc = pc.createDataChannel('chat');
+  setupDC(peerId, dc);
 
   try {
     await pc.setLocalDescription(await pc.createOffer());
-    await gatherICE(pc); // max 2s
-    const sdp=JSON.stringify(pc.localDescription);
-    g('rawOffer').value=sdp;
-    g('rawOffer').placeholder='';
-    sigPost(myCode,{type:'offer',sdp:pc.localDescription,nick:myNick}).catch(()=>{});
+    await gatherICE(pc);
+    // Post our join request (offer) to the room topic
+    await sigPost(code, {type:'join-request', peerId, sdp:pc.localDescription, nick:myNick});
   } catch(e) {
-    toast('Failed to create offer','e');
-    g('startBtn').disabled=false; g('startBtn').innerHTML='🟢 Start';
-    scr('s1'); return;
+    toast('Failed to connect','e');
+    btn.disabled=false; btn.innerHTML='Join room →'; pstat('offline',false);
+    return;
   }
 
-  // Listen for answer — poll first in case peer already replied, then SSE
-  sigListenForAnswer(myCode,async msg=>{
-    if(msg.type==='answer'&&pc&&pc.signalingState==='have-local-offer'){
-      stopSig();
-      try{await pc.setRemoteDescription(msg.sdp);}catch(e){}
-    }
-  });
-}
+  // Listen for the host's answer addressed to our peerId
+  let got = false;
+  const listenForAnswer = async () => {
+    // Poll first
+    try {
+      const r = await fetch(`${SIG}/direct-${code.toLowerCase()}/json?poll=1&since=all`);
+      const txt = await r.text();
+      for (const line of txt.trim().split('\n')) {
+        if (!line) continue;
+        try {
+          const msg = JSON.parse(JSON.parse(line).message);
+          if (msg.type==='host-answer' && msg.peerId===peerId && !got) {
+            got=true; await pc.setRemoteDescription(msg.sdp);
+            return;
+          }
+        } catch(_) {}
+      }
+    } catch(_) {}
 
-async function doJoin() {
-  const code=g('codeInp').value.trim().toUpperCase();
-  if(!code){toast('Type the code first!');return;}
-  myNick=g('nick2').value.trim()||'Me'; myCode=code;
-  const btn=g('joinBtn');
-  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Connecting…';
-  pstat('connecting…',false);
-
-  let got=false;
-  const onOffer=async msg=>{
-    if(got)return;
-    got=true; stopSig();
-    makePC();
-    try{
-      await pc.setRemoteDescription(msg.sdp);
-      await pc.setLocalDescription(await pc.createAnswer());
-      await gatherICE(pc); // max 2s
-      sigPost(code,{type:'answer',sdp:pc.localDescription,nick:myNick}).catch(()=>{});
-    }catch(e){
-      toast('Connection failed','e');
-      btn.disabled=false; btn.innerHTML='Connect →'; pstat('offline',false);
+    // SSE fallback
+    if (!got) {
+      const es = new EventSource(`${SIG}/direct-${code.toLowerCase()}/sse`);
+      sigPollAnswer = es;
+      es.onmessage = async e => {
+        if (got) return;
+        try {
+          const outer = JSON.parse(e.data);
+          const msg = JSON.parse(outer.message);
+          if (msg.type==='host-answer' && msg.peerId===peerId) {
+            got=true; es.close(); sigPollAnswer=null;
+            await pc.setRemoteDescription(msg.sdp);
+          }
+        } catch(_) {}
+      };
+      es.onerror = ()=>{};
     }
   };
 
-  await sigListen(code,onOffer); // polls first, may call onOffer immediately
+  await listenForAnswer();
 
-  // Only start timeout if we didn't already get the offer from poll
-  if(!got){
-    setTimeout(()=>{
-      if(!got){
-        stopSig();
-        toast('Code not found — check spelling','e');
-        btn.disabled=false; btn.innerHTML='Connect →'; pstat('offline',false);
-      }
-    },30000);
-  }
+  // 30s timeout
+  setTimeout(() => {
+    if (!got) {
+      stopSig(); if(sigPollAnswer){sigPollAnswer.close();sigPollAnswer=null;}
+      toast('Room not found or timed out','e');
+      btn.disabled=false; btn.innerHTML='Join room →'; pstat('offline',false);
+      peers.delete(peerId);
+    }
+  }, 30000);
 }
 
-// ── PEER — legacy paste ────────────────────────────────────────────────────
+// ── PEER FLOW — legacy paste ───────────────────────────────────────────────
 async function doJoinLegacy() {
-  const offerJson=g('rawOfferIn').value.trim();
-  if(!offerJson){toast('Paste the offer code first!');return;}
-  myNick=g('nick2').value.trim()||'Me';
-  const btn=g('genAnsBtn');
+  const offerJson = g('rawOfferIn').value.trim();
+  if (!offerJson) { toast('Paste the offer code first!'); return; }
+  myNick = g('nick2').value.trim() || 'Me';
+  isHost = false;
+  const btn = g('genAnsBtn');
   btn.disabled=true; btn.innerHTML='<span class="spin"></span> Generating…';
-  g('rawAnsOut').value=''; g('rawAnsOut').placeholder='⏳ Generating…';
-  try{
-    makePC();
+  g('rawAnsOut').placeholder='⏳ Generating…';
+  const peerId = 'legacy-'+Math.random().toString(36).slice(2,8);
+  try {
+    const pc = makePeerConnection(peerId);
     await pc.setRemoteDescription(JSON.parse(offerJson));
     await pc.setLocalDescription(await pc.createAnswer());
-    await gatherICE(pc); // max 2s
-    g('rawAnsOut').value=JSON.stringify(pc.localDescription);
+    await gatherICE(pc);
+    g('rawAnsOut').value = JSON.stringify(pc.localDescription);
     g('rawAnsOut').placeholder='';
     g('legacyAnsArea').style.display='flex';
     btn.innerHTML='✓ Done'; pstat('waiting…',false);
-  }catch(e){
+  } catch(e) {
     btn.disabled=false; btn.innerHTML='Generate reply code →';
-    toast('Bad offer code — check paste','e');
+    toast('Bad offer code','e');
   }
 }
 
-// Host accepts raw answer from old-version peer
-async function acceptRawAnswer(){
-  const str=g('rawAnswer').value.trim();
-  if(!str){toast('Paste the reply code first');return;}
-  if(!pc){toast('Start the session first','e');return;}
-  if(pc.signalingState!=='have-local-offer'){toast('Not waiting for an answer','e');return;}
-  try{await pc.setRemoteDescription(JSON.parse(str));stopSig();}
-  catch(e){toast('Invalid reply code — check paste','e');}
+async function acceptRawAnswer() {
+  const str = g('rawAnswer').value.trim();
+  if (!str) { toast('Paste reply code first'); return; }
+  // Find a PC waiting for a remote description
+  const peerId = 'raw-'+Math.random().toString(36).slice(2,8);
+  const pc = makePeerConnection(peerId);
+  const dc = pc.createDataChannel('chat');
+  setupDC(peerId, dc);
+  try {
+    // Host's "offer" for this peer needs to be created fresh
+    await pc.setLocalDescription(await pc.createOffer());
+    await gatherICE(pc);
+    await pc.setRemoteDescription(JSON.parse(str));
+  } catch(e) { toast('Invalid reply code','e'); }
 }
 
-// ── SIGNALING ──────────────────────────────────────────────────────────────
-function sigPost(code,data){
-  return fetch(`${SIG}/direct-${code.toLowerCase()}`,{
-    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)
+// ── WEBRTC: one PC per peer ────────────────────────────────────────────────
+function makePeerConnection(peerId) {
+  const pc = new RTCPeerConnection({iceServers: ICE});
+  peers.set(peerId, {pc, dc:null, nick:'?', online:true});
+
+  pc.oniceconnectionstatechange = () => {
+    if (!pc) return;
+    sv('s-ice', pc.iceConnectionState, {connected:'sg',completed:'sg',failed:'sr',disconnected:'sr',checking:'sy'}[pc.iceConnectionState]||'sm');
+    if (pc.iceConnectionState==='connected'||pc.iceConnectionState==='completed') detectRelay(pc);
+  };
+
+  pc.onconnectionstatechange = () => {
+    if (!pc) return;
+    const s = pc.connectionState;
+    if (s==='connected') onPeerConnected(peerId);
+    if (s==='failed'||s==='closed') removePeer(peerId, 'Connection failed');
+    if (s==='disconnected') {
+      const p=peers.get(peerId); if(p){p.online=false; updatePeerList();}
+      sys(`⚠️ ${peers.get(peerId)?.nick||'Peer'} disconnected`);
+    }
+  };
+
+  pc.ondatachannel = e => setupDC(peerId, e.channel);
+  return pc;
+}
+
+function setupDC(peerId, ch) {
+  const peer = peers.get(peerId);
+  if (peer) peer.dc = ch;
+
+  ch.onopen = () => {
+    wireOne(peerId, {t:'hi', nick:myNick});
+    wireOne(peerId, {t:'pres', s:'online'});
+  };
+  ch.onmessage = e => { try { onMsg(peerId, JSON.parse(e.data)); } catch(_) {} };
+  ch.onclose = () => { removePeer(peerId, null); };
+  ch.onerror = () => {};
+}
+
+function wireOne(peerId, obj) {
+  const peer = peers.get(peerId);
+  if (!peer||!peer.dc||peer.dc.readyState!=='open') return;
+  try {
+    const s = JSON.stringify(obj);
+    peer.dc.send(s);
+    sbytes += s.length;
+    sv('s-bup', (sbytes/1024).toFixed(1), 'sg');
+  } catch(e) {}
+}
+
+// Broadcast to all connected peers
+function broadcast(obj, exceptId=null) {
+  peers.forEach((peer, id) => {
+    if (id !== exceptId) wireOne(id, obj);
   });
 }
-async function sigListenForAnswer(code,cb){
-  stopSig();
-  const topic=`direct-${code.toLowerCase()}`;
-  let handled=false;
 
-  // Poll for any answer already posted
-  try{
-    const r=await fetch(`${SIG}/${topic}/json?poll=1&since=all`);
-    const txt=await r.text();
-    for(const line of txt.trim().split('\n')){
-      if(!line)continue;
-      try{
-        const msg=JSON.parse(JSON.parse(line).message);
-        if(msg.type==='answer'){handled=true;cb(msg);return;}
-      }catch(_){}
-    }
-  }catch(_){}
+// ── PEER CONNECTED ─────────────────────────────────────────────────────────
+function onPeerConnected(peerId) {
+  sv('s-status','connected','sg');
+  pstat('connected', true);
+  if (!connAt) {
+    connAt = Date.now();
+    g('mainCard').style.display='none';
+    g('chatCard').style.display='block';
+    enableIn();
+    upTmr = setInterval(()=>{
+      sv('s-up',upt(Math.floor((Date.now()-connAt)/1000)),'sp');
+      sv('s-peers', countOnline(), 'sg');
+      const now=performance.now();
+      for(const id in pings){if(now-pings[id]>8000){delete pings[id];pL++;}}
+    },5000);
+    sv('s-code', myCode, 'sg');
+  }
+  sv('s-peers', countOnline()+1, 'sg');
+  updatePeerList();
 
-  // Otherwise wait via SSE
-  if(!handled){
-    const es=new EventSource(`${SIG}/${topic}/sse`);
-    sigPoll=es;
-    es.onmessage=e=>{
-      if(handled)return;
-      try{const o=JSON.parse(e.data);const msg=JSON.parse(o.message);if(msg.type==='answer'){handled=true;cb(msg);}}catch(_){}
-    };
-    es.onerror=()=>{};
+  // If we're the host, keep the room open for more joiners
+  if (isHost && !sigPoll) hostListenLoop();
+}
+
+function removePeer(peerId, reason) {
+  const peer = peers.get(peerId);
+  if (!peer) return;
+  if (reason) sys(`❌ ${peer.nick||'Peer'}: ${reason}`);
+  try{if(peer.dc)peer.dc.close();}catch(e){}
+  try{if(peer.pc)peer.pc.close();}catch(e){}
+  peers.delete(peerId);
+  updatePeerList();
+  sv('s-peers', countOnline(), 'sg');
+  if (peers.size === 0 && !isHost) {
+    pstat('offline', false); disableIn();
   }
 }
 
-async function sigListen(code,cb){
-  stopSig();
-  const topic=`direct-${code.toLowerCase()}`;
-  let handled=false;
-
-  // Step 1: poll for any messages already posted (host may have posted before we subscribed)
-  try{
-    const r=await fetch(`${SIG}/${topic}/json?poll=1&since=all`);
-    const txt=await r.text();
-    for(const line of txt.trim().split('\n')){
-      if(!line)continue;
-      try{
-        const msg=JSON.parse(JSON.parse(line).message);
-        if(msg.type==='offer'){handled=true;cb(msg);return;} // got it from poll, done
-      }catch(_){}
-    }
-  }catch(_){}
-
-  // Step 2: if no existing offer found, subscribe to SSE for when host posts
-  if(!handled){
-    const es=new EventSource(`${SIG}/${topic}/sse`);
-    sigPoll=es;
-    es.onmessage=e=>{
-      if(handled)return;
-      try{const o=JSON.parse(e.data);const msg=JSON.parse(o.message);if(msg.type==='offer'){handled=true;cb(msg);}}catch(_){}
-    };
-    es.onerror=()=>{};
-  }
-}
-function stopSig(){if(sigPoll){sigPoll.close();sigPoll=null;}}
-
-// ── WEBRTC ─────────────────────────────────────────────────────────────────
-function makePC(){
-  if(pc){try{pc.close();}catch(e){} pc=null;}
-  pc=new RTCPeerConnection({iceServers:ICE});
-  pc.oniceconnectionstatechange=()=>{
-    if(!pc)return;
-    sv('s-ice',pc.iceConnectionState,{connected:'sg',completed:'sg',failed:'sr',disconnected:'sr',checking:'sy'}[pc.iceConnectionState]||'sm');
-    if(pc.iceConnectionState==='connected'||pc.iceConnectionState==='completed')detectRelay();
-  };
-  pc.onconnectionstatechange=()=>{
-    if(!pc)return;
-    const s=pc.connectionState;
-    sv('s-status',s,{connected:'sg',failed:'sr',disconnected:'sr'}[s]||'sm');
-    if(s==='connected')onConn();
-    if(s==='failed'){pstat('failed',false);sys('❌ Connection failed.');}
-    if(s==='disconnected'){pstat('offline',false);sys('⚠️ Peer disconnected.');disableIn();sv('s-online','offline','sm');}
-  };
-  pc.ondatachannel=e=>setupDC(e.channel);
+function countOnline() {
+  let n=0; peers.forEach(p=>{ if(p.online!==false) n++; }); return n;
 }
 
-function setupDC(ch){
-  dc=ch;
-  dc.onopen=()=>{wire({t:'hi',nick:myNick});pres('online');};
-  dc.onmessage=e=>{try{onMsg(JSON.parse(e.data));}catch(_){}};
-  dc.onclose=()=>{sys('⚠️ Channel closed.');disableIn();};
-  dc.onerror=()=>{sys('⚠️ Channel error.');};
-}
-
-function wire(obj){
-  if(!dc||dc.readyState!=='open')return;
-  try{const s=JSON.stringify(obj);dc.send(s);sbytes+=s.length;sv('s-bup',(sbytes/1024).toFixed(1),'sg');}catch(e){}
+function updatePeerList() {
+  const list = g('peerList');
+  list.innerHTML = '';
+  // Self chip
+  const me = document.createElement('div');
+  me.className='peer-chip on';
+  me.textContent='👤 '+myNick+' (you)';
+  list.appendChild(me);
+  // Each peer
+  peers.forEach((peer, id) => {
+    const chip = document.createElement('div');
+    chip.className='peer-chip '+(peer.online!==false?'on':'');
+    chip.textContent=(peer.online!==false?'👤 ':'💤 ')+peer.nick;
+    list.appendChild(chip);
+  });
 }
 
 // ── MESSAGES ───────────────────────────────────────────────────────────────
-function onMsg(d){
-  if(!d||!d.t)return;
-  if(d.t==='hi'){
-    peerNick=d.nick||'Friend';sv('s-peer',peerNick,'sb');g('typiName').textContent=peerNick;
-    sys('👋 '+peerNick+' connected!');
-  }else if(d.t==='msg'){
-    recv++;rbytes+=String(d.v||'').length;
-    sv('s-recv',recv,'sb');sv('s-bdn',(rbytes/1024).toFixed(1),'sb');
-    addMsg(d.v,d.nick||peerNick,d.id,false);
-    wire({t:'ack',id:d.id});
-    peerSeen=Date.now();sv('s-seen','now','sm');
-  }else if(d.t==='ack'){
+function onMsg(fromId, d) {
+  if (!d||!d.t) return;
+  const peer = peers.get(fromId);
+
+  if (d.t==='hi') {
+    if (peer) { peer.nick=d.nick||'?'; peer.online=true; }
+    updatePeerList();
+    sys('👋 '+d.nick+' joined!');
+    sv('s-peers', countOnline(), 'sg');
+  } else if (d.t==='msg') {
+    recv++; rbytes+=String(d.v||'').length;
+    sv('s-recv',recv,'sb'); sv('s-bdn',(rbytes/1024).toFixed(1),'sb');
+    addMsg(d.v, d.nick||(peer?.nick||'?'), d.id, false);
+    wireOne(fromId, {t:'ack',id:d.id});
+    // Relay to all other peers (host acts as relay for multi-peer)
+    if (isHost) broadcast({t:'relay-msg', v:d.v, nick:d.nick, id:d.id}, fromId);
+  } else if (d.t==='relay-msg') {
+    // Message relayed through host from another peer
+    recv++; rbytes+=String(d.v||'').length;
+    sv('s-recv',recv,'sb'); sv('s-bdn',(rbytes/1024).toFixed(1),'sb');
+    addMsg(d.v, d.nick||'?', d.id, false);
+  } else if (d.t==='ack') {
     const n=document.querySelector(`[data-mid="${d.id}"] .ri`);
     if(n){n.textContent='✓✓';n.classList.add('read');}
     reads++;sv('s-read',reads,'sc');
     if(pings[d.id]){rtt(Math.round(performance.now()-pings[d.id]));delete pings[d.id];}
-  }else if(d.t==='ping'){
-    wire({t:'pong',id:d.id});
-  }else if(d.t==='pong'){
+  } else if (d.t==='ping') {
+    wireOne(fromId, {t:'pong',id:d.id});
+  } else if (d.t==='pong') {
     if(pings[d.id]){rtt(Math.round(performance.now()-pings[d.id]));delete pings[d.id];}
-  }else if(d.t==='pres'){
-    sv('s-online',d.s,d.s==='online'?'sg':'sm');if(d.s==='online')peerSeen=Date.now();
-  }else if(d.t==='typ'){
-    g('typi').classList.add('on');sv('s-typing','yes ✍️','sb');
+  } else if (d.t==='pres') {
+    if(peer){peer.online=(d.s==='online'); updatePeerList();}
+    sv('s-status',countOnline()+' online','sg');
+  } else if (d.t==='typ') {
+    g('typiName').textContent=peer?.nick||'Someone';
+    g('typi').classList.add('on'); sv('s-typing','yes ✍️','sb');
     clearTimeout(window._pt);window._pt=setTimeout(()=>{g('typi').classList.remove('on');sv('s-typing','no','sm');},2500);
-  }else if(d.t==='styp'){
+  } else if (d.t==='styp') {
     clearTimeout(window._pt);g('typi').classList.remove('on');sv('s-typing','no','sm');
   }
 }
 
-function rtt(ms){
+function rtt(ms) {
   hist.push(ms);if(hist.length>50)hist.shift();
   const mn=Math.min(...hist),mx=Math.max(...hist),av=Math.round(hist.reduce((a,b)=>a+b,0)/hist.length);
   const jt=hist.length>1?Math.abs(ms-hist[hist.length-2]):0;
@@ -532,49 +817,21 @@ function rtt(ms){
   sv('s-jitter',jt+'ms','sy');sv('s-loss',ls+'%',ls===0?'sg':ls<10?'sy':'sr');
 }
 
-function pres(s){if(s===lastPres)return;lastPres=s;wire({t:'pres',s});}
-function onType(){
-  if(!dc||dc.readyState!=='open')return;
-  if(!myTyping){myTyping=true;wire({t:'typ'});}
-  clearTimeout(typOff);typOff=setTimeout(()=>{myTyping=false;wire({t:'styp'});},1500);
-}
-
-// ── CONNECTED ──────────────────────────────────────────────────────────────
-function onConn(){
-  stopSig();
-  pstat('connected',true);
-  g('mainCard').style.display='none';g('chatCard').style.display='block';
-  enableIn();connAt=Date.now();
-  sv('s-status','connected','sg');sv('s-online','online','sg');sv('s-code',myCode,'sg');
-  if(pc)pc.onicecandidate=null; // no longer needed
-  upTmr=setInterval(()=>{
-    sv('s-up',upt(Math.floor((Date.now()-connAt)/1000)),'sp');
-    if(peerSeen){const a=Math.floor((Date.now()-peerSeen)/1000);sv('s-seen',a<5?'now':upt(a)+' ago','sm');}
-    const now=performance.now();for(const id in pings){if(now-pings[id]>8000){delete pings[id];pL++;}}
-  },5000);
-}
-
-async function detectRelay(){
-  if(!pc)return;
-  try{
-    const s=await pc.getStats();
-    s.forEach(r=>{if(r.type==='candidate-pair'&&r.state==='succeeded'){
-      s.forEach(c=>{if(c.id===r.localCandidateId){
-        const t=c.candidateType==='relay'?'TURN':c.candidateType==='srflx'?'STUN':'Direct';
-        sv('s-relay',t,t==='TURN'?'sg':t==='STUN'?'sb':'sc');
-      }});
-    }});
-  }catch(e){}
+function onType() {
+  if (peers.size===0) return;
+  if (!myTyping) { myTyping=true; broadcast({t:'typ'}); }
+  clearTimeout(typOff);
+  typOff=setTimeout(()=>{ myTyping=false; broadcast({t:'styp'}); },1500);
 }
 
 // ── SEND ───────────────────────────────────────────────────────────────────
-function send(){
+function send() {
   const inp=g('msgIn'),txt=inp.value.trim();
-  if(!txt||!dc||dc.readyState!=='open')return;
+  if (!txt||peers.size===0) return;
   const id='m'+(++msgN);
-  if(myTyping){myTyping=false;clearTimeout(typOff);wire({t:'styp'});}
+  if (myTyping){myTyping=false;clearTimeout(typOff);broadcast({t:'styp'});}
   pings[id]=performance.now();pS++;
-  wire({t:'msg',v:txt,nick:myNick,id});
+  broadcast({t:'msg',v:txt,nick:myNick,id});
   sent++;sv('s-sent',sent,'sg');
   addMsg(txt,myNick,id,true);
   inp.value='';inp.style.height='auto';
@@ -587,8 +844,20 @@ function addMsg(text,nick,id,isMe){
   const d=document.createElement('div');
   d.className='msg '+(isMe?'me':'them');
   if(id)d.setAttribute('data-mid',id);
-  d.innerHTML=`<div class="mw">${esc(nick)} · ${t}</div><div class="mb">${esc(text).replace(/\n/g,'<br>')}</div>${isMe?`<div class="mr"><span class="ri">✓</span> sent</div>`:''}`;
+  // Assign a color per nick for multi-peer
+  const col = isMe ? 'var(--g)' : nickColor(nick);
+  d.innerHTML=`<div class="mw" style="color:${col}">${esc(nick)} · ${t}</div><div class="mb">${esc(text).replace(/\n/g,'<br>')}</div>${isMe?`<div class="mr"><span class="ri">✓</span> sent</div>`:''}`;
   box.appendChild(d);box.scrollTop=box.scrollHeight;
+}
+
+const nickColors=['#60a5fa','#a78bfa','#fb923c','#22d3ee','#f472b6','#34d399'];
+const nickColorMap={};
+function nickColor(nick){
+  if(!nickColorMap[nick]){
+    const keys=Object.keys(nickColorMap);
+    nickColorMap[nick]=nickColors[keys.length%nickColors.length];
+  }
+  return nickColorMap[nick];
 }
 
 function sys(txt){
@@ -597,21 +866,44 @@ function sys(txt){
 }
 
 // ── DISCONNECT ─────────────────────────────────────────────────────────────
-function disc(){
-  if(!confirm('Disconnect?'))return;
-  // Send offline before closing — must happen before dc.close()
-  pres('offline');
-  // Give it a moment to send, then tear everything down
+function disc() {
+  if(!confirm('Leave room?'))return;
+  broadcast({t:'pres',s:'offline'});
   setTimeout(()=>{
     fullReset();
-    // Reset UI back to start screen
     g('chatCard').style.display='none';
     g('mainCard').style.display='block';
-    g('msgs').innerHTML='<div class="sys">🟢 Connected!</div>';
-    g('startBtn').disabled=false;g('startBtn').innerHTML='🟢 Start';
-    scr('s1');pstat('offline',false);
-    toast('Disconnected.');
+    g('msgs').innerHTML='<div class="sys">🟢 Room open!</div>';
+    g('startBtn').disabled=false; g('startBtn').innerHTML='🟢 Start room';
+    scr('s1'); pstat('offline',false);
+    toast('Left room.');
   },200);
+}
+
+// ── RELAY DETECTION ────────────────────────────────────────────────────────
+async function detectRelay(pc){
+  if(!pc)return;
+  try{
+    const s=await pc.getStats();
+    s.forEach(r=>{if(r.type==='candidate-pair'&&r.state==='succeeded'){
+      s.forEach(c=>{if(c.id===r.localCandidateId){
+        const t=c.candidateType==='relay'?'TURN':c.candidateType==='srflx'?'STUN':'Direct';
+        sv('s-relay',t,t==='TURN'?'sg':t==='STUN'?'sb':'sc');
+      }});
+    }});
+  }catch(e){}
+}
+
+// ── SIGNALING ──────────────────────────────────────────────────────────────
+function sigPost(code,data){
+  return fetch(`${SIG}/direct-${code.toLowerCase()}`,{
+    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)
+  });
+}
+
+function stopSig(){
+  if(sigPoll){sigPoll.close();sigPoll=null;}
+  if(sigPollAnswer){sigPollAnswer.close();sigPollAnswer=null;}
 }
 
 // ── COPY HELPERS ───────────────────────────────────────────────────────────
@@ -621,11 +913,10 @@ function copyCode(){
     const b=g('cpyBtn');b.textContent='copied!';setTimeout(()=>b.textContent='copy',2000);
   });
 }
-
 function cpyEl(srcId,btnId){
   const el=g(srcId);if(!el)return;
   const v=el.value;
-  if(!v||v.startsWith('⏳')){toast('Not ready yet — wait a moment');return;}
+  if(!v||v.startsWith('⏳')){toast('Not ready yet');return;}
   navigator.clipboard.writeText(v).then(()=>{
     const b=g(btnId);const o=b.textContent;b.textContent='✓ Copied!';setTimeout(()=>b.textContent=o,2000);
   });
@@ -648,8 +939,10 @@ function toast(msg,type=''){
 
 g('msgIn').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
 g('msgIn').addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px';onType();});
-window.addEventListener('beforeunload',()=>pres('offline'));
-document.addEventListener('visibilitychange',()=>{if(dc&&dc.readyState==='open')pres(document.hidden?'away':'online');});
+window.addEventListener('beforeunload',()=>broadcast({t:'pres',s:'offline'}));
+document.addEventListener('visibilitychange',()=>{
+  if(peers.size>0) broadcast({t:'pres',s:document.hidden?'away':'online'});
+});
 </script>
 </body>
 </html>
