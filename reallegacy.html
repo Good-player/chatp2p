@@ -1,1 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIRECT Chat</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a10;--card:#13131a;--card2:#1a1a24;--border:#22222e;
+  --green:#4ade80;--blue:#60a5fa;--yellow:#fbbf24;--red:#f87171;
+  --purple:#a78bfa;--cyan:#22d3ee;--orange:#fb923c;
+  --text:#e2e2ec;--muted:#5a5a70;--font:'JetBrains Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:12px}
+.wrap{width:100%;max-width:680px;display:flex;flex-direction:column;gap:10px}
 
+/* header */
+.hdr{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px}
+.hdr-title{font-size:17px;font-weight:700;color:var(--green);letter-spacing:-.5px;flex-shrink:0}
+.hdr-title span{color:var(--muted);font-weight:400;font-size:11px;margin-left:6px}
+.hdr-spacer{flex:1}
+.cpill{display:flex;align-items:center;gap:5px;font-size:10px;padding:3px 9px;border-radius:99px;border:1px solid var(--border);color:var(--muted);white-space:nowrap;transition:all .3s}
+.cpill.on{color:var(--green);border-color:var(--green)}
+.cpill .d{width:5px;height:5px;border-radius:50%;background:currentColor}
+.cpill.on .d{box-shadow:0 0 5px currentColor;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* card */
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+
+/* wizard */
+.wprog{display:flex;border-bottom:1px solid var(--border);padding:12px 16px;gap:8px;align-items:center}
+.sdot{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);color:var(--muted);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .3s}
+.sdot.active{border-color:var(--green);color:var(--green)}
+.sdot.done{border-color:var(--green);background:var(--green);color:var(--bg)}
+.wline{flex:1;height:1px;background:var(--border)}
+.wpage{display:none;flex-direction:column;gap:14px;padding:20px 16px}
+.wpage.active{display:flex}
+.wtitle{font-size:15px;font-weight:700}
+.wdesc{font-size:11px;color:var(--muted);line-height:1.8}
+.wdesc b{color:var(--text)}
+.role-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.role-btn{padding:16px 12px;border:2px solid var(--border);background:var(--bg);border-radius:8px;cursor:pointer;transition:all .15s;text-align:center;display:flex;flex-direction:column;gap:5px;align-items:center}
+.role-btn:hover{border-color:var(--blue);transform:translateY(-1px)}
+.rb-icon{font-size:26px}
+.rb-title{font-size:13px;font-weight:700}
+.rb-sub{font-size:10px;color:var(--muted)}
+textarea{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:11px;padding:10px;width:100%;border-radius:6px;resize:none;outline:none;transition:border-color .2s;line-height:1.5}
+textarea:focus{border-color:var(--blue)}
+textarea[readonly]{color:var(--green);border-color:rgba(74,222,128,.3);cursor:default}
+.inp{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:13px;padding:9px 11px;width:100%;border-radius:6px;outline:none;transition:border-color .2s}
+.inp:focus{border-color:var(--blue)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 16px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--font);font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;transition:all .15s;user-select:none;width:100%}
+.btn:hover:not(:disabled){border-color:var(--blue);color:var(--blue)}
+.btn.g{background:rgba(74,222,128,.08);border-color:var(--green);color:var(--green)}
+.btn.g:hover:not(:disabled){background:rgba(74,222,128,.15)}
+.btn.b{background:rgba(96,165,250,.08);border-color:var(--blue);color:var(--blue)}
+.btn.b:hover:not(:disabled){background:rgba(96,165,250,.15)}
+.btn.r{background:rgba(248,113,113,.08);border-color:var(--red);color:var(--red)}
+.btn.r:hover:not(:disabled){background:rgba(248,113,113,.15)}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+.btn-row{display:flex;gap:8px}
+.btn-row .btn{flex:1}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.back{font-size:11px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:color .15s;width:fit-content}
+.back:hover{color:var(--text)}
+
+/* status grid */
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 12px;border-bottom:1px solid var(--border);background:var(--bg)}
+.sbox{background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:7px 8px;display:flex;flex-direction:column;gap:2px}
+.slbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.sval{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sval.green{color:var(--green)}.sval.blue{color:var(--blue)}.sval.yellow{color:var(--yellow)}
+.sval.red{color:var(--red)}.sval.purple{color:var(--purple)}.sval.cyan{color:var(--cyan)}
+.sval.orange{color:var(--orange)}.sval.muted{color:var(--muted)}
+
+/* turn bar */
+.tpanel{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tlbl{font-size:10px;color:var(--muted);flex-shrink:0}
+.tbars{display:flex;gap:4px;align-items:center;flex:1}
+.tbar{height:6px;border-radius:3px;background:var(--border);flex:1;transition:background .3s}
+.tbar.testing{background:var(--yellow);animation:pulse 1s infinite}
+.tbar.ok{background:var(--green)}
+.tbar.fail{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+.tbtn{width:auto;padding:5px 12px;font-size:10px}
+
+/* chat */
+.msgs{padding:12px;min-height:280px;max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;scroll-behavior:smooth}
+.msgs::-webkit-scrollbar{width:3px}
+.msgs::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.msg{display:flex;flex-direction:column;max-width:76%;animation:mi .16s ease}
+@keyframes mi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.msg.me{align-self:flex-end;align-items:flex-end}
+.msg.them{align-self:flex-start;align-items:flex-start}
+.mwho{font-size:9px;color:var(--muted);margin-bottom:2px}
+.msg.me .mwho{color:var(--green)}
+.msg.them .mwho{color:var(--blue)}
+.mbub{padding:8px 11px;font-size:12px;line-height:1.6;word-break:break-word;border-radius:7px}
+.msg.me .mbub{background:rgba(74,222,128,.09);border:1px solid rgba(74,222,128,.2);border-bottom-right-radius:2px}
+.msg.them .mbub{background:rgba(96,165,250,.09);border:1px solid rgba(96,165,250,.2);border-bottom-left-radius:2px}
+.mrec{font-size:9px;margin-top:2px;color:var(--muted);display:flex;align-items:center;gap:3px}
+.msg.me .mrec{align-self:flex-end}
+.ri{font-size:10px}
+.ri.read{color:var(--blue)}
+.sys{align-self:center;font-size:10px;color:var(--muted);background:var(--bg);border:1px solid var(--border);padding:2px 10px;border-radius:99px;margin:4px 0}
+.typi{align-self:flex-start;display:none;align-items:center;gap:5px;padding:4px 10px;background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);border-radius:99px;margin:2px 0}
+.typi.show{display:flex}
+.typi span{font-size:10px;color:var(--blue)}
+.td{width:4px;height:4px;border-radius:50%;background:var(--blue);animation:td .9s infinite}
+.td:nth-child(2){animation-delay:.15s}.td:nth-child(3){animation-delay:.3s}
+@keyframes td{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+.cinput{border-top:1px solid var(--border);padding:10px;display:flex;gap:8px;align-items:flex-end}
+.cinput textarea{flex:1;min-height:38px;max-height:90px;resize:none;font-size:12px}
+.cbtns{display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+#sendBtn{width:auto;padding:0 14px;height:38px}
+#discBtn{width:auto;padding:0 10px;height:28px;font-size:10px}
+
+/* toast */
+.toast{position:fixed;bottom:16px;right:16px;background:var(--card);border:1px solid var(--green);color:var(--green);font-family:var(--font);font-size:11px;padding:8px 14px;border-radius:6px;animation:ti .25s ease;z-index:999}
+.toast.err{border-color:var(--red);color:var(--red)}
+@keyframes ti{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.wdots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--yellow);animation:wa 1s infinite;margin-right:3px}
+.wdots span:nth-child(2){animation-delay:.15s}.wdots span:nth-child(3){animation-delay:.3s}
+@keyframes wa{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hdr">
+  <div class="hdr-title">DIRECT <span>// p2p</span></div>
+  <div class="hdr-spacer"></div>
+  <div class="cpill" id="cpill"><div class="d"></div><span id="ctxt">offline</span></div>
+</div>
+
+<!-- WIZARD -->
+<div class="card" id="mainCard">
+  <div class="wprog">
+    <div class="sdot active" id="sd1">1</div><div class="wline"></div>
+    <div class="sdot" id="sd2">2</div><div class="wline"></div>
+    <div class="sdot" id="sd3">3</div>
+  </div>
+
+  <div class="wpage active" id="p1">
+    <div class="wtitle">Who are you?</div>
+    <div class="wdesc">One person <b>starts</b>, one <b>joins</b>. Decide between you.</div>
+    <div class="role-btns">
+      <div class="role-btn" onclick="pickRole('host')"><div class="rb-icon">🟢</div><div class="rb-title">I'm starting</div><div class="rb-sub">Make invite code</div></div>
+      <div class="role-btn" onclick="pickRole('peer')"><div class="rb-icon">🔵</div><div class="rb-title">I'm joining</div><div class="rb-sub">I have invite code</div></div>
+    </div>
+  </div>
+
+  <div class="wpage" id="p2host">
+    <div class="back" onclick="goBack()">← back</div>
+    <div class="wtitle">Step 1 — Make invite code</div>
+    <div class="wdesc">Enter nickname → Generate → <b>copy and send</b> to friend.</div>
+    <input class="inp" id="hostNick" placeholder="Your nickname" maxlength="20"/>
+    <button class="btn g" id="genOfferBtn" onclick="generateOffer()">✦ Generate Invite Code</button>
+    <div id="offerSection" style="display:none;flex-direction:column;gap:8px">
+      <div class="wdesc" style="color:var(--green)">✓ Ready! Copy and send to friend.</div>
+      <textarea id="offerOut" rows="3" readonly></textarea>
+      <div class="btn-row">
+        <button class="btn g" id="copyOfferBtn" onclick="copyEl('offerOut','copyOfferBtn')">📋 Copy</button>
+        <button class="btn b" onclick="goHostStep2()">Friend got it →</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wpage" id="p3host">
+    <div class="wtitle">Step 2 — Paste reply code</div>
+    <div class="wdesc">Paste the <b>reply code</b> your friend sent.</div>
+    <textarea id="answerIn" rows="3" placeholder="Paste reply code here…"></textarea>
+    <button class="btn g" id="connectBtn" onclick="connectHost()">🔗 Connect!</button>
+    <div id="connectingNote" style="display:none"><div class="wdesc" style="color:var(--yellow)">⏳ Connecting… keep tab open!</div></div>
+  </div>
+
+  <div class="wpage" id="p2peer">
+    <div class="back" onclick="goBack()">← back</div>
+    <div class="wtitle">Step 1 — Paste invite code</div>
+    <div class="wdesc">Nickname → paste invite code → Generate Reply.</div>
+    <input class="inp" id="peerNick" placeholder="Your nickname" maxlength="20"/>
+    <textarea id="offerIn" rows="3" placeholder="Paste invite code here…"></textarea>
+    <button class="btn b" id="genAnswerBtn" onclick="generateAnswer()">Generate Reply Code →</button>
+    <div id="answerSection" style="display:none;flex-direction:column;gap:8px">
+      <div class="wdesc" style="color:var(--green)">✓ Ready! Copy and send back.</div>
+      <textarea id="answerOut" rows="3" readonly></textarea>
+      <div class="btn-row">
+        <button class="btn g" id="copyAnswerBtn" onclick="copyEl('answerOut','copyAnswerBtn')">📋 Copy Reply</button>
+      </div>
+      <div class="wdesc" style="color:var(--yellow)">⏳ Waiting for friend to confirm…</div>
+      <div class="wdots"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div class="card" id="chatCard" style="display:none">
+  <!-- TURN test bar -->
+  <div class="tpanel">
+    <div class="tlbl">TURN relay:</div>
+    <div class="tbars">
+      <div class="tbar" id="tb0" title="STUN"></div>
+      <div class="tbar" id="tb1" title="TURN :80"></div>
+      <div class="tbar" id="tb2" title="TURN :80 TCP"></div>
+      <div class="tbar" id="tb3" title="TURN :443"></div>
+      <div class="tbar" id="tb4" title="TURNS :443 TCP"></div>
+    </div>
+    <button class="btn b tbtn" onclick="testTurn()">Test</button>
+  </div>
+  <!-- 20 stats -->
+  <div class="sgrid">
+    <div class="sbox"><div class="slbl">Ping</div><div class="sval green" id="s-ping">—</div></div>
+    <div class="sbox"><div class="slbl">Min ping</div><div class="sval cyan" id="s-minping">—</div></div>
+    <div class="sbox"><div class="slbl">Max ping</div><div class="sval orange" id="s-maxping">—</div></div>
+    <div class="sbox"><div class="slbl">Avg ping</div><div class="sval blue" id="s-avgping">—</div></div>
+    <div class="sbox"><div class="slbl">Peer</div><div class="sval blue" id="s-peer">—</div></div>
+    <div class="sbox"><div class="slbl">Status</div><div class="sval green" id="s-status">—</div></div>
+    <div class="sbox"><div class="slbl">Uptime</div><div class="sval purple" id="s-uptime">0s</div></div>
+    <div class="sbox"><div class="slbl">Msgs sent</div><div class="sval green" id="s-sent">0</div></div>
+    <div class="sbox"><div class="slbl">Msgs recv</div><div class="sval blue" id="s-recv">0</div></div>
+    <div class="sbox"><div class="slbl">Read recpts</div><div class="sval cyan" id="s-reads">0</div></div>
+    <div class="sbox"><div class="slbl">Bytes sent</div><div class="sval green" id="s-bsent">0B</div></div>
+    <div class="sbox"><div class="slbl">Bytes recv</div><div class="sval blue" id="s-brecv">0B</div></div>
+    <div class="sbox"><div class="slbl">ICE state</div><div class="sval yellow" id="s-ice">—</div></div>
+    <div class="sbox"><div class="slbl">Conn state</div><div class="sval yellow" id="s-conn">—</div></div>
+    <div class="sbox"><div class="slbl">Relay type</div><div class="sval purple" id="s-relay">—</div></div>
+    <div class="sbox"><div class="slbl">Peer online</div><div class="sval green" id="s-online">—</div></div>
+    <div class="sbox"><div class="slbl">Last seen</div><div class="sval muted" id="s-lastseen">—</div></div>
+    <div class="sbox"><div class="slbl">Typing</div><div class="sval muted" id="s-typing">no</div></div>
+    <div class="sbox"><div class="slbl">Ping loss</div><div class="sval red" id="s-loss">0%</div></div>
+    <div class="sbox"><div class="slbl">Jitter</div><div class="sval orange" id="s-jitter">—</div></div>
+  </div>
+  <!-- messages -->
+  <div class="msgs" id="msgs"><div class="sys">🟢 Connected!</div></div>
+  <div class="typi" id="typi"><div class="td"></div><div class="td"></div><div class="td"></div><span id="typiName">Friend</span></div>
+  <!-- input -->
+  <div class="cinput">
+    <textarea id="msgIn" placeholder="Type… Enter to send" rows="1" disabled></textarea>
+    <div class="cbtns">
+      <button class="btn g" id="sendBtn" onclick="send()" disabled>Send</button>
+      <button class="btn r" id="discBtn" onclick="disconnect()" disabled>⏏ Disc.</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+<script>
+'use strict';
+
+// ── TURN CREDENTIALS (samptonweb.metered.live) ─────────────────────────────
+const ICE = [
+  { urls:'stun:stun.relay.metered.ca:80' },
+  { urls:'turn:eu.relay.metered.ca:80',                 username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi' },
+  { urls:'turn:eu.relay.metered.ca:80?transport=tcp',   username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi' },
+  { urls:'turn:eu.relay.metered.ca:443',                username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi' },
+  { urls:'turns:eu.relay.metered.ca:443?transport=tcp', username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi' }
+];
+
+// ── STATE (declared once) ──────────────────────────────────────────────────
+let pc = null, dc = null, role = null;
+let myNick = 'You', peerNick = 'Friend';
+let msgId = 0;
+let sentCount = 0, recvCount = 0, readCount = 0;
+let sentBytes = 0, recvBytes = 0;
+let pingsSent = 0, pingsLost = 0;
+const pings = {};          // id → performance.now() at send
+const pingHist = [];       // RTT samples (last 50)
+let connectedAt = null;
+let uptimeTimer = null;
+let lastPresence = null;   // avoid duplicate presence sends
+let myTyping = false;
+let typingOffTimer = null;
+let peerLastSeen = null;
+const MAX_MSGS = 200;
+
+// ── WIZARD ─────────────────────────────────────────────────────────────────
+function pickRole(r) {
+  role = r;
+  dot(2);
+  show(r === 'host' ? 'p2host' : 'p2peer');
+}
+
+function goBack() {
+  resetPC(); dot(1); show('p1');
+  ['offerSection','answerSection','connectingNote'].forEach(id => g(id).style.display = 'none');
+  ['offerOut','answerOut','offerIn','answerIn'].forEach(id => g(id).value = '');
+  g('genOfferBtn').disabled = false; g('genOfferBtn').innerHTML = '✦ Generate Invite Code';
+  g('genAnswerBtn').disabled = false; g('genAnswerBtn').innerHTML = 'Generate Reply Code →';
+  g('connectBtn').disabled = false; g('connectingNote').style.display = 'none';
+  status('offline', false);
+}
+
+function goHostStep2() {
+  if (!g('offerOut').value.startsWith('{')) { toast('Still generating…'); return; }
+  dot(3); show('p3host');
+}
+
+function show(id) {
+  document.querySelectorAll('.wpage').forEach(p => p.classList.remove('active'));
+  g(id).classList.add('active');
+}
+
+function dot(n) {
+  for (let i = 1; i <= 3; i++) {
+    const d = g('sd'+i);
+    d.classList.remove('active','done');
+    if (i < n) d.classList.add('done');
+    else if (i === n) d.classList.add('active');
+  }
+}
+
+// ── WEBRTC ─────────────────────────────────────────────────────────────────
+function resetPC() {
+  clearInterval(uptimeTimer); uptimeTimer = null;
+  if (pc) { try { pc.close(); } catch(e) {} pc = null; }
+  dc = null;
+  sentCount = recvCount = readCount = sentBytes = recvBytes = pingsSent = pingsLost = 0;
+  pingHist.length = 0;
+  Object.keys(pings).forEach(k => delete pings[k]);
+  connectedAt = null; lastPresence = null; myTyping = false; peerLastSeen = null;
+}
+
+function makePC() {
+  resetPC();
+  pc = new RTCPeerConnection({ iceServers: ICE });
+
+  // SDP ready when ICE gathering complete
+  const fill = () => {
+    if (pc.iceGatheringState !== 'complete') return;
+    const sdp = JSON.stringify(pc.localDescription);
+    if (pc.localDescription.type === 'offer') {
+      g('offerOut').value = sdp; g('offerSection').style.display = 'flex';
+    } else {
+      g('answerOut').value = sdp; g('answerSection').style.display = 'flex';
+    }
+  };
+  pc.onicegatheringstatechange = fill;
+  pc.onicecandidate = e => { if (!e.candidate) fill(); };
+
+  pc.oniceconnectionstatechange = () => {
+    stat('s-ice', pc.iceConnectionState, sc(pc.iceConnectionState));
+    if (pc.iceConnectionState === 'connected') relayType();
+  };
+
+  pc.onconnectionstatechange = () => {
+    const s = pc.connectionState;
+    stat('s-conn', s, sc(s));
+    if (s === 'connected')    onConnected();
+    if (s === 'failed')       { status('failed', false); sys('❌ Failed.'); stat('s-status','failed','red'); }
+    if (s === 'disconnected') { status('disconnected', false); sys('⚠️ Peer disconnected.'); disableInput(); stat('s-status','disconnected','red'); stat('s-online','offline','red'); }
+  };
+
+  pc.ondatachannel = e => setupDC(e.channel);
+  return pc;
+}
+
+function setupDC(ch) {
+  dc = ch;
+  dc.onopen = () => { wire({ t:'hello', nick:myNick }); presence('online'); };
+  dc.onmessage = e => recv(e.data);
+  dc.onclose = () => { sys('⚠️ Channel closed.'); disableInput(); stat('s-online','offline','red'); };
+}
+
+// wire() — single send path, tracks bytes, returns false if not open
+function wire(obj) {
+  if (!dc || dc.readyState !== 'open') return false;
+  const s = JSON.stringify(obj);
+  dc.send(s);
+  sentBytes += s.length;
+  stat('s-bsent', fmt(sentBytes), 'green');
+  return true;
+}
+
+// ── RECEIVE ────────────────────────────────────────────────────────────────
+function recv(raw) {
+  try {
+    const d = JSON.parse(raw);
+    recvBytes += raw.length;
+    stat('s-brecv', fmt(recvBytes), 'blue');
+
+    switch (d.t) {
+      case 'hello':
+        peerNick = d.nick || 'Friend';
+        stat('s-peer', peerNick, 'blue');
+        g('typiName').textContent = peerNick;
+        sys('👋 Connected with ' + peerNick);
+        break;
+
+      case 'msg':
+        recvCount++;
+        stat('s-recv', recvCount, 'blue');
+        addMsg(d.v, d.nick || peerNick, d.id, false);
+        wire({ t:'ack', id: d.id }); // read receipt — only sent on actual message
+        peerLastSeen = Date.now();
+        stat('s-lastseen', 'just now', 'muted');
+        break;
+
+      case 'ack':
+        // Mark delivered + measure RTT from send→ack
+        const node = document.querySelector(`[data-mid="${d.id}"] .ri`);
+        if (node) { node.textContent = '✓✓'; node.classList.add('read'); }
+        readCount++;
+        stat('s-reads', readCount, 'cyan');
+        if (pings[d.id]) { recordRTT(Math.round(performance.now() - pings[d.id])); delete pings[d.id]; }
+        break;
+
+      case 'ping':
+        wire({ t:'pong', id: d.id }); // reply only, no extra data
+        break;
+
+      case 'pong':
+        if (pings[d.id]) { recordRTT(Math.round(performance.now() - pings[d.id])); delete pings[d.id]; }
+        break;
+
+      case 'presence':
+        const on = d.status === 'online';
+        stat('s-online', d.status, on ? 'green' : 'muted');
+        if (on) peerLastSeen = Date.now();
+        break;
+
+      case 'typing':
+        g('typi').classList.add('show');
+        stat('s-typing', 'yes ✍️', 'blue');
+        clearTimeout(window._ptyExp);
+        window._ptyExp = setTimeout(() => { g('typi').classList.remove('show'); stat('s-typing','no','muted'); }, 2500);
+        break;
+
+      case 'stopTyping':
+        clearTimeout(window._ptyExp);
+        g('typi').classList.remove('show');
+        stat('s-typing', 'no', 'muted');
+        break;
+    }
+  } catch(e) {}
+}
+
+// ── PING ───────────────────────────────────────────────────────────────────
+// Only sent when: manual Test button, or piggybacked on message send (id=msgid)
+function manualPing() {
+  pingsSent++;
+  const id = 'mp' + pingsSent;
+  pings[id] = performance.now();
+  wire({ t:'ping', id });
+}
+
+function recordRTT(rtt) {
+  pingHist.push(rtt);
+  if (pingHist.length > 50) pingHist.shift();
+  const min = Math.min(...pingHist), max = Math.max(...pingHist);
+  const avg = Math.round(pingHist.reduce((a,b)=>a+b,0)/pingHist.length);
+  const jitter = pingHist.length > 1 ? Math.abs(rtt - pingHist[pingHist.length-2]) : 0;
+  const loss = pingsSent > 0 ? Math.round(pingsLost/pingsSent*100) : 0;
+  stat('s-ping',    rtt+'ms',    rtt<80?'green':rtt<200?'yellow':'red');
+  stat('s-minping', min+'ms',    'cyan');
+  stat('s-maxping', max+'ms',    'orange');
+  stat('s-avgping', avg+'ms',    'blue');
+  stat('s-jitter',  jitter+'ms', 'orange');
+  stat('s-loss',    loss+'%',    loss===0?'green':loss<10?'yellow':'red');
+}
+
+// ── PRESENCE (send only on state change) ───────────────────────────────────
+function presence(s) {
+  if (s === lastPresence) return;
+  lastPresence = s;
+  wire({ t:'presence', status: s });
+}
+
+// ── TYPING (send on flip only) ─────────────────────────────────────────────
+function onType() {
+  if (!dc || dc.readyState !== 'open') return;
+  if (!myTyping) { myTyping = true; wire({ t:'typing' }); }
+  clearTimeout(typingOffTimer);
+  typingOffTimer = setTimeout(() => { myTyping = false; wire({ t:'stopTyping' }); }, 1500);
+}
+
+// ── CONNECTED ──────────────────────────────────────────────────────────────
+function onConnected() {
+  status('connected', true);
+  g('mainCard').style.display = 'none';
+  g('chatCard').style.display = 'block';
+  enableInput();
+  connectedAt = Date.now();
+
+  stat('s-status', 'connected', 'green');
+  stat('s-online',  'online',   'green');
+  stat('s-conn',    'connected','green');
+
+  // Free ICE memory
+  pc.onicegatheringstatechange = null;
+  pc.onicecandidate = null;
+
+  // Uptime — DOM only, zero network
+  uptimeTimer = setInterval(() => {
+    stat('s-uptime', uptime(Math.floor((Date.now()-connectedAt)/1000)), 'purple');
+    if (peerLastSeen) {
+      const ago = Math.floor((Date.now()-peerLastSeen)/1000);
+      stat('s-lastseen', ago<5?'just now':uptime(ago)+' ago', 'muted');
+    }
+    // Expire lost pings >8s
+    const now = performance.now();
+    for (const id in pings) { if (now-pings[id] > 8000) { delete pings[id]; pingsLost++; } }
+  }, 5000);
+
+  testTurn();
+}
+
+// ── RELAY DETECTION ────────────────────────────────────────────────────────
+async function relayType() {
+  try {
+    const s = await pc.getStats();
+    s.forEach(r => {
+      if (r.type==='candidate-pair' && r.state==='succeeded') {
+        s.forEach(c => {
+          if (c.id===r.localCandidateId) {
+            const t = c.candidateType==='relay'?'TURN relay':c.candidateType==='srflx'?'STUN':c.candidateType==='host'?'Direct LAN':c.candidateType;
+            stat('s-relay', t, t==='TURN relay'?'green':t==='STUN'?'blue':'cyan');
+          }
+        });
+      }
+    });
+  } catch(e) {}
+}
+
+// ── TURN TEST ──────────────────────────────────────────────────────────────
+async function testTurn() {
+  ['tb0','tb1','tb2','tb3','tb4'].forEach(id => g(id).className='tbar testing');
+  for (let i = 0; i < ICE.length; i++) {
+    const ok = await testServer(ICE[i]);
+    const bar = g('tb'+i);
+    if (bar) { bar.className='tbar '+(ok?'ok':'fail'); bar.title=(ICE[i].urls||'?')+': '+(ok?'✓':'✗'); }
+  }
+}
+
+function testServer(srv) {
+  return new Promise(res => {
+    let done = false;
+    const t = setTimeout(() => { fin(false); }, 4000);
+    const tp = new RTCPeerConnection({ iceServers:[srv] });
+    tp.createDataChannel('x');
+    tp.onicecandidate = e => {
+      if (!done && e.candidate) fin(true);
+      if (!done && !e.candidate) fin(false);
+    };
+    tp.createOffer().then(o=>tp.setLocalDescription(o)).catch(()=>fin(false));
+    function fin(v) { if(done)return; done=true; clearTimeout(t); try{tp.close();}catch(e){} res(v); }
+  });
+}
+
+// ── HOST FLOW ──────────────────────────────────────────────────────────────
+async function generateOffer() {
+  myNick = g('hostNick').value.trim() || 'You';
+  const btn = g('genOfferBtn'); btn.disabled=true; btn.innerHTML='<span class="spin"></span> Generating…';
+  const p = makePC();
+  setupDC(p.createDataChannel('chat'));
+  await p.setLocalDescription(await p.createOffer());
+  status('waiting…', false);
+}
+
+async function connectHost() {
+  const s = g('answerIn').value.trim();
+  if (!s) { toast('Paste reply code first!'); return; }
+  try {
+    await pc.setRemoteDescription(JSON.parse(s));
+    g('connectBtn').disabled=true; g('connectingNote').style.display='block'; status('connecting…',false);
+  } catch(e) { toast('Invalid reply code!','err'); }
+}
+
+// ── PEER FLOW ──────────────────────────────────────────────────────────────
+async function generateAnswer() {
+  const offer = g('offerIn').value.trim();
+  if (!offer) { toast('Paste invite code first!'); return; }
+  myNick = g('peerNick').value.trim() || 'You';
+  const btn = g('genAnswerBtn'); btn.disabled=true; btn.innerHTML='<span class="spin"></span> Generating…';
+  try {
+    const p = makePC();
+    await p.setRemoteDescription(JSON.parse(offer));
+    await p.setLocalDescription(await p.createAnswer());
+    status('waiting…', false);
+  } catch(e) { btn.disabled=false; btn.innerHTML='Generate Reply Code →'; toast('Invalid invite code!','err'); }
+}
+
+// ── DISCONNECT ─────────────────────────────────────────────────────────────
+function disconnect() {
+  if (!confirm('Disconnect?')) return;
+  presence('offline');
+  setTimeout(() => {
+    clearInterval(uptimeTimer); uptimeTimer=null;
+    if (dc) try{dc.close();}catch(e){}
+    if (pc) try{pc.close();}catch(e){}
+    pc=null; dc=null;
+    g('chatCard').style.display='none';
+    g('mainCard').style.display='block';
+    goBack(); status('offline',false); toast('Disconnected.');
+  }, 300);
+}
+
+// ── SEND MESSAGE ───────────────────────────────────────────────────────────
+function send() {
+  const inp = g('msgIn');
+  const txt = inp.value.trim();
+  if (!txt || !dc || dc.readyState!=='open') return;
+  const id = 'msg'+(++msgId);
+
+  // Stop typing on send
+  if (myTyping) { myTyping=false; clearTimeout(typingOffTimer); wire({t:'stopTyping'}); }
+
+  // Track this for RTT (measured when ack comes back)
+  pings[id] = performance.now();
+  pingsSent++;
+
+  wire({ t:'msg', v:txt, nick:myNick, id });
+  sentCount++;
+  stat('s-sent', sentCount, 'green');
+  addMsg(txt, myNick, id, true);
+  inp.value=''; inp.style.height='auto';
+}
+
+function addMsg(text, nick, id, isMe) {
+  const box = g('msgs');
+  while (box.children.length >= MAX_MSGS) box.removeChild(box.firstChild);
+  const t = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const d = document.createElement('div');
+  d.className = 'msg '+(isMe?'me':'them');
+  if (id) d.setAttribute('data-mid', id);
+  d.innerHTML = `<div class="mwho">${esc(nick)} · ${t}</div><div class="mbub">${esc(text).replace(/\n/g,'<br>')}</div>${isMe?`<div class="mrec"><span class="ri">✓</span> sent</div>`:''}`;
+  box.appendChild(d); box.scrollTop=box.scrollHeight;
+}
+
+function sys(txt) {
+  const box=g('msgs'), d=document.createElement('div'); d.className='sys'; d.textContent=txt;
+  box.appendChild(d); box.scrollTop=box.scrollHeight;
+}
+
+// ── HELPERS ────────────────────────────────────────────────────────────────
+function enableInput()  { g('msgIn').disabled=false; g('sendBtn').disabled=false; g('discBtn').disabled=false; g('msgIn').focus(); }
+function disableInput() { g('msgIn').disabled=true;  g('sendBtn').disabled=true; }
+function status(txt,on) { g('ctxt').textContent=txt; g('cpill').classList.toggle('on',on); }
+function stat(id,val,cls) { const e=g(id); if(!e)return; e.textContent=val; e.className='sval '+(cls||''); }
+function sc(s) { return {connected:'green',completed:'green',failed:'red',disconnected:'red',checking:'yellow',new:'muted',closed:'muted'}[s]||'muted'; }
+function fmt(b) { return b<1024?b+'B':b<1048576?(b/1024).toFixed(1)+'KB':(b/1048576).toFixed(1)+'MB'; }
+function uptime(s) { return s<60?s+'s':s<3600?Math.floor(s/60)+'m '+Math.floor(s%60)+'s':Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m'; }
+function g(id) { return document.getElementById(id); }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function copyEl(id,btnId) {
+  const v=g(id).value; if(!v||!v.startsWith('{')){ toast('Not ready yet!'); return; }
+  navigator.clipboard.writeText(v).then(()=>{ const b=g(btnId); const o=b.textContent; b.textContent='✓ Copied!'; setTimeout(()=>b.textContent=o,2000); });
+}
+let _tt;
+function toast(msg,type='') {
+  document.querySelectorAll('.toast').forEach(t=>t.remove()); clearTimeout(_tt);
+  const t=document.createElement('div'); t.className='toast '+(type==='err'?'err':''); t.textContent=msg;
+  document.body.appendChild(t); _tt=setTimeout(()=>t.remove(),3000);
+}
+
+// ── EVENTS ─────────────────────────────────────────────────────────────────
+g('msgIn').addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();} });
+g('msgIn').addEventListener('input', function(){ this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,90)+'px'; onType(); });
+window.addEventListener('beforeunload', ()=>presence('offline'));
+document.addEventListener('visibilitychange', ()=>{
+  if (dc&&dc.readyState==='open') presence(document.hidden?'away':'online');
+  if (!document.hidden&&pc&&pc.connectionState==='failed') sys('⚠️ Connection dropped while tab was hidden.');
+});
+</script>
+</body>
+</html>
