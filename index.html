@@ -173,7 +173,7 @@ p b{color:var(--t)}
       <button class="btn g" id="startBtn" onclick="doStart()">🟢 Start room</button>
       <button class="btn b" onclick="goJoin()">🔵 Join room</button>
     </div>
-    <button class="btn sm" onclick="scr('s0')" style="background:transparent;border-color:var(--b);color:var(--m);font-size:10px">⚙ Test TURN servers</button>
+    <button class="btn sm" id="turnStatusBtn" onclick="scr('s0')" style="background:transparent;border-color:var(--b);color:var(--m);font-size:10px">⚙ Testing TURN servers…</button>
   </div>
 
   <!-- S2: host waiting -->
@@ -273,19 +273,65 @@ p b{color:var(--t)}
 
 // ── ALL TURN SERVER OPTIONS ────────────────────────────────────────────────
 const ALL_TURNS = [
-  {label:'Google STUN',        urls:'stun:stun.l.google.com:19302'},
-  {label:'Metered STUN',       urls:'stun:stun.relay.metered.ca:80'},
-  {label:'Metered TURN :80',   urls:'turn:eu.relay.metered.ca:80',                username:'2cf116991a6a04cbee8fcd9a',credential:'/NmwpIw3nexKDXIi'},
-  {label:'Metered TURN TCP80', urls:'turn:eu.relay.metered.ca:80?transport=tcp',  username:'2cf116991a6a04cbee8fcd9a',credential:'/NmwpIw3nexKDXIi'},
-  {label:'Metered TURN :443',  urls:'turn:eu.relay.metered.ca:443',               username:'2cf116991a6a04cbee8fcd9a',credential:'/NmwpIw3nexKDXIi'},
-  {label:'Metered TURNS TCP',  urls:'turns:eu.relay.metered.ca:443?transport=tcp',username:'2cf116991a6a04cbee8fcd9a',credential:'/NmwpIw3nexKDXIi'},
+  {label:'Google STUN',         urls:'stun:stun.l.google.com:19302'},
+  {label:'Metered STUN',        urls:'stun:stun.relay.metered.ca:80'},
+  // ExpressTurn — preferred, tested first
+  {label:'ExpressTurn',         urls:'turn:free.expressturn.com:3478',               username:'000000002089490852',       credential:'47MfC+I9nOTiijmLTIGyZ32gXqQ='},
+  {label:'Metered TURN :80',    urls:'turn:eu.relay.metered.ca:80',                  username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
+  {label:'Metered TURN TCP80',  urls:'turn:eu.relay.metered.ca:80?transport=tcp',    username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
+  {label:'Metered TURN :443',   urls:'turn:eu.relay.metered.ca:443',                 username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
+  {label:'Metered TURNS TCP',   urls:'turns:eu.relay.metered.ca:443?transport=tcp',  username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
+  {label:'Hubl UDP',            urls:'turn:turn01.hubl.in?transport=udp'},
+  {label:'Hubl TCP',            urls:'turn:turn02.hubl.in?transport=tcp'},
+  {label:'Viagenie',            urls:'turn:numb.viagenie.ca',                         username:'webrtc@live.com',          credential:'muazkh'},
+  {label:'192.158 UDP',         urls:'turn:192.158.29.39:3478?transport=udp',         username:'28224511:1379330808',       credential:'JZEOEt2V3Qb0y27GRntt2u2PAYA='},
+  {label:'192.158 TCP',         urls:'turn:192.158.29.39:3478?transport=tcp',         username:'28224511:1379330808',       credential:'JZEOEt2V3Qb0y27GRntt2u2PAYA='},
+  {label:'Bistri :80',          urls:'turn:turn.bistri.com:80',                       username:'homeo',                    credential:'homeo'},
+  {label:'Anyfirewall TCP443',  urls:'turn:turn.anyfirewall.com:443?transport=tcp',   username:'webrtc',                   credential:'webrtc'},
 ];
 
-// Active ICE config — starts with a sensible default, updated by TURN test
+// Active ICE config — auto-selected on load, overridable via test menu
 let ICE = [
   {urls:'stun:stun.l.google.com:19302'},
+  {urls:'turn:free.expressturn.com:3478', username:'000000002089490852', credential:'47MfC+I9nOTiijmLTIGyZ32gXqQ='},
   {urls:'turn:eu.relay.metered.ca:443?transport=tcp', username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'}
 ];
+let turnAutoSelected = false; // set to true once auto-test completes
+
+// Run silently in background on page load — pick best server before user even clicks Start
+async function autoSelectTurn() {
+  const btn = g('turnStatusBtn');
+  if (btn) { btn.textContent = '⚙ Testing servers…'; btn.disabled = true; }
+
+  // Test all in parallel, 3s timeout per server (faster than manual 4s)
+  const results = await Promise.all(ALL_TURNS.map(async srv => {
+    const start = performance.now();
+    try {
+      const ok = await testOneTurn(srv, 3000);
+      return {srv, ms: ok ? Math.round(performance.now()-start) : Infinity, ok};
+    } catch(e) { return {srv, ms:Infinity, ok:false}; }
+  }));
+
+  const turns = results.filter(r=>r.ok && r.srv.username).sort((a,b)=>a.ms-b.ms);
+  const stuns = results.filter(r=>r.ok && !r.srv.username).sort((a,b)=>a.ms-b.ms);
+
+  // Always prefer ExpressTurn if it's working, regardless of ping
+  const expressTurn = turns.find(r=>r.srv.label==='ExpressTurn');
+  const bestTurn = expressTurn || (turns.length>0 ? turns[0] : null);
+
+  if (bestTurn || stuns.length > 0) {
+    const newIce = [];
+    if (stuns.length > 0) newIce.push({urls: stuns[0].srv.urls});
+    if (bestTurn) newIce.push({urls:bestTurn.srv.urls, username:bestTurn.srv.username, credential:bestTurn.srv.credential});
+    ICE = newIce;
+    turnAutoSelected = true;
+    const best = bestTurn || stuns[0];
+    if (btn) { btn.textContent = `⚙ TURN: ${best.srv.label} (${best.ms}ms)`; btn.disabled = false; btn.style.color='var(--g)'; btn.style.borderColor='var(--g)'; }
+    if (g('chosenTurnName')) { g('chosenTurnName').textContent = best.srv.label; g('chosenTurn').style.display='flex'; }
+  } else {
+    if (btn) { btn.textContent = '⚙ No TURN found — check manually'; btn.disabled = false; btn.style.color='var(--r)'; }
+  }
+}
 
 const SIG = 'https://ntfy.sh';
 const WORDS = ['APPLE','BRICK','CLOUD','DELTA','EAGLE','FLAME','GHOST','HONEY','IVORY','JOKER',
@@ -349,34 +395,35 @@ async function runTurnTest() {
 
   const allResults = await Promise.all(tests);
 
-  // Pick best: prefer fastest TURN (relay) over STUN
-  const turns = allResults.filter(r => r.ok && r.srv.username); // has auth = is TURN
-  const stuns = allResults.filter(r => r.ok && !r.srv.username);
-  turns.sort((a,b)=>a.ms-b.ms);
-  stuns.sort((a,b)=>a.ms-b.ms);
+  // Pick best: prefer ExpressTurn if available, then fastest TURN, then STUN
+  const turns = allResults.filter(r => r.ok && r.srv.username).sort((a,b)=>a.ms-b.ms);
+  const stuns = allResults.filter(r => r.ok && !r.srv.username).sort((a,b)=>a.ms-b.ms);
+  const expressTurn = turns.find(r=>r.srv.label==='ExpressTurn');
+  const bestTurn = expressTurn || (turns.length>0 ? turns[0] : null);
 
-  if (turns.length > 0 || stuns.length > 0) {
-    // Always include best STUN + best TURN
+  if (bestTurn || stuns.length > 0) {
     const newIce = [];
     if (stuns.length > 0) newIce.push({urls: stuns[0].srv.urls});
-    if (turns.length > 0) {
-      const t = turns[0].srv;
-      newIce.push({urls: t.urls, username: t.username, credential: t.credential});
-    }
+    if (bestTurn) newIce.push({urls:bestTurn.srv.urls, username:bestTurn.srv.username, credential:bestTurn.srv.credential});
     ICE = newIce;
-    g('chosenTurnName').textContent = turns.length>0 ? turns[0].srv.label : stuns[0].srv.label;
+    turnAutoSelected = true;
+    const best = bestTurn || stuns[0];
+    g('chosenTurnName').textContent = best.srv.label;
     g('chosenTurn').style.display = 'flex';
-    toast(`Best server: ${turns.length>0 ? turns[0].srv.label : stuns[0].srv.label}`);
+    const btn = g('turnStatusBtn');
+    if (btn) { btn.textContent=`⚙ TURN: ${best.srv.label} (${best.ms}ms)`; btn.style.color='var(--g)'; btn.style.borderColor='var(--g)'; }
+    toast(`Best: ${best.srv.label} — ${best.ms}ms`);
   } else {
     toast('No servers reachable!', 'e');
+    const btn=g('turnStatusBtn'); if(btn){btn.textContent='⚙ No TURN found';btn.style.color='var(--r)';}
   }
 }
 
-function testOneTurn(srv) {
+function testOneTurn(srv, timeoutMs=4000) {
   return new Promise(res => {
     let done = false;
     const fin = v => { if(!done){done=true; try{tp.close();}catch(e){} res(v);} };
-    const timeout = setTimeout(()=>fin(false), 4000);
+    const timeout = setTimeout(()=>fin(false), timeoutMs);
     const iceEntry = srv.username
       ? {urls:srv.urls, username:srv.username, credential:srv.credential}
       : {urls:srv.urls};
@@ -520,7 +567,7 @@ async function handleNewPeer(msg) {
     await pc.setLocalDescription(await pc.createAnswer());
     await gatherICE(pc);
     // Send answer back tagged with peerId so peer knows it's for them
-    await sigPost(myCode, {type:'host-answer', peerId, sdp:pc.localDescription, nick:myNick});
+    await sigPost(myCode, {type:'host-answer', peerId, sdp:stripSDP(pc.localDescription), nick:myNick});
   } catch(e) {
     try{pc.close();}catch(ex){}
   }
@@ -549,7 +596,7 @@ async function doJoin() {
     await pc.setLocalDescription(await pc.createOffer());
     await gatherICE(pc);
     // Post our join request (offer) to the room topic
-    await sigPost(code, {type:'join-request', peerId, sdp:pc.localDescription, nick:myNick});
+    sigPost(myCode, {type:'join-request', peerId, sdp:stripSDP(pc.localDescription), nick:myNick});
   } catch(e) {
     toast('Failed to connect','e');
     btn.disabled=false; btn.innerHTML='Join room →'; pstat('offline',false);
@@ -674,24 +721,61 @@ function makePeerConnection(peerId) {
   return pc;
 }
 
+// ── COMPACT WIRE PROTOCOL ─────────────────────────────────────────────────
+// Array format saves ~40% vs JSON objects over TURN relay
+// [0]=hi nick, [1]=msg text nick id, [2]=ack id, [3]=typ, [4]=styp,
+// [5]=pres 0/1, [6]=ping id, [7]=pong id, [8]=relay-msg text nick id
+const W = {
+  enc(obj) {
+    switch(obj.t) {
+      case 'hi':        return JSON.stringify([0, obj.nick]);
+      case 'msg':       return JSON.stringify([1, obj.v, obj.nick, obj.id]);
+      case 'ack':       return JSON.stringify([2, obj.id]);
+      case 'typ':       return '[3]';
+      case 'styp':      return '[4]';
+      case 'pres':      return JSON.stringify([5, obj.s==='online'?1:obj.s==='away'?2:0]);
+      case 'ping':      return JSON.stringify([6, obj.id]);
+      case 'pong':      return JSON.stringify([7, obj.id]);
+      case 'relay-msg': return JSON.stringify([8, obj.v, obj.nick, obj.id]);
+      default:          return JSON.stringify(obj);
+    }
+  },
+  dec(s) {
+    const a = JSON.parse(s);
+    if (!Array.isArray(a)) return a; // legacy fallback
+    switch(a[0]) {
+      case 0: return {t:'hi',    nick:a[1]};
+      case 1: return {t:'msg',   v:a[1], nick:a[2], id:a[3]};
+      case 2: return {t:'ack',   id:a[1]};
+      case 3: return {t:'typ'};
+      case 4: return {t:'styp'};
+      case 5: return {t:'pres',  s:a[1]===1?'online':a[1]===2?'away':'offline'};
+      case 6: return {t:'ping',  id:a[1]};
+      case 7: return {t:'pong',  id:a[1]};
+      case 8: return {t:'relay-msg', v:a[1], nick:a[2], id:a[3]};
+      default: return {t:'?'};
+    }
+  }
+};
+
 function setupDC(peerId, ch) {
   const peer = peers.get(peerId);
   if (peer) peer.dc = ch;
 
   ch.onopen = () => {
-    wireOne(peerId, {t:'hi', nick:myNick});
+    wireOne(peerId, {t:'hi',   nick:myNick});
     wireOne(peerId, {t:'pres', s:'online'});
   };
-  ch.onmessage = e => { try { onMsg(peerId, JSON.parse(e.data)); } catch(_) {} };
-  ch.onclose = () => { removePeer(peerId, null); };
-  ch.onerror = () => {};
+  ch.onmessage = e => { try { onMsg(peerId, W.dec(e.data)); } catch(_) {} };
+  ch.onclose   = () => { removePeer(peerId, null); };
+  ch.onerror   = () => {};
 }
 
 function wireOne(peerId, obj) {
   const peer = peers.get(peerId);
   if (!peer||!peer.dc||peer.dc.readyState!=='open') return;
   try {
-    const s = JSON.stringify(obj);
+    const s = W.enc(obj);
     peer.dc.send(s);
     sbytes += s.length;
     sv('s-bup', (sbytes/1024).toFixed(1), 'sg');
@@ -894,6 +978,21 @@ async function detectRelay(pc){
   }catch(e){}
 }
 
+// Strip bloat from SDP before sending to ntfy — saves ~40% on signaling size
+function stripSDP(sdp) {
+  if (!sdp || !sdp.sdp) return sdp;
+  const keep = sdp.sdp.split('\r\n').filter(l =>
+    !l.startsWith('a=extmap') &&
+    !l.startsWith('a=msid') &&
+    !l.startsWith('a=rtpmap') &&
+    !l.startsWith('a=fmtp') &&
+    !l.startsWith('a=rtcp-fb') &&
+    !l.startsWith('a=ssrc') &&
+    !l.startsWith('b=')
+  ).join('\r\n');
+  return {type: sdp.type, sdp: keep};
+}
+
 // ── SIGNALING ──────────────────────────────────────────────────────────────
 function sigPost(code,data){
   return fetch(`${SIG}/direct-${code.toLowerCase()}`,{
@@ -943,6 +1042,9 @@ window.addEventListener('beforeunload',()=>broadcast({t:'pres',s:'offline'}));
 document.addEventListener('visibilitychange',()=>{
   if(peers.size>0) broadcast({t:'pres',s:document.hidden?'away':'online'});
 });
+
+// Auto-test TURN servers silently on load
+autoSelectTurn();
 </script>
 </body>
 </html>
