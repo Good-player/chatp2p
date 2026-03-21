@@ -302,8 +302,8 @@ async function doStart() {
     scr('s1'); return;
   }
 
-  // Listen for ntfy answer from new-version peer
-  sigListen(myCode,async msg=>{
+  // Listen for answer — poll first in case peer already replied, then SSE
+  sigListenForAnswer(myCode,async msg=>{
     if(msg.type==='answer'&&pc&&pc.signalingState==='have-local-offer'){
       stopSig();
       try{await pc.setRemoteDescription(msg.sdp);}catch(e){}
@@ -311,7 +311,6 @@ async function doStart() {
   });
 }
 
-// ── PEER — word code ───────────────────────────────────────────────────────
 async function doJoin() {
   const code=g('codeInp').value.trim().toUpperCase();
   if(!code){toast('Type the code first!');return;}
@@ -321,32 +320,35 @@ async function doJoin() {
   pstat('connecting…',false);
 
   let got=false;
-  sigListen(code,async msg=>{
-    if(msg.type==='offer'&&!got){
-      got=true; stopSig();
-      makePC();
-      try{
-        await pc.setRemoteDescription(msg.sdp);
-        await pc.setLocalDescription(await pc.createAnswer());
-        pc.onicecandidate=e=>{
-          if(e.candidate!==null)return;
-          sigPost(code,{type:'answer',sdp:pc.localDescription,nick:myNick}).catch(()=>{});
-        };
-      }catch(e){
-        toast('Connection failed','e');
-        btn.disabled=false; btn.innerHTML='Connect →'; pstat('offline',false);
-      }
-    }
-  });
-
-  // Timeout after 30s
-  setTimeout(()=>{
-    if(!got){
-      stopSig();
-      toast('Code not found — check spelling','e');
+  const onOffer=async msg=>{
+    if(got)return;
+    got=true; stopSig();
+    makePC();
+    try{
+      await pc.setRemoteDescription(msg.sdp);
+      await pc.setLocalDescription(await pc.createAnswer());
+      pc.onicecandidate=e=>{
+        if(e.candidate!==null)return;
+        sigPost(code,{type:'answer',sdp:pc.localDescription,nick:myNick}).catch(()=>{});
+      };
+    }catch(e){
+      toast('Connection failed','e');
       btn.disabled=false; btn.innerHTML='Connect →'; pstat('offline',false);
     }
-  },30000);
+  };
+
+  await sigListen(code,onOffer); // polls first, may call onOffer immediately
+
+  // Only start timeout if we didn't already get the offer from poll
+  if(!got){
+    setTimeout(()=>{
+      if(!got){
+        stopSig();
+        toast('Code not found — check spelling','e');
+        btn.disabled=false; btn.innerHTML='Connect →'; pstat('offline',false);
+      }
+    },30000);
+  }
 }
 
 // ── PEER — legacy paste ────────────────────────────────────────────────────
@@ -390,12 +392,64 @@ function sigPost(code,data){
     method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)
   });
 }
-function sigListen(code,cb){
+async function sigListenForAnswer(code,cb){
   stopSig();
-  const es=new EventSource(`${SIG}/direct-${code.toLowerCase()}/sse`);
-  sigPoll=es;
-  es.onmessage=e=>{try{const o=JSON.parse(e.data);cb(JSON.parse(o.message));}catch(_){}};
-  es.onerror=()=>{};
+  const topic=`direct-${code.toLowerCase()}`;
+  let handled=false;
+
+  // Poll for any answer already posted
+  try{
+    const r=await fetch(`${SIG}/${topic}/json?poll=1&since=all`);
+    const txt=await r.text();
+    for(const line of txt.trim().split('\n')){
+      if(!line)continue;
+      try{
+        const msg=JSON.parse(JSON.parse(line).message);
+        if(msg.type==='answer'){handled=true;cb(msg);return;}
+      }catch(_){}
+    }
+  }catch(_){}
+
+  // Otherwise wait via SSE
+  if(!handled){
+    const es=new EventSource(`${SIG}/${topic}/sse`);
+    sigPoll=es;
+    es.onmessage=e=>{
+      if(handled)return;
+      try{const o=JSON.parse(e.data);const msg=JSON.parse(o.message);if(msg.type==='answer'){handled=true;cb(msg);}}catch(_){}
+    };
+    es.onerror=()=>{};
+  }
+}
+
+async function sigListen(code,cb){
+  stopSig();
+  const topic=`direct-${code.toLowerCase()}`;
+  let handled=false;
+
+  // Step 1: poll for any messages already posted (host may have posted before we subscribed)
+  try{
+    const r=await fetch(`${SIG}/${topic}/json?poll=1&since=all`);
+    const txt=await r.text();
+    for(const line of txt.trim().split('\n')){
+      if(!line)continue;
+      try{
+        const msg=JSON.parse(JSON.parse(line).message);
+        if(msg.type==='offer'){handled=true;cb(msg);return;} // got it from poll, done
+      }catch(_){}
+    }
+  }catch(_){}
+
+  // Step 2: if no existing offer found, subscribe to SSE for when host posts
+  if(!handled){
+    const es=new EventSource(`${SIG}/${topic}/sse`);
+    sigPoll=es;
+    es.onmessage=e=>{
+      if(handled)return;
+      try{const o=JSON.parse(e.data);const msg=JSON.parse(o.message);if(msg.type==='offer'){handled=true;cb(msg);}}catch(_){}
+    };
+    es.onerror=()=>{};
+  }
 }
 function stopSig(){if(sigPoll){sigPoll.close();sigPoll=null;}}
 
