@@ -219,11 +219,9 @@ const WORDS=['APPLE','BRICK','CLOUD','DELTA','EAGLE','FLAME','GHOST','HONEY','IV
 'NORTH','OLIVE','PLUMB','RAVEN','SOUTH','TRAIL','VAULT','AGENT','CABLE','FOCUS'];
 
 const ICE=[
-  {urls:'stun:stun.relay.metered.ca:80'},
-  {urls:'turn:eu.relay.metered.ca:80',                username:'2cf116991a6a04cbee8fcd9a',credential:'/NmwpIw3nexKDXIi'},
-  {urls:'turn:eu.relay.metered.ca:80?transport=tcp',  username:'2cf116991a6a04cbee8fcd9a',credential:'/NmwpIw3nexKDXIi'},
-  {urls:'turn:eu.relay.metered.ca:443',               username:'2cf116991a6a04cbee8fcd9a',credential:'/NmwpIw3nexKDXIi'},
-  {urls:'turns:eu.relay.metered.ca:443?transport=tcp',username:'2cf116991a6a04cbee8fcd9a',credential:'/NmwpIw3nexKDXIi'}
+  {urls:'stun:stun.l.google.com:19302'},
+  {urls:'turn:eu.relay.metered.ca:443?transport=tcp',
+   username:'2cf116991a6a04cbee8fcd9a',credential:'/NmwpIw3nexKDXIi'}
 ];
 const SIG='https://ntfy.sh';
 
@@ -269,6 +267,21 @@ function joinTab(t) {
   g('join-raw').style.display=w?'none':'flex';
 }
 
+// Wait for ICE — max 2s, then send whatever we have.
+// Sending partial SDP is fine; browser handles relay fallback internally.
+function gatherICE(pc){
+  return new Promise(res=>{
+    // Already done
+    if(pc.iceGatheringState==='complete'){res();return;}
+    let done=false;
+    const finish=()=>{if(!done){done=true;res();}};
+    // Resolve on null candidate (natural completion)
+    pc.onicecandidate=e=>{if(e.candidate===null)finish();};
+    // Hard 2s cap — don't wait forever for slow TURN
+    setTimeout(finish,2000);
+  });
+}
+
 // ── HOST ───────────────────────────────────────────────────────────────────
 async function doStart() {
   myNick=g('nick').value.trim()||'Me';
@@ -285,17 +298,13 @@ async function doStart() {
   dc=pc.createDataChannel('chat');
   setupDC(dc);
 
-  // ICE done when onicecandidate fires with null candidate
-  pc.onicecandidate=e=>{
-    if(e.candidate!==null)return;
+  try {
+    await pc.setLocalDescription(await pc.createOffer());
+    await gatherICE(pc); // max 2s
     const sdp=JSON.stringify(pc.localDescription);
     g('rawOffer').value=sdp;
     g('rawOffer').placeholder='';
     sigPost(myCode,{type:'offer',sdp:pc.localDescription,nick:myNick}).catch(()=>{});
-  };
-
-  try {
-    await pc.setLocalDescription(await pc.createOffer());
   } catch(e) {
     toast('Failed to create offer','e');
     g('startBtn').disabled=false; g('startBtn').innerHTML='🟢 Start';
@@ -327,10 +336,8 @@ async function doJoin() {
     try{
       await pc.setRemoteDescription(msg.sdp);
       await pc.setLocalDescription(await pc.createAnswer());
-      pc.onicecandidate=e=>{
-        if(e.candidate!==null)return;
-        sigPost(code,{type:'answer',sdp:pc.localDescription,nick:myNick}).catch(()=>{});
-      };
+      await gatherICE(pc); // max 2s
+      sigPost(code,{type:'answer',sdp:pc.localDescription,nick:myNick}).catch(()=>{});
     }catch(e){
       toast('Connection failed','e');
       btn.disabled=false; btn.innerHTML='Connect →'; pstat('offline',false);
@@ -363,13 +370,11 @@ async function doJoinLegacy() {
     makePC();
     await pc.setRemoteDescription(JSON.parse(offerJson));
     await pc.setLocalDescription(await pc.createAnswer());
-    pc.onicecandidate=e=>{
-      if(e.candidate!==null)return;
-      g('rawAnsOut').value=JSON.stringify(pc.localDescription);
-      g('rawAnsOut').placeholder='';
-      g('legacyAnsArea').style.display='flex';
-      btn.innerHTML='✓ Done'; pstat('waiting…',false);
-    };
+    await gatherICE(pc); // max 2s
+    g('rawAnsOut').value=JSON.stringify(pc.localDescription);
+    g('rawAnsOut').placeholder='';
+    g('legacyAnsArea').style.display='flex';
+    btn.innerHTML='✓ Done'; pstat('waiting…',false);
   }catch(e){
     btn.disabled=false; btn.innerHTML='Generate reply code →';
     toast('Bad offer code — check paste','e');
