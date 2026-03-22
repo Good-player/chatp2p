@@ -349,10 +349,14 @@ p b{color:var(--t)}
 'use strict';
 
 // ── TURN SERVERS ───────────────────────────────────────────────────────────
-// group: 'main' = ExpressTurn, 'stun' = Google STUNs, 'other' = everything else
+// group: 'main' = primary TURN, 'stun' = Google STUNs, 'other' = everything else
 const ALL_TURNS = [
-  // ── Main server ───────────────────────────────────────────────────────────
-  {group:'main', label:'ExpressTurn',         urls:'turn:free.expressturn.com:3478',              username:'000000002089490852',       credential:'47MfC+l9nOTiijmLTIGyZ32gXqQ='},
+  // ── Main servers ──────────────────────────────────────────────────────────
+  {group:'main', label:'OpenRelay :80',       urls:'turn:openrelay.metered.ca:80',                 username:'openrelayproject', credential:'openrelayproject'},
+  {group:'main', label:'OpenRelay TCP80',     urls:'turn:openrelay.metered.ca:80?transport=tcp',   username:'openrelayproject', credential:'openrelayproject'},
+  {group:'main', label:'OpenRelay TCP443',    urls:'turn:openrelay.metered.ca:443?transport=tcp',  username:'openrelayproject', credential:'openrelayproject'},
+  {group:'main', label:'OpenRelay TLS443',    urls:'turns:openrelay.metered.ca:443?transport=tcp', username:'openrelayproject', credential:'openrelayproject'},
+  {group:'main', label:'ExpressTurn',         urls:'turn:free.expressturn.com:3478',               username:'000000002089490852',       credential:'47MfC+l9nOTiijmLTIGyZ32gXqQ='},
   // ── Google STUN ───────────────────────────────────────────────────────────
   {group:'stun', label:'Google stun.l :19302',     urls:'stun:stun.l.google.com:19302'},
   {group:'stun', label:'Google stun.l :5349',      urls:'stun:stun.l.google.com:5349'},
@@ -397,9 +401,17 @@ const OTHER_RESOURCES = [
 ];
 
 let ICE = [
+  // STUN
   {urls:'stun:stun.l.google.com:19302'},
-  {urls:'turn:free.expressturn.com:3478', username:'000000002089490852', credential:'47MfC+l9nOTiijmLTIGyZ32gXqQ='},
-  {urls:'turn:eu.relay.metered.ca:443?transport=tcp', username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'}
+  {urls:'stun:stun1.l.google.com:19302'},
+  // Open Relay (confirmed working, completely free, no account needed)
+  {urls:'turn:openrelay.metered.ca:80',                 username:'openrelayproject', credential:'openrelayproject'},
+  {urls:'turn:openrelay.metered.ca:80?transport=tcp',   username:'openrelayproject', credential:'openrelayproject'},
+  {urls:'turn:openrelay.metered.ca:443?transport=tcp',  username:'openrelayproject', credential:'openrelayproject'},
+  {urls:'turns:openrelay.metered.ca:443?transport=tcp', username:'openrelayproject', credential:'openrelayproject'},
+  // Metered fallback (same account, may still work)
+  {urls:'turn:eu.relay.metered.ca:80',                  username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
+  {urls:'turn:eu.relay.metered.ca:443?transport=tcp',   username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
 ];
 let turnAutoSelected = false;
 
@@ -515,9 +527,7 @@ async function startCall(targetPeerId) {
     setTimeout(() => setOpusBitrate(sender, 128000), 1500);
   });
   try {
-    const offer = await peer.pc.createOffer();
-    await peer.pc.setLocalDescription(offer);
-    await gatherICE(peer.pc);
+    await setLocalAndGather(peer.pc, await peer.pc.createOffer());
     wireOne(targetId, {t:'call-req', nick:myNick, sdp:peer.pc.localDescription});
   } catch(e) { toast('Call setup failed','e'); _cleanupCall(); return; }
   toast('Calling ' + (peer.nick || 'peer') + '…');
@@ -571,9 +581,7 @@ async function answerCall() {
   // Complete renegotiation: apply caller's new offer, send answer
   try {
     await peer.pc.setRemoteDescription(incomingSDP);
-    const answer = await peer.pc.createAnswer();
-    await peer.pc.setLocalDescription(answer);
-    await gatherICE(peer.pc);
+    await setLocalAndGather(peer.pc, await peer.pc.createAnswer());
     wireOne(peerId, {t:'call-ans', nick:myNick, sdp:peer.pc.localDescription});
     onCallConnected(peerId);
     playBeep(880, 0.1);
@@ -674,8 +682,8 @@ async function autoSelectTurn() {
   }));
   const turns = results.filter(r=>r.ok&&r.srv.username).sort((a,b)=>a.ms-b.ms);
   const stuns = results.filter(r=>r.ok&&!r.srv.username).sort((a,b)=>a.ms-b.ms);
-  const expressTurn = turns.find(r=>r.srv.label==='ExpressTurn');
-  const bestTurn = expressTurn || (turns.length>0?turns[0]:null);
+  const openRelay = turns.find(r=>r.srv.label.startsWith('OpenRelay')&&r.ok); const expressTurn = turns.find(r=>r.srv.label==='ExpressTurn'&&r.ok);
+  const bestTurn = openRelay || expressTurn || (turns.length>0?turns[0]:null);
   // Best STUN: prefer fastest Google STUN
   const bestStun = stuns.find(r=>r.srv.group==='stun') || stuns[0];
   if (bestTurn||bestStun) {
@@ -780,8 +788,8 @@ async function runTurnTest() {
   // Pick best
   const turns = serverResults.filter(r=>r.ok&&r.srv.username).sort((a,b)=>a.ms-b.ms);
   const stuns = serverResults.filter(r=>r.ok&&!r.srv.username).sort((a,b)=>a.ms-b.ms);
-  const expressTurn = turns.find(r=>r.srv.label==='ExpressTurn');
-  const bestTurn = expressTurn||(turns.length>0?turns[0]:null);
+  const openRelay = turns.find(r=>r.srv.label.startsWith('OpenRelay')&&r.ok); const expressTurn = turns.find(r=>r.srv.label==='ExpressTurn'&&r.ok);
+  const bestTurn = openRelay || expressTurn || (turns.length>0?turns[0]:null);
   const bestStun = stuns.find(r=>r.srv.group==='stun')||stuns[0];
 
   if (bestTurn||bestStun) {
@@ -877,8 +885,7 @@ async function joinPublic(roomCode) {
   setupDC(peerId, dc);
 
   try {
-    await pc.setLocalDescription(await pc.createOffer());
-    await gatherICE(pc);
+    await setLocalAndGather(pc, await pc.createOffer());
     await sigPost(roomCode, {type:'join-request', peerId, sdp:stripSDP(pc.localDescription), nick:myNick});
   } catch(e) {
     toast('Failed to join room', 'e');
@@ -932,24 +939,29 @@ async function joinPublic(roomCode) {
   } catch(_) {}
 
   if (!got) {
-    const es = new EventSource(`${SIG}/direct-${roomCode.toLowerCase()}/sse`);
-    sigPollAnswer = es;
-    es.onmessage = async e => {
-      if (got) return;
+    let since = Math.floor(Date.now()/1000) - 2;
+    sigAnswerTimer = setInterval(async () => {
+      if (got) { clearInterval(sigAnswerTimer); sigAnswerTimer = null; return; }
       try {
-        const outer = JSON.parse(e.data);
-        const msg = JSON.parse(outer.message);
-        if (msg.type==='host-answer' && msg.peerId===peerId) {
-          got=true; es.close(); sigPollAnswer=null;
-          await pc.setRemoteDescription(msg.sdp);
+        const r = await fetch(`${SIG}/direct-${roomCode.toLowerCase()}/json?poll=1&since=${since}`);
+        const txt = await r.text();
+        since = Math.floor(Date.now()/1000) - 1;
+        for (const line of txt.trim().split('\n')) {
+          if (!line) continue;
+          try {
+            const msg = JSON.parse(JSON.parse(line).message);
+            if (msg.type==='host-answer' && msg.peerId===peerId && !got) {
+              got=true; clearInterval(sigAnswerTimer); sigAnswerTimer=null;
+              await pc.setRemoteDescription(msg.sdp);
+            }
+          } catch(_) {}
         }
       } catch(_) {}
-    };
-    es.onerror = ()=>{};
+    }, 1500);
 
     setTimeout(()=>{
       if (!got) {
-        stopSig(); if(sigPollAnswer){sigPollAnswer.close();sigPollAnswer=null;}
+        stopSig();
         sys('⚠️ Host not responding — you are now hosting.');
         const p = peers.get(peerId);
         if (p) { try{p.dc&&p.dc.close();}catch(_){} try{p.pc.close();}catch(_){} }
@@ -964,7 +976,8 @@ async function joinPublic(roomCode) {
 }
 const peers=new Map();
 let myNick='Me',myCode='',isHost=false;
-let sigPoll=null,sigPollAnswer=null;
+let sigPoll=null,sigPollAnswer=null; // kept for legacy compat refs
+let sigPollTimer=null,sigAnswerTimer=null;
 let msgN=0,sent=0,recv=0,reads=0,sbytes=0,rbytes=0,pS=0,pL=0;
 const pings={},hist=[];
 let connAt=null,upTmr=null,lastPres=null,myTyping=false,typOff=null;
@@ -1011,16 +1024,29 @@ function fullReset(){
   const badge=g('pubBadge');if(badge)badge.style.display='none';
 }
 
-function gatherICE(pc){
+// gatherICE — waits for ICE candidates to include at least one srflx (STUN/public IP)
+// or relay candidate, up to maxMs. Falls back after timeout with whatever was gathered.
+function gatherICE(pc, maxMs=5000){
   return new Promise(res=>{
     if(pc.iceGatheringState==='complete'){res();return;}
-    let done=false;
-    const finish=()=>{if(!done){done=true;res();}};
-    // Use addEventListener instead of assignment — avoids overwriting any existing onicecandidate handler
-    const handler=e=>{if(e.candidate===null){pc.removeEventListener('icecandidate',handler);finish();}};
+    let done=false, hasSrflx=false;
+    const finish=()=>{if(!done){done=true;pc.removeEventListener('icecandidate',handler);res();}};
+    const handler=e=>{
+      if(!e.candidate){finish();return;}
+      const t=e.candidate.type||(e.candidate.candidate.match(/typ (\w+)/)||[])[1];
+      if(t==='srflx'||t==='relay'){hasSrflx=true;setTimeout(finish,300);}
+    };
     pc.addEventListener('icecandidate',handler);
-    setTimeout(finish,2000);
+    setTimeout(finish,maxMs);
   });
+}
+
+// setLocalAndGather — pre-attaches ICE listener BEFORE setLocalDescription
+// to fix race condition where fast browsers fire candidates before listener attaches
+async function setLocalAndGather(pc, desc, maxMs=5000){
+  const p=gatherICE(pc,maxMs); // attach listener FIRST
+  await pc.setLocalDescription(desc);
+  await p; // then wait
 }
 
 async function _becomePublicHost(roomCode) {
@@ -1086,8 +1112,7 @@ async function generateHostOffer(){
   };
   tpc.ondatachannel=e=>setupDC(legacyId,e.channel);
   try{
-    await tpc.setLocalDescription(await tpc.createOffer());
-    await gatherICE(tpc);
+    await setLocalAndGather(tpc, await tpc.createOffer());
     g('rawOffer').value=JSON.stringify(tpc.localDescription);
     g('rawOffer').placeholder='';
     hostTemplatePc=tpc; // keep alive for acceptRawAnswer
@@ -1097,19 +1122,26 @@ async function generateHostOffer(){
   }
 }
 
-function hostListenLoop(){
+// ── SIGNALING: poll-based (no SSE — avoids Firefox CORS bug on EventSource) ──
+function hostListenLoop() {
   stopSig();
-  sigPost(myCode,{type:'beacon',nick:myNick}).catch(()=>{});
-  const es=new EventSource(`${SIG}/direct-${myCode.toLowerCase()}/sse`);
-  sigPoll=es;
-  es.onmessage=async e=>{
-    try{
-      const outer=JSON.parse(e.data);
-      const msg=JSON.parse(outer.message);
-      if(msg.type==='join-request') await handleNewPeer(msg);
-    }catch(_){}
-  };
-  es.onerror=()=>{};
+  sigPost(myCode, {type:'beacon', nick:myNick}).catch(()=>{});
+  // Poll every 2s for new join-requests using timestamp
+  let lastTime = Math.floor(Date.now()/1000) - 2;
+  sigPollTimer = setInterval(async () => {
+    try {
+      const r = await fetch(`${SIG}/direct-${myCode.toLowerCase()}/json?poll=1&since=${lastTime}`);
+      const txt = await r.text();
+      lastTime = Math.floor(Date.now()/1000) - 1;
+      for (const line of txt.trim().split('\n')) {
+        if (!line) continue;
+        try {
+          const msg = JSON.parse(JSON.parse(line).message);
+          if (msg.type === 'join-request') await handleNewPeer(msg);
+        } catch(_) {}
+      }
+    } catch(_) {}
+  }, 2000);
 }
 
 async function handleNewPeer(msg){
@@ -1118,8 +1150,7 @@ async function handleNewPeer(msg){
   const pc=makePeerConnection(peerId);
   try{
     await pc.setRemoteDescription(msg.sdp);
-    await pc.setLocalDescription(await pc.createAnswer());
-    await gatherICE(pc);
+    await setLocalAndGather(pc, await pc.createAnswer());
     await sigPost(myCode,{type:'host-answer',peerId,sdp:stripSDP(pc.localDescription),nick:myNick});
   }catch(e){try{pc.close();}catch(ex){}}
 }
@@ -1137,45 +1168,45 @@ async function doJoin(){
   const dc=pc.createDataChannel('chat');
   setupDC(peerId,dc);
   try{
-    await pc.setLocalDescription(await pc.createOffer());
-    await gatherICE(pc);
+    await setLocalAndGather(pc, await pc.createOffer());
     // MUST await — listenForAnswer polls immediately after, needs request delivered first
     await sigPost(myCode,{type:'join-request',peerId,sdp:stripSDP(pc.localDescription),nick:myNick});
   }catch(e){
     toast('Failed to connect','e');btn.disabled=false;btn.innerHTML='Join room →';pstat('offline',false);return;
   }
   let got=false;
-  const listenForAnswer=async()=>{
-    // Wait briefly — give host time to receive join-request and post answer
-    await new Promise(r=>setTimeout(r,800));
-    try{
-      const r=await fetch(`${SIG}/direct-${code.toLowerCase()}/json?poll=1&since=all`);
-      const txt=await r.text();
-      for(const line of txt.trim().split('\n')){
-        if(!line)continue;
-        try{
-          const msg=JSON.parse(JSON.parse(line).message);
-          if(msg.type==='host-answer'&&msg.peerId===peerId&&!got){got=true;await pc.setRemoteDescription(msg.sdp);return;}
-        }catch(_){}
-      }
-    }catch(_){}
-    if(!got){
-      const es=new EventSource(`${SIG}/direct-${code.toLowerCase()}/sse`);
-      sigPollAnswer=es;
-      es.onmessage=async e=>{
-        if(got)return;
-        try{const outer=JSON.parse(e.data);const msg=JSON.parse(outer.message);if(msg.type==='host-answer'&&msg.peerId===peerId){got=true;es.close();sigPollAnswer=null;await pc.setRemoteDescription(msg.sdp);}}catch(_){}
-      };
-      es.onerror=()=>{};
+  // Poll for host-answer — no SSE to avoid Firefox CORS issues with EventSource
+  await new Promise(r=>setTimeout(r,800));
+  // Immediate first poll
+  try{
+    const r=await fetch(`${SIG}/direct-${code.toLowerCase()}/json?poll=1&since=all`);
+    const txt=await r.text();
+    for(const line of txt.trim().split('\n')){
+      if(!line)continue;
+      try{const msg=JSON.parse(JSON.parse(line).message);if(msg.type==='host-answer'&&msg.peerId===peerId&&!got){got=true;await pc.setRemoteDescription(msg.sdp);}}catch(_){}
     }
-  };
-  await listenForAnswer();
+  }catch(_){}
+  // Repeat poll every 1.5s until answer arrives or timeout
+  if(!got){
+    let since=Math.floor(Date.now()/1000)-2;
+    sigAnswerTimer=setInterval(async()=>{
+      if(got){clearInterval(sigAnswerTimer);sigAnswerTimer=null;return;}
+      try{
+        const r=await fetch(`${SIG}/direct-${code.toLowerCase()}/json?poll=1&since=${since}`);
+        const txt=await r.text();
+        since=Math.floor(Date.now()/1000)-1;
+        for(const line of txt.trim().split('\n')){
+          if(!line)continue;
+          try{const msg=JSON.parse(JSON.parse(line).message);if(msg.type==='host-answer'&&msg.peerId===peerId&&!got){got=true;clearInterval(sigAnswerTimer);sigAnswerTimer=null;await pc.setRemoteDescription(msg.sdp);}}catch(_){}
+        }
+      }catch(_){}
+    },1500);
+  }
   setTimeout(()=>{
     if(!got){
-      stopSig();if(sigPollAnswer){sigPollAnswer.close();sigPollAnswer=null;}
+      stopSig();
       toast('Room not found or timed out','e');
       btn.disabled=false;btn.innerHTML='Join room →';pstat('offline',false);
-      // Close and remove the PC to prevent memory leak
       const timedOutPeer=peers.get(peerId);
       if(timedOutPeer){try{if(timedOutPeer.dc)timedOutPeer.dc.close();}catch(e){}try{timedOutPeer.pc.close();}catch(e){}}
       peers.delete(peerId);
@@ -1193,8 +1224,7 @@ async function doJoinLegacy(){
   try{
     const pc=makePeerConnection(peerId);
     await pc.setRemoteDescription(JSON.parse(offerJson));
-    await pc.setLocalDescription(await pc.createAnswer());
-    await gatherICE(pc);
+    await setLocalAndGather(pc, await pc.createAnswer());
     g('rawAnsOut').value=JSON.stringify(pc.localDescription);g('rawAnsOut').placeholder='';
     g('legacyAnsArea').style.display='flex';btn.innerHTML='✓ Done';pstat('waiting…',false);
   }catch(e){btn.disabled=false;btn.innerHTML='Generate reply code →';toast('Bad offer code','e');}
@@ -1529,7 +1559,12 @@ function stripSDP(sdp){
 }
 
 function sigPost(code,data){return fetch(`${SIG}/direct-${code.toLowerCase()}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});}
-function stopSig(){if(sigPoll){sigPoll.close();sigPoll=null;}if(sigPollAnswer){sigPollAnswer.close();sigPollAnswer=null;}}
+function stopSig(){
+  if(sigPollTimer){clearInterval(sigPollTimer);sigPollTimer=null;}
+  if(sigAnswerTimer){clearInterval(sigAnswerTimer);sigAnswerTimer=null;}
+  if(sigPoll){sigPoll.close();sigPoll=null;}
+  if(sigPollAnswer){sigPollAnswer.close();sigPollAnswer=null;}
+}
 
 // ── COPY HELPERS ──────────────────────────────────────────────────────────
 function copyCode(){if(!myCode)return;navigator.clipboard.writeText(myCode).then(()=>{const b=g('cpyBtn');b.textContent='copied!';setTimeout(()=>b.textContent='copy',2000);});}
