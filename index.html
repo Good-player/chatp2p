@@ -826,7 +826,11 @@ const PUBLIC_ROOMS = {
   GENERAL: {name:'General', icon:'💬'},
   RANDOM:  {name:'Random',  icon:'🎲'},
 };
-let isPublicRoom = false; // true when in a public room
+
+const SIG   = 'https://ntfy.sh';
+const WORDS = ['APPLE','BRICK','CLOUD','DELTA','EAGLE','FLAME','GHOST','HONEY','IVORY','JOKER','KITE','LEMON','MANGO','NOBLE','OCEAN','PIANO','QUEEN','RIVER','STORM','TIGER','ULTRA','VITAL','WHALE','AMBER','BLAZE','CHESS','DRIFT','EMBER','FROST','GROVE','HATCH','KARMA','LUNAR','MAPLE','ORBIT','PEACH','QUEST','RADAR','SCOUT','TORCH','VAPOR','WALTZ','ARROW','CRANE','ELBOW','FLUTE','GRANT','INDEX','LANCE','MERIT','NORTH','OLIVE','PLUMB','RAVEN','SOUTH','TRAIL','VAULT','AGENT','CABLE','FOCUS'];
+
+let isPublicRoom = false;
 
 async function joinPublic(roomCode) {
   const nick = g('nick').value.trim();
@@ -958,8 +962,6 @@ async function joinPublic(roomCode) {
     }, 10000);
   }
 }
-const WORDS=['APPLE','BRICK','CLOUD','DELTA','EAGLE','FLAME','GHOST','HONEY','IVORY','JOKER','KITE','LEMON','MANGO','NOBLE','OCEAN','PIANO','QUEEN','RIVER','STORM','TIGER','ULTRA','VITAL','WHALE','AMBER','BLAZE','CHESS','DRIFT','EMBER','FROST','GROVE','HATCH','KARMA','LUNAR','MAPLE','ORBIT','PEACH','QUEST','RADAR','SCOUT','TORCH','VAPOR','WALTZ','ARROW','CRANE','ELBOW','FLUTE','GRANT','INDEX','LANCE','MERIT','NORTH','OLIVE','PLUMB','RAVEN','SOUTH','TRAIL','VAULT','AGENT','CABLE','FOCUS'];
-
 const peers=new Map();
 let myNick='Me',myCode='',isHost=false;
 let sigPoll=null,sigPollAnswer=null;
