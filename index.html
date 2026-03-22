@@ -832,17 +832,41 @@ async function joinPublic(roomCode) {
   const nick = g('nick').value.trim();
   if (!nick) { toast('Enter your name first!'); g('nick').focus(); return; }
   isPublicRoom = true;
-  // Pre-fill the code input and join as a peer
-  // Public rooms always have a persistent host on the fixed code
-  // Everyone joins as a peer — the room stays open via ntfy signaling
   myNick = nick;
   myCode = roomCode;
-  isHost = false;
   pstat('connecting…', false);
 
-  const btn = document.querySelector(`.pub-room[onclick="joinPublic('${roomCode}')"] .pub-join`);
-  if (btn) btn.textContent = '…';
+  // Disable all pub-room buttons while connecting
+  document.querySelectorAll('.pub-room').forEach(el=>el.style.pointerEvents='none');
+  document.querySelectorAll('.pub-join').forEach(el=>el.textContent='…');
 
+  const room = PUBLIC_ROOMS[roomCode];
+
+  // Step 1: check if a host is already active by polling ntfy for a recent beacon
+  let hostExists = false;
+  try {
+    const r = await fetch(`${SIG}/direct-${roomCode.toLowerCase()}/json?poll=1&since=10m`);
+    const txt = await r.text();
+    for (const line of txt.trim().split('\n')) {
+      if (!line) continue;
+      try {
+        const msg = JSON.parse(JSON.parse(line).message);
+        if (msg.type === 'beacon') { hostExists = true; break; }
+      } catch(_) {}
+    }
+  } catch(_) {}
+
+  if (!hostExists) {
+    // Nobody hosting — become host immediately, no waiting
+    isHost = true;
+    document.querySelectorAll('.pub-room').forEach(el=>el.style.pointerEvents='');
+    document.querySelectorAll('.pub-join').forEach(el=>el.textContent='Join →');
+    await _becomePublicHost(roomCode);
+    return;
+  }
+
+  // Step 2: host exists — join as peer
+  isHost = false;
   const peerId = Math.random().toString(36).slice(2,10);
   const pc = makePeerConnection(peerId);
   const dc = pc.createDataChannel('chat');
@@ -854,70 +878,85 @@ async function joinPublic(roomCode) {
     await sigPost(roomCode, {type:'join-request', peerId, sdp:stripSDP(pc.localDescription), nick:myNick});
   } catch(e) {
     toast('Failed to join room', 'e');
-    if (btn) btn.textContent = 'Join →';
     pstat('offline', false);
+    isPublicRoom = false;
+    const p = peers.get(peerId);
+    if (p) { try{p.dc&&p.dc.close();}catch(_){} try{p.pc.close();}catch(_){} }
     peers.delete(peerId);
+    document.querySelectorAll('.pub-room').forEach(el=>el.style.pointerEvents='');
+    document.querySelectorAll('.pub-join').forEach(el=>el.textContent='Join →');
     return;
   }
 
-  // Show public badge when connected
-  const room = PUBLIC_ROOMS[roomCode];
+  // Show chat immediately in "connecting" state so user isn't stuck on start screen
+  if (!connAt) {
+    connAt = Date.now();
+    g('mainCard').style.display = 'none';
+    g('chatCard').style.display = 'block';
+    enableIn();
+    upTmr = setInterval(()=>{
+      sv('s-up', upt(Math.floor((Date.now()-connAt)/1000)), 'sp');
+      sv('s-peers', countOnline(), 'sg');
+      const now=performance.now(); for(const id in pings){if(now-pings[id]>8000){delete pings[id];pL++;}}
+    }, 5000);
+  }
+  // Set badge
   if (room) {
     g('pubBadgeName').textContent = room.icon + ' ' + room.name;
     g('pubBadge').style.display = 'inline-flex';
   }
-  g('s-code').textContent = roomCode;
+  sv('s-code', roomCode, 'sg');
+  sys(`🔌 Joining ${room?.name||roomCode}…`);
+  document.querySelectorAll('.pub-room').forEach(el=>el.style.pointerEvents='');
+  document.querySelectorAll('.pub-join').forEach(el=>el.textContent='Join →');
 
   // Listen for host answer
   let got = false;
-  const listenForAnswer = async () => {
-    await new Promise(r => setTimeout(r, 800));
-    try {
-      const r = await fetch(`${SIG}/direct-${roomCode.toLowerCase()}/json?poll=1&since=all`);
-      const txt = await r.text();
-      for (const line of txt.trim().split('\n')) {
-        if (!line) continue;
-        try {
-          const msg = JSON.parse(JSON.parse(line).message);
-          if (msg.type==='host-answer' && msg.peerId===peerId && !got) {
-            got=true; await pc.setRemoteDescription(msg.sdp); return;
-          }
-        } catch(_) {}
+  await new Promise(r => setTimeout(r, 800));
+  try {
+    const r = await fetch(`${SIG}/direct-${roomCode.toLowerCase()}/json?poll=1&since=all`);
+    const txt = await r.text();
+    for (const line of txt.trim().split('\n')) {
+      if (!line) continue;
+      try {
+        const msg = JSON.parse(JSON.parse(line).message);
+        if (msg.type==='host-answer' && msg.peerId===peerId && !got) {
+          got=true; await pc.setRemoteDescription(msg.sdp);
+        }
+      } catch(_) {}
+    }
+  } catch(_) {}
+
+  if (!got) {
+    const es = new EventSource(`${SIG}/direct-${roomCode.toLowerCase()}/sse`);
+    sigPollAnswer = es;
+    es.onmessage = async e => {
+      if (got) return;
+      try {
+        const outer = JSON.parse(e.data);
+        const msg = JSON.parse(outer.message);
+        if (msg.type==='host-answer' && msg.peerId===peerId) {
+          got=true; es.close(); sigPollAnswer=null;
+          await pc.setRemoteDescription(msg.sdp);
+        }
+      } catch(_) {}
+    };
+    es.onerror = ()=>{};
+
+    setTimeout(()=>{
+      if (!got) {
+        stopSig(); if(sigPollAnswer){sigPollAnswer.close();sigPollAnswer=null;}
+        sys('⚠️ Host not responding — you are now hosting.');
+        const p = peers.get(peerId);
+        if (p) { try{p.dc&&p.dc.close();}catch(_){} try{p.pc.close();}catch(_){} }
+        peers.delete(peerId);
+        isHost = true;
+        hostListenLoop();
+        sigPost(roomCode, {type:'beacon', nick:myNick}).catch(()=>{});
+        pstat('hosting…', false);
       }
-    } catch(_) {}
-    if (!got) {
-      const es = new EventSource(`${SIG}/direct-${roomCode.toLowerCase()}/sse`);
-      sigPollAnswer = es;
-      es.onmessage = async e => {
-        if (got) return;
-        try {
-          const outer = JSON.parse(e.data);
-          const msg = JSON.parse(outer.message);
-          if (msg.type==='host-answer' && msg.peerId===peerId) {
-            got=true; es.close(); sigPollAnswer=null;
-            await pc.setRemoteDescription(msg.sdp);
-          }
-        } catch(_) {}
-      };
-      es.onerror = ()=>{};
-    }
-  };
-
-  await listenForAnswer();
-
-  setTimeout(()=>{
-    if (!got) {
-      stopSig(); if(sigPollAnswer){sigPollAnswer.close();sigPollAnswer=null;}
-      // Public room: nobody hosting yet — become the host
-      toast(`Nobody in ${roomCode} yet — starting the room!`);
-      isHost = true; isPublicRoom = true;
-      const timedOutPeer = peers.get(peerId);
-      if (timedOutPeer) { try{if(timedOutPeer.dc)timedOutPeer.dc.close();}catch(e){} try{timedOutPeer.pc.close();}catch(e){} }
-      peers.delete(peerId);
-      // Become host of this public room
-      _becomePublicHost(roomCode);
-    }
-  }, 5000); // shorter timeout for public rooms — 5s then host
+    }, 10000);
+  }
 }
 const WORDS=['APPLE','BRICK','CLOUD','DELTA','EAGLE','FLAME','GHOST','HONEY','IVORY','JOKER','KITE','LEMON','MANGO','NOBLE','OCEAN','PIANO','QUEEN','RIVER','STORM','TIGER','ULTRA','VITAL','WHALE','AMBER','BLAZE','CHESS','DRIFT','EMBER','FROST','GROVE','HATCH','KARMA','LUNAR','MAPLE','ORBIT','PEACH','QUEST','RADAR','SCOUT','TORCH','VAPOR','WALTZ','ARROW','CRANE','ELBOW','FLUTE','GRANT','INDEX','LANCE','MERIT','NORTH','OLIVE','PLUMB','RAVEN','SOUTH','TRAIL','VAULT','AGENT','CABLE','FOCUS'];
 
@@ -985,12 +1024,8 @@ function gatherICE(pc){
 async function _becomePublicHost(roomCode) {
   myCode = roomCode; isHost = true;
   const room = PUBLIC_ROOMS[roomCode];
-  if (room) {
-    g('pubBadgeName').textContent = room.icon + ' ' + room.name;
-    g('pubBadge').style.display = 'inline-flex';
-  }
-  g('s-code').textContent = roomCode;
-  // Show chat immediately even without peers (public room stays open)
+
+  // Show chat immediately
   if (!connAt) {
     connAt = Date.now();
     g('mainCard').style.display = 'none';
@@ -1002,9 +1037,19 @@ async function _becomePublicHost(roomCode) {
       const now=performance.now(); for(const id in pings){if(now-pings[id]>8000){delete pings[id];pL++;}}
     }, 5000);
   }
+
+  // Set badge
+  if (room) {
+    g('pubBadgeName').textContent = room.icon + ' ' + room.name;
+    g('pubBadge').style.display = 'inline-flex';
+  }
+  sv('s-code', roomCode, 'sg');
   pstat('hosting…', false);
-  sys(`🏠 You are now hosting ${room?.name||roomCode}. Others can join!`);
+  sys(`🏠 You are hosting ${room?.name||roomCode} — others can join now!`);
   updatePeerList();
+
+  // Post beacon so future joiners know someone is here, then keep listening
+  await sigPost(roomCode, {type:'beacon', nick:myNick}).catch(()=>{});
   hostListenLoop();
 }
 
