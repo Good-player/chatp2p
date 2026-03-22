@@ -292,6 +292,7 @@ p b{color:var(--t)}
     <div class="stk"><div class="slbl">Relay</div><div class="sval sc" id="s-relay">—</div></div>
     <div class="stk"><div class="slbl">Code</div><div class="sval sg" id="s-code">—</div></div>
     <div class="stk"><div class="slbl">Status</div><div class="sval sg" id="s-status">—</div></div>
+    <div class="stk"><div class="slbl">Typing</div><div class="sval sm" id="s-typing">no</div></div>
   </div>
   <div class="msgs" id="msgs"><div class="sys">🟢 Room open!</div></div>
   <div class="typi" id="typi"><div class="td"></div><div class="td"></div><div class="td"></div><span id="typiName">Someone</span></div>
@@ -357,27 +358,40 @@ let ICE = [
 let turnAutoSelected = false;
 
 // ── SIMPLE MARKDOWN RENDERER ───────────────────────────────────────────────
-function renderMD(text) {
-  let s = esc(text);
-  // fenced code blocks
-  s = s.replace(/```([^`]*?)```/gs, (_, c) => `<pre><code>${c.trim()}</code></pre>`);
-  // inline code
-  s = s.replace(/`([^`]+?)`/g, '<code>$1</code>');
-  // bold
+function renderMD(raw) {
+  // Process line by line to handle block elements safely
+  let s = raw;
+  // Escape HTML in text but preserve markdown chars — do a targeted escape
+  // We escape only what's needed after markdown is applied
+  // Step 1: protect code blocks (extract, escape content, reinsert)
+  const codeBlocks = [];
+  s = s.replace(/```([\s\S]*?)```/g, (_, c) => {
+    const idx = codeBlocks.length;
+    codeBlocks.push(`<pre><code>${esc(c.trim())}</code></pre>`);
+    return `\x00CB${idx}\x00`;
+  });
+  const inlineCodes = [];
+  s = s.replace(/`([^`]+?)`/g, (_, c) => {
+    const idx = inlineCodes.length;
+    inlineCodes.push(`<code>${esc(c)}</code>`);
+    return `\x00IC${idx}\x00`;
+  });
+  // Now escape remaining HTML
+  s = esc(s);
+  // Markdown on escaped text — note: esc converts > to &gt; so blockquote needs &gt;
   s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   s = s.replace(/__(.+?)__/g, '<strong>$1</strong>');
-  // italic
   s = s.replace(/\*(.+?)\*/g, '<em>$1</em>');
   s = s.replace(/_(.+?)_/g, '<em>$1</em>');
-  // strikethrough
   s = s.replace(/~~(.+?)~~/g, '<del>$1</del>');
-  // blockquote
   s = s.replace(/^&gt; ?(.+)$/gm, '<blockquote>$1</blockquote>');
-  // hr
   s = s.replace(/^---$/gm, '<hr>');
-  // links [text](url) — only allow http/https
-  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-  // line breaks
+  // Links — only http/https, href is already escaped so safe
+  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]{1,300})\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  // Restore code blocks
+  s = s.replace(/\x00CB(\d+)\x00/g, (_, i) => codeBlocks[+i]);
+  s = s.replace(/\x00IC(\d+)\x00/g, (_, i) => inlineCodes[+i]);
+  // Line breaks
   s = s.replace(/\n/g, '<br>');
   return s;
 }
@@ -407,11 +421,11 @@ function playBeep(freq=880, dur=0.15) {
   try {
     const ctx = new (window.AudioContext||window.webkitAudioContext)();
     const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.connect(g); g.connect(ctx.destination);
+    const gainNode = ctx.createGain();
+    o.connect(gainNode); gainNode.connect(ctx.destination);
     o.frequency.value = freq;
-    g.gain.setValueAtTime(0.2, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
     o.start(); o.stop(ctx.currentTime + dur);
     setTimeout(() => ctx.close(), dur * 1000 + 100);
   } catch(e) {}
@@ -528,30 +542,41 @@ function declineCall() {
 
 function onCallConnected(peerId) {
   const peer = peers.get(peerId);
-  callStartedAt = Date.now();
-  callPeerId = peerId;
-  g('callPeerName').textContent = peer?.nick || 'Peer';
+  // Only start timer once — if already in call (group: another peer answered), just update display
+  if (!callStartedAt) {
+    callStartedAt = Date.now();
+    callTimerTmr = setInterval(() => {
+      const s = Math.floor((Date.now() - callStartedAt) / 1000);
+      const m = Math.floor(s / 60), sec = s % 60;
+      g('callTimer').textContent = m + ':' + String(sec).padStart(2,'0');
+    }, 1000);
+  }
+  // Update display: show group count if multiple peers in call
+  const callCount = audioSenders.size;
+  g('callPeerName').textContent = callCount > 1
+    ? `${callCount} people`
+    : (peer?.nick || 'Peer');
   g('callBar').classList.add('show');
   g('callBtn').innerHTML = '🔴';
   g('callBtn').title = 'In call';
-  // Start call timer
-  callTimerTmr = setInterval(() => {
-    const s = Math.floor((Date.now() - callStartedAt) / 1000);
-    const m = Math.floor(s / 60), sec = s % 60;
-    g('callTimer').textContent = m + ':' + String(sec).padStart(2,'0');
-  }, 1000);
-  // Animate vol bars only when not muted
-  const bars = g('callVol');
-  if (isMuted) bars.style.opacity = '0.3';
+  if (isMuted) g('callVol').style.opacity = '0.3';
 }
 
 function endCall() {
   stopRing();
-  if (callPeerId) {
-    wireOne(callPeerId, {t:'call-end'});
-    _cleanupCall();
-  }
+  // End call with ALL peers who were called (group call)
+  audioSenders.forEach((_, peerId) => wireOne(peerId, {t:'call-end'}));
+  if (callPeerId && !audioSenders.has(callPeerId)) wireOne(callPeerId, {t:'call-end'});
+  _cleanupCall();
   playBeep(440, 0.2);
+}
+
+function declineCall() {
+  if (!pendingCallFrom) return;
+  stopRing();
+  wireOne(pendingCallFrom, {t:'call-dec'});
+  pendingCallFrom = null; pendingCallSDP = null; // Bug 4: also clear SDP
+  g('callBanner').classList.remove('show');
 }
 
 function toggleMute() {
@@ -788,6 +813,8 @@ function fullReset(){
   stopSig();
   _cleanupCall();
   stopRing();
+  // Close hostTemplatePc (legacy offer PC)
+  if(hostTemplatePc){try{hostTemplatePc.close();}catch(e){} hostTemplatePc=null;}
   peers.forEach(p=>{try{if(p.dc)p.dc.close();}catch(e){}try{if(p.pc)p.pc.close();}catch(e){}});
   peers.clear();
   msgN=sent=recv=reads=sbytes=rbytes=pS=pL=0;
@@ -802,7 +829,9 @@ function gatherICE(pc){
     if(pc.iceGatheringState==='complete'){res();return;}
     let done=false;
     const finish=()=>{if(!done){done=true;res();}};
-    pc.onicecandidate=e=>{if(e.candidate===null)finish();};
+    // Use addEventListener instead of assignment — avoids overwriting any existing onicecandidate handler
+    const handler=e=>{if(e.candidate===null){pc.removeEventListener('icecandidate',handler);finish();}};
+    pc.addEventListener('icecandidate',handler);
     setTimeout(finish,2000);
   });
 }
@@ -820,16 +849,33 @@ async function doStart(){
   hostListenLoop();
 }
 
+let hostTemplatePc = null; // kept alive so acceptRawAnswer can apply the answer
+
 async function generateHostOffer(){
+  // Close old template PC if exists
+  if(hostTemplatePc){try{hostTemplatePc.close();}catch(e){} hostTemplatePc=null;}
   const tpc=new RTCPeerConnection({iceServers:ICE});
-  tpc.createDataChannel('x');
+  const legacyId='legacy-'+Math.random().toString(36).slice(2,6);
+  peers.set(legacyId,{pc:tpc,dc:null,nick:'?',online:true});
+  tpc.onconnectionstatechange=()=>{
+    if(tpc.connectionState==='connected')onPeerConnected(legacyId);
+    if(tpc.connectionState==='failed'||tpc.connectionState==='closed')removePeer(legacyId,'Connection failed');
+  };
+  tpc.oniceconnectionstatechange=()=>{
+    sv('s-ice',tpc.iceConnectionState,{connected:'sg',completed:'sg',failed:'sr',disconnected:'sr',checking:'sy'}[tpc.iceConnectionState]||'sm');
+    if(tpc.iceConnectionState==='connected'||tpc.iceConnectionState==='completed')detectRelay(tpc);
+  };
+  tpc.ondatachannel=e=>setupDC(legacyId,e.channel);
   try{
     await tpc.setLocalDescription(await tpc.createOffer());
     await gatherICE(tpc);
     g('rawOffer').value=JSON.stringify(tpc.localDescription);
     g('rawOffer').placeholder='';
-  }catch(e){}
-  try{tpc.close();}catch(e){}
+    hostTemplatePc=tpc; // keep alive for acceptRawAnswer
+  }catch(e){
+    peers.delete(legacyId);
+    try{tpc.close();}catch(ex){}
+  }
 }
 
 function hostListenLoop(){
@@ -874,12 +920,15 @@ async function doJoin(){
   try{
     await pc.setLocalDescription(await pc.createOffer());
     await gatherICE(pc);
-    sigPost(myCode,{type:'join-request',peerId,sdp:stripSDP(pc.localDescription),nick:myNick});
+    // MUST await — listenForAnswer polls immediately after, needs request delivered first
+    await sigPost(myCode,{type:'join-request',peerId,sdp:stripSDP(pc.localDescription),nick:myNick});
   }catch(e){
     toast('Failed to connect','e');btn.disabled=false;btn.innerHTML='Join room →';pstat('offline',false);return;
   }
   let got=false;
   const listenForAnswer=async()=>{
+    // Wait briefly — give host time to receive join-request and post answer
+    await new Promise(r=>setTimeout(r,800));
     try{
       const r=await fetch(`${SIG}/direct-${code.toLowerCase()}/json?poll=1&since=all`);
       const txt=await r.text();
@@ -906,7 +955,11 @@ async function doJoin(){
     if(!got){
       stopSig();if(sigPollAnswer){sigPollAnswer.close();sigPollAnswer=null;}
       toast('Room not found or timed out','e');
-      btn.disabled=false;btn.innerHTML='Join room →';pstat('offline',false);peers.delete(peerId);
+      btn.disabled=false;btn.innerHTML='Join room →';pstat('offline',false);
+      // Close and remove the PC to prevent memory leak
+      const timedOutPeer=peers.get(peerId);
+      if(timedOutPeer){try{if(timedOutPeer.dc)timedOutPeer.dc.close();}catch(e){}try{timedOutPeer.pc.close();}catch(e){}}
+      peers.delete(peerId);
     }
   },30000);
 }
@@ -931,14 +984,10 @@ async function doJoinLegacy(){
 async function acceptRawAnswer(){
   const str=g('rawAnswer').value.trim();
   if(!str){toast('Paste reply code first');return;}
-  const peerId='raw-'+Math.random().toString(36).slice(2,8);
-  const pc=makePeerConnection(peerId);
-  const dc=pc.createDataChannel('chat');
-  setupDC(peerId,dc);
+  if(!hostTemplatePc){toast('Generate offer code first','e');return;}
   try{
-    await pc.setLocalDescription(await pc.createOffer());
-    await gatherICE(pc);
-    await pc.setRemoteDescription(JSON.parse(str));
+    await hostTemplatePc.setRemoteDescription(JSON.parse(str));
+    stopSig();
   }catch(e){toast('Invalid reply code','e');}
 }
 
@@ -1041,7 +1090,9 @@ function setupDC(peerId,ch){
   const peer=peers.get(peerId);
   if(peer)peer.dc=ch;
   ch.onopen=()=>{wireOne(peerId,{t:'hi',nick:myNick});wireOne(peerId,{t:'pres',s:'online'});};
-  ch.onmessage=e=>{try{onMsg(peerId,W.dec(e.data));}catch(_){}};
+  ch.onmessage=e=>{
+    try{ onMsg(peerId,W.dec(e.data)).catch(()=>{}); }catch(_){}
+  };
   ch.onclose=()=>{removePeer(peerId,null);};
   ch.onerror=()=>{};
 }
@@ -1069,7 +1120,7 @@ function onPeerConnected(peerId){
     },5000);
     sv('s-code',myCode,'sg');
   }
-  sv('s-peers',countOnline()+1,'sg');
+  sv('s-peers', countOnline(), 'sg'); // peer is already in map, countOnline() is correct
   updatePeerList();
   if(isHost&&!sigPoll)hostListenLoop();
 }
@@ -1218,7 +1269,15 @@ async function detectRelay(pc){
 
 function stripSDP(sdp){
   if(!sdp||!sdp.sdp)return sdp;
-  const keep=sdp.sdp.split('\r\n').filter(l=>!l.startsWith('a=extmap')&&!l.startsWith('a=msid')&&!l.startsWith('a=rtpmap')&&!l.startsWith('a=fmtp')&&!l.startsWith('a=rtcp-fb')&&!l.startsWith('a=ssrc')&&!l.startsWith('b=')).join('\r\n');
+  // Only strip lines that are NOT needed for data channels or audio
+  // Keep: a=rtpmap, a=fmtp (codec params), a=rtcp-fb (needed for audio quality)
+  // Strip: video-only ssrc lines, extmap, msid
+  const keep=sdp.sdp.split('\r\n').filter(l=>
+    !l.startsWith('a=extmap')&&
+    !l.startsWith('a=msid')&&
+    !l.startsWith('a=ssrc')&&
+    !l.startsWith('b=')
+  ).join('\r\n');
   return{type:sdp.type,sdp:keep};
 }
 
