@@ -346,8 +346,19 @@ const ALL_TURNS = [
 
 // Other resources
 const OTHER_RESOURCES = [
-  {label:'Ringtone (GitHub Pages)', url:'https://good-player.github.io/chatp2p/ringtone.mp3', check: async()=>{ const r=await fetch('https://good-player.github.io/chatp2p/ringtone.mp3',{method:'HEAD'}); return r.ok; }},
-  {label:'ntfy.sh Signaling',       url:'https://ntfy.sh',  check: async()=>{ const r=await fetch('https://ntfy.sh',{method:'HEAD'}); return r.ok; }},
+  {label:'Ringtone (GitHub Pages)', url:'https://good-player.github.io/chatp2p/ringtone.mp3',
+   check: async()=>{
+     // Range request: only fetch first byte, avoids downloading whole file
+     const r=await fetch('https://good-player.github.io/chatp2p/ringtone.mp3',
+       {headers:{'Range':'bytes=0-0'}});
+     return r.ok||r.status===206;
+   }},
+  {label:'ntfy.sh Signaling', url:'https://ntfy.sh',
+   check: async()=>{
+     // GET on a known-good ntfy endpoint — HEAD not allowed by ntfy CORS
+     const r=await fetch('https://ntfy.sh/direct-pingtest/json?poll=1&since=all');
+     return r.ok;
+   }},
 ];
 
 let ICE = [
