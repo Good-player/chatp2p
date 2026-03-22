@@ -351,31 +351,24 @@ function renderMD(text) {
   return s;
 }
 
-// ── RINGTONE (Web Audio API — no external files) ───────────────────────────
-let ringInterval = null;
+// ── RINGTONE (MP3) ────────────────────────────────────────────────────────
+const RING_URL = 'https://raw.githubusercontent.com/Good-player/chatp2p/main/ringtone.mp3';
+let ringAudio = null;
 function playRing() {
   stopRing();
-  const ring = () => {
-    try {
-      const ctx = new (window.AudioContext||window.webkitAudioContext)();
-      // Two-tone phone ring: 440Hz + 480Hz, 2s on / 4s off pattern
-      [440, 480].forEach(freq => {
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.connect(g); g.connect(ctx.destination);
-        o.frequency.value = freq;
-        g.gain.setValueAtTime(0.15, ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.8);
-        o.start(); o.stop(ctx.currentTime + 1.8);
-      });
-      setTimeout(() => ctx.close(), 2000);
-    } catch(e) {}
-  };
-  ring();
-  ringInterval = setInterval(ring, 4000);
+  try {
+    ringAudio = new Audio(RING_URL);
+    ringAudio.loop = true;
+    ringAudio.volume = 0.8;
+    ringAudio.play().catch(()=>{});
+  } catch(e) {}
 }
 function stopRing() {
-  if (ringInterval) { clearInterval(ringInterval); ringInterval = null; }
+  if (ringAudio) {
+    ringAudio.pause();
+    ringAudio.currentTime = 0;
+    ringAudio = null;
+  }
 }
 
 // Call-connected sound (short beep)
@@ -961,7 +954,7 @@ function updatePeerList(){
 }
 
 // ── MESSAGES ─────────────────────────────────────────────────────────────
-function onMsg(fromId,d){
+async function onMsg(fromId,d){
   if(!d||!d.t)return;
   const peer=peers.get(fromId);
   if(d.t==='hi'){
