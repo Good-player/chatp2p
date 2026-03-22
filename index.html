@@ -169,6 +169,19 @@ p b{color:var(--t)}
 .toast{position:fixed;bottom:14px;right:14px;background:var(--card);border:1px solid var(--g);color:var(--g);font-family:var(--f);font-size:11px;padding:8px 14px;border-radius:7px;animation:ti .2s ease;z-index:9}
 .toast.e{border-color:var(--r);color:var(--r)}
 @keyframes ti{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+/* mic test */
+.mic-meter-wrap{background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.mic-db-val{font-size:36px;font-weight:700;text-align:center;color:var(--g);font-variant-numeric:tabular-nums;min-height:44px;line-height:1}
+.mic-bar-track{height:32px;background:var(--b);border-radius:8px;overflow:hidden;position:relative;touch-action:none}
+.mic-bar-fill{height:100%;width:0%;border-radius:8px;background:linear-gradient(90deg,#4ade80 0%,#fbbf24 70%,#f87171 100%);transition:width .04s linear}
+.mic-bar-peak{position:absolute;top:4px;bottom:4px;width:3px;right:0%;background:var(--r);border-radius:2px;transition:right .15s}
+.mic-bands{display:flex;gap:2px;height:48px;align-items:flex-end;padding:0 2px}
+.mic-band{flex:1;background:var(--g);border-radius:3px 3px 0 0;min-height:2px}
+.mic-label-row{display:flex;justify-content:space-between;font-size:10px;color:var(--m)}
+.mic-status{font-size:12px;text-align:center;padding:6px;border-radius:6px}
+.mic-status.ok{color:var(--g);background:rgba(74,222,128,.08)}
+.mic-status.err{color:var(--r);background:rgba(248,113,113,.08)}
+.mic-status.idle{color:var(--m)}
 </style>
 </head>
 <body>
@@ -234,6 +247,37 @@ p b{color:var(--t)}
     </div>
 
     <button class="btn sm" id="turnStatusBtn" onclick="scr('s0')" style="background:transparent;border-color:var(--b);color:var(--m);font-size:10px">⚙ Testing TURN servers…</button>
+    <button class="btn sm" onclick="openMicTest()" style="background:transparent;border-color:var(--b);color:var(--m);font-size:10px">🎙 Test microphone</button>
+  </div>
+
+  <!-- S4: mic test -->
+  <div class="scr" id="s4">
+    <div class="back" onclick="closeMicTest()">← back</div>
+    <h2>Microphone Test</h2>
+    <p>Check your mic works before joining a call. Speak and watch the level meter.</p>
+
+    <div class="mic-meter-wrap">
+      <div class="mic-db-val" id="micDbVal">— dB</div>
+
+      <!-- Main level bar -->
+      <div>
+        <div class="mic-label-row"><span>Silent</span><span>Loud</span></div>
+        <div class="mic-bar-track">
+          <div class="mic-bar-fill" id="micBarFill"></div>
+          <div class="mic-bar-peak" id="micBarPeak" style="right:100%"></div>
+        </div>
+      </div>
+
+      <!-- Frequency bands (visualiser) -->
+      <div class="mic-bands" id="micBands"></div>
+
+      <div class="mic-status idle" id="micStatus">Press Start to test your microphone</div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn g" id="micStartBtn" onclick="micTestStart()" style="flex:1;min-height:48px;font-size:15px">🎙 Start Test</button>
+      <button class="btn r" id="micStopBtn" onclick="micTestStop()" style="flex:1;min-height:48px;font-size:15px;display:none">⏹ Stop</button>
+    </div>
   </div>
 
   <!-- S2: host waiting -->
@@ -287,23 +331,23 @@ p b{color:var(--t)}
 
 <!-- CHAT -->
 <div class="card" id="chatCard" style="display:none">
-  <!-- Incoming call banner -->
+  <!-- Incoming call banner - big and obvious -->
   <div class="call-banner" id="callBanner">
     <div class="call-banner-txt">📞 <span id="callCallerName">Someone</span> is calling…</div>
     <div class="call-banner-btns">
-      <button class="cbtn ans" onclick="answerCall()">Answer</button>
-      <button class="cbtn dec" onclick="declineCall()">Decline</button>
+      <button class="cbtn ans" onclick="answerCall()">✅ Answer</button>
+      <button class="cbtn dec" onclick="declineCall()">❌ Decline</button>
     </div>
   </div>
   <!-- Active call bar -->
   <div class="call-bar" id="callBar">
     <div class="call-bar-left">
       <div class="call-vol" id="callVol"><div class="vol-bar"></div><div class="vol-bar"></div><div class="vol-bar"></div><div class="vol-bar"></div><div class="vol-bar"></div></div>
-      <span id="callPeerName">Call</span>
+      <span id="callPeerName" style="font-weight:700">Call</span>
       <span class="call-timer" id="callTimer">0:00</span>
     </div>
     <div class="call-bar-right">
-      <button class="ctl-btn" id="muteBtn" onclick="toggleMute()" title="Mute">🎙</button>
+      <button class="ctl-btn" id="muteBtn" onclick="toggleMute()" title="Mute/Unmute">🎙</button>
       <button class="ctl-btn end" onclick="endCall()" title="End call">📵</button>
     </div>
   </div>
@@ -490,58 +534,59 @@ function playBeep(freq=880, dur=0.15) {
 }
 
 // ── VOICE CALL STATE ───────────────────────────────────────────────────────
-let localStream = null;       // microphone MediaStream
-let callPeerId = null;        // who we're in a call with
+let localStream = null;
+let callPeerId = null;
+let callAudioPc = null;   // DEDICATED PC just for audio — never touches the data PC
 let callStartedAt = null;
 let callTimerTmr = null;
 let isMuted = false;
-let pendingCallFrom = null;   // peerId of incoming unanswered call
-let pendingCallSDP = null;    // SDP from caller for renegotiation
-const audioSenders = new Map(); // peerId → RTCRtpSender
+let pendingCallFrom = null;
+let pendingCallSDP = null;
+const audioSenders = new Map();
 let audioCtx = null, mixerDest = null;
-const mixerSources = new Map(); // streamId → {source, compressor}
+const mixerSources = new Map();
 
-// ── VOICE CALL FUNCTIONS ───────────────────────────────────────────────────
+// ── DEDICATED AUDIO PC ─────────────────────────────────────────────────────
+// Completely separate from the data channel PC — no renegotiation needed
+function makeAudioPC() {
+  if (callAudioPc) { try{callAudioPc.close();}catch(e){} callAudioPc=null; }
+  const apc = new RTCPeerConnection({iceServers: ICE});
+  apc.onconnectionstatechange = () => {
+    if (apc.connectionState==='failed'||apc.connectionState==='closed') {
+      sys('📵 Voice connection lost.'); _cleanupCall();
+    }
+  };
+  apc.ontrack = e => {
+    if (e.track.kind==='audio') mixIncomingAudio(e.streams[0]||new MediaStream([e.track]));
+  };
+  callAudioPc = apc;
+  return apc;
+}
+
 async function startCall(targetPeerId) {
-  // targetPeerId: specific peer to call (direct call)
   if (peers.size === 0) { toast('No peers connected'); return; }
   if (callPeerId) { toast('Already in a call'); return; }
-
-  // Determine who to call
   const targetId = targetPeerId || [...peers.keys()][0];
   const peer = peers.get(targetId);
   if (!peer) { toast('Peer not found'); return; }
-
   try {
     localStream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, sampleRate: 48000 }
+      audio: {echoCancellation:true, noiseSuppression:true, autoGainControl:true, sampleRate:48000}
     });
-  } catch(e) { toast('Microphone access denied', 'e'); return; }
-
+  } catch(e) { toast('Microphone access denied','e'); return; }
   callPeerId = targetId;
-
-  // Add tracks then renegotiate with the specific target only
+  const apc = makeAudioPC();
   localStream.getAudioTracks().forEach(track => {
-    const sender = peer.pc.addTrack(track, localStream);
+    const sender = apc.addTrack(track, localStream);
     audioSenders.set(targetId, sender);
-    setTimeout(() => setOpusBitrate(sender, 128000), 1500);
+    setTimeout(()=>setOpusBitrate(sender,128000), 1500);
   });
   try {
-    await setLocalAndGather(peer.pc, await peer.pc.createOffer());
-    wireOne(targetId, {t:'call-req', nick:myNick, sdp:peer.pc.localDescription});
-  } catch(e) { toast('Call setup failed','e'); _cleanupCall(); return; }
-  toast('Calling ' + (peer.nick || 'peer') + '…');
-  updatePeerList(); // refresh to show in-call state
-}
-
-async function addAudioToPeer(peerId) {
-  const peer = peers.get(peerId);
-  if (!peer || !peer.pc || !localStream) return;
-  localStream.getAudioTracks().forEach(track => {
-    const sender = peer.pc.addTrack(track, localStream);
-    audioSenders.set(peerId, sender);
-    setTimeout(() => setOpusBitrate(sender, 128000), 1500);
-  });
+    await setLocalAndGather(apc, await apc.createOffer());
+    wireOne(targetId, {t:'call-req', nick:myNick, sdp:apc.localDescription});
+    toast('Calling '+(peer.nick||'peer')+'\u2026');
+    updatePeerList();
+  } catch(e) { toast('Call setup failed','e'); _cleanupCall(); }
 }
 
 async function setOpusBitrate(sender, bitrate) {
@@ -561,31 +606,30 @@ async function answerCall() {
   const peerId = pendingCallFrom;
   const incomingSDP = pendingCallSDP;
   pendingCallFrom = null; pendingCallSDP = null;
-  callPeerId = peerId;
   const peer = peers.get(peerId);
-  if (!peer) return;
+  if (!peer) { toast('Peer disconnected','e'); return; }
   try {
     localStream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 48000 }
+      audio: {echoCancellation:true, noiseSuppression:true, autoGainControl:true, sampleRate:48000}
     });
   } catch(e) {
-    toast('Microphone access denied', 'e');
-    wireOne(peerId, {t:'call-dec'}); callPeerId = null; return;
+    toast('Microphone access denied','e');
+    wireOne(peerId, {t:'call-dec'}); return;
   }
-  // Add our tracks
+  callPeerId = peerId;
+  const apc = makeAudioPC();
   localStream.getAudioTracks().forEach(track => {
-    const sender = peer.pc.addTrack(track, localStream);
+    const sender = apc.addTrack(track, localStream);
     audioSenders.set(peerId, sender);
-    setTimeout(() => setOpusBitrate(sender, 128000), 1500);
+    setTimeout(()=>setOpusBitrate(sender,128000), 1500);
   });
-  // Complete renegotiation: apply caller's new offer, send answer
   try {
-    await peer.pc.setRemoteDescription(incomingSDP);
-    await setLocalAndGather(peer.pc, await peer.pc.createAnswer());
-    wireOne(peerId, {t:'call-ans', nick:myNick, sdp:peer.pc.localDescription});
+    await apc.setRemoteDescription(incomingSDP);
+    await setLocalAndGather(apc, await apc.createAnswer());
+    wireOne(peerId, {t:'call-ans', nick:myNick, sdp:apc.localDescription});
     onCallConnected(peerId);
     playBeep(880, 0.1);
-  } catch(e) { toast('Call answer failed','e'); _cleanupCall(); }
+  } catch(e) { toast('Call answer failed: '+e.message,'e'); _cleanupCall(); }
 }
 
 function declineCall() {
@@ -620,7 +664,7 @@ function onCallConnected(peerId) {
 
 function endCall() {
   stopRing();
-  // End call with ALL peers who were called (group call)
+  // Notify all peers we called
   audioSenders.forEach((_, peerId) => wireOne(peerId, {t:'call-end'}));
   if (callPeerId && !audioSenders.has(callPeerId)) wireOne(callPeerId, {t:'call-end'});
   _cleanupCall();
@@ -647,28 +691,109 @@ function toggleMute() {
 
 function _cleanupCall() {
   clearInterval(callTimerTmr); callTimerTmr = null;
-  // Remove audio senders
-  audioSenders.forEach((sender, peerId) => {
-    const peer = peers.get(peerId);
-    if (peer && peer.pc) try { peer.pc.removeTrack(sender); } catch(e) {}
-  });
+  // Close dedicated audio PC
+  if (callAudioPc) { try{callAudioPc.close();}catch(e){} callAudioPc=null; }
   audioSenders.clear();
-  // Disconnect mixer sources
-  mixerSources.forEach(({source, compressor}) => {
-    try { source.disconnect(); compressor.disconnect(); } catch(e) {}
-  });
+  // Disconnect mixer
+  mixerSources.forEach(({source,compressor})=>{try{source.disconnect();compressor.disconnect();}catch(e){}});
   mixerSources.clear();
-  // Close audio context
-  if (audioCtx) { try { audioCtx.close(); } catch(e) {} audioCtx = null; mixerDest = null; }
+  if (audioCtx) { try{audioCtx.close();}catch(e){} audioCtx=null; mixerDest=null; }
   // Stop mic
-  if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
-  callPeerId = null; callStartedAt = null; isMuted = false;
+  if (localStream) { localStream.getTracks().forEach(t=>t.stop()); localStream=null; }
+  callPeerId=null; callStartedAt=null; isMuted=false;
   g('callBar').classList.remove('show');
-  g('muteBtn').textContent = '🎙'; g('muteBtn').classList.remove('active');
-  g('callTimer').textContent = '0:00';
-  g('callVol').style.opacity = '1';
-  g('remoteAudio').srcObject = null;
-  updatePeerList(); // refresh call buttons to show 📞 again
+  g('muteBtn').textContent='🎙'; g('muteBtn').classList.remove('active');
+  g('callTimer').textContent='0:00';
+  g('callVol').style.opacity='1';
+  g('remoteAudio').srcObject=null;
+  updatePeerList();
+}
+
+// ── MIC TEST ───────────────────────────────────────────────────────────────
+let micTestStream=null,micTestCtx=null,micTestAnim=null;
+let micPeakVal=0,micPeakDecay=0;
+const MIC_BANDS=20;
+
+function openMicTest(){
+  const bandsEl=g('micBands'); bandsEl.innerHTML='';
+  for(let i=0;i<MIC_BANDS;i++){
+    const b=document.createElement('div'); b.className='mic-band'; b.style.height='2px';
+    const pct=i/MIC_BANDS;
+    b.style.background=pct<0.6?'var(--g)':pct<0.85?'var(--y)':'var(--r)';
+    bandsEl.appendChild(b);
+  }
+  scr('s4');
+}
+
+function closeMicTest(){ micTestStop(); scr('s1'); }
+
+async function micTestStart(){
+  micTestStop();
+  const st=g('micStatus'); st.className='mic-status idle'; st.textContent='Requesting microphone…';
+  try{
+    micTestStream=await navigator.mediaDevices.getUserMedia({
+      audio:{echoCancellation:false,noiseSuppression:false,sampleRate:48000}
+    });
+  }catch(e){
+    st.className='mic-status err';
+    st.textContent='❌ Microphone denied or not found. Check browser permissions.';
+    return;
+  }
+  micTestCtx=new(window.AudioContext||window.webkitAudioContext)();
+  const source=micTestCtx.createMediaStreamSource(micTestStream);
+  const analyser=micTestCtx.createAnalyser();
+  analyser.fftSize=256; analyser.smoothingTimeConstant=0.5;
+  source.connect(analyser);
+  const freqData=new Uint8Array(analyser.frequencyBinCount);
+  const timeData=new Uint8Array(analyser.fftSize);
+  const bands=g('micBands').children;
+  const binsPerBand=Math.floor(analyser.frequencyBinCount/MIC_BANDS);
+  micPeakVal=0; micPeakDecay=0;
+  st.className='mic-status ok'; st.textContent='✅ Microphone active — speak to test!';
+  g('micStartBtn').style.display='none'; g('micStopBtn').style.display='';
+
+  function frame(){
+    micTestAnim=requestAnimationFrame(frame);
+    analyser.getByteTimeDomainData(timeData);
+    let sum=0;
+    for(let i=0;i<timeData.length;i++){const s=(timeData[i]-128)/128;sum+=s*s;}
+    const rms=Math.sqrt(sum/timeData.length);
+    const db=rms>0.0001?20*Math.log10(rms):-80;
+    const dbClamped=Math.max(-60,Math.min(0,db));
+    const pct=(dbClamped+60)/60;
+    g('micDbVal').textContent=dbClamped.toFixed(1)+' dB';
+    g('micDbVal').style.color=pct>0.9?'var(--r)':pct>0.6?'var(--y)':'var(--g)';
+    g('micBarFill').style.width=(pct*100)+'%';
+    // Peak hold + decay
+    if(pct>micPeakVal){micPeakVal=pct;micPeakDecay=50;}
+    else if(micPeakDecay>0)micPeakDecay--;
+    else micPeakVal=Math.max(0,micPeakVal-0.005);
+    g('micBarPeak').style.right=((1-micPeakVal)*100)+'%';
+    // Frequency bands
+    analyser.getByteFrequencyData(freqData);
+    for(let i=0;i<MIC_BANDS&&i<bands.length;i++){
+      let s=0; for(let j=0;j<binsPerBand;j++) s+=freqData[i*binsPerBand+j];
+      const v=s/binsPerBand/255;
+      bands[i].style.height=Math.max(2,v*44)+'px';
+      bands[i].style.opacity=0.3+v*0.7;
+    }
+  }
+  frame();
+}
+
+function micTestStop(){
+  if(micTestAnim){cancelAnimationFrame(micTestAnim);micTestAnim=null;}
+  if(micTestStream){micTestStream.getTracks().forEach(t=>t.stop());micTestStream=null;}
+  if(micTestCtx){try{micTestCtx.close();}catch(e){} micTestCtx=null;}
+  const st=g('micStatus');
+  if(st){st.className='mic-status idle';st.textContent='Press Start to test your microphone';}
+  if(g('micDbVal')){g('micDbVal').textContent='— dB';g('micDbVal').style.color='var(--g)';}
+  if(g('micBarFill'))g('micBarFill').style.width='0%';
+  if(g('micBarPeak'))g('micBarPeak').style.right='100%';
+  if(g('micStartBtn'))g('micStartBtn').style.display='';
+  if(g('micStopBtn'))g('micStopBtn').style.display='none';
+  const bands=g('micBands');
+  if(bands)Array.from(bands.children).forEach(b=>{b.style.height='2px';b.style.opacity='1';});
 }
 
 // ── AUTO TURN SELECT ───────────────────────────────────────────────────────
@@ -983,7 +1108,7 @@ const pings={},hist=[];
 let connAt=null,upTmr=null,lastPres=null,myTyping=false,typOff=null;
 const MAX=200;
 
-function scr(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));g(id).classList.add('on');}
+function scr(id){if(id!=='s4'&&micTestStream)micTestStop();document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));g(id).classList.add('on');}
 
 function goJoin(){
   myNick=g('nick').value.trim()||'Me';
@@ -1461,10 +1586,9 @@ async function onMsg(fromId,d){
     playRing();
     sys(`📞 Incoming call from ${callerName}…`);
   } else if(d.t==='call-ans'){
-    // Callee sent their answer SDP — apply it to complete renegotiation
-    const peer2=peers.get(fromId);
-    if(peer2&&peer2.pc&&d.sdp){
-      try{await peer2.pc.setRemoteDescription(d.sdp);}catch(e){}
+    // Callee answered — apply their answer SDP to our audio PC
+    if(callAudioPc && d.sdp){
+      try{ await callAudioPc.setRemoteDescription(d.sdp); }catch(e){ sys('📵 Call setup failed.'); _cleanupCall(); return; }
     }
     onCallConnected(fromId);
     sys(`📞 Call connected with ${d.nick||peer?.nick||'peer'}`);
