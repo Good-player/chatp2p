@@ -400,6 +400,7 @@ let callStartedAt = null;
 let callTimerTmr = null;
 let isMuted = false;
 let pendingCallFrom = null;   // peerId of incoming unanswered call
+let pendingCallSDP = null;    // SDP from caller for renegotiation
 // For multi-peer: voice goes on the FIRST connected peer's PC (simplest model)
 // Track senders so we can remove them on hang-up
 const audioSenders = new Map(); // peerId → RTCRtpSender
@@ -408,37 +409,38 @@ const audioSenders = new Map(); // peerId → RTCRtpSender
 async function startCall() {
   if (peers.size === 0) { toast('No peers connected'); return; }
   if (callPeerId) { toast('Already in a call'); return; }
-
-  // Pick first connected peer to call
   const targetId = [...peers.keys()][0];
   const peer = peers.get(targetId);
   if (!peer) return;
-
   try {
     localStream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 48000 }
     });
-  } catch(e) {
-    toast('Microphone access denied', 'e'); return;
-  }
-
-  // Signal call request via data channel
-  wireOne(targetId, {t:'call-req', nick:myNick});
-  // Add audio track to existing PC
-  await addAudioToPeer(targetId);
-  toast('Calling ' + (peer.nick || 'peer') + '…');
+  } catch(e) { toast('Microphone access denied', 'e'); return; }
   callPeerId = targetId;
-  g('callBtn').innerHTML = '📞';
+  // Add tracks then renegotiate — addTrack alone does nothing on a live PC
+  localStream.getAudioTracks().forEach(track => {
+    const sender = peer.pc.addTrack(track, localStream);
+    audioSenders.set(targetId, sender);
+    setTimeout(() => setOpusBitrate(sender, 128000), 1500);
+  });
+  try {
+    const offer = await peer.pc.createOffer();
+    await peer.pc.setLocalDescription(offer);
+    await gatherICE(peer.pc);
+    // Send call-req WITH the new SDP so callee can complete renegotiation
+    wireOne(targetId, {t:'call-req', nick:myNick, sdp:peer.pc.localDescription});
+  } catch(e) { toast('Call setup failed','e'); _cleanupCall(); return; }
+  toast('Calling ' + (peer.nick || 'peer') + '…');
 }
 
 async function addAudioToPeer(peerId) {
   const peer = peers.get(peerId);
-  if (!peer || !peer.pc) return;
+  if (!peer || !peer.pc || !localStream) return;
   localStream.getAudioTracks().forEach(track => {
     const sender = peer.pc.addTrack(track, localStream);
     audioSenders.set(peerId, sender);
-    // Set 128kbps Opus after renegotiation settles
-    setTimeout(() => setOpusBitrate(sender, 128000), 1000);
+    setTimeout(() => setOpusBitrate(sender, 128000), 1500);
   });
 }
 
@@ -452,26 +454,40 @@ async function setOpusBitrate(sender, bitrate) {
   } catch(e) {}
 }
 
-function answerCall() {
+async function answerCall() {
   if (!pendingCallFrom) return;
   stopRing();
   g('callBanner').classList.remove('show');
   const peerId = pendingCallFrom;
-  pendingCallFrom = null;
+  const incomingSDP = pendingCallSDP;
+  pendingCallFrom = null; pendingCallSDP = null;
   callPeerId = peerId;
-  // Get mic and add to existing PC
-  navigator.mediaDevices.getUserMedia({
-    audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 48000 }
-  }).then(async stream => {
-    localStream = stream;
-    await addAudioToPeer(peerId);
-    wireOne(peerId, {t:'call-ans', nick:myNick});
+  const peer = peers.get(peerId);
+  if (!peer) return;
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 48000 }
+    });
+  } catch(e) {
+    toast('Microphone access denied', 'e');
+    wireOne(peerId, {t:'call-dec'}); callPeerId = null; return;
+  }
+  // Add our tracks
+  localStream.getAudioTracks().forEach(track => {
+    const sender = peer.pc.addTrack(track, localStream);
+    audioSenders.set(peerId, sender);
+    setTimeout(() => setOpusBitrate(sender, 128000), 1500);
+  });
+  // Complete renegotiation: apply caller's new offer, send answer
+  try {
+    await peer.pc.setRemoteDescription(incomingSDP);
+    const answer = await peer.pc.createAnswer();
+    await peer.pc.setLocalDescription(answer);
+    await gatherICE(peer.pc);
+    wireOne(peerId, {t:'call-ans', nick:myNick, sdp:peer.pc.localDescription});
     onCallConnected(peerId);
     playBeep(880, 0.1);
-  }).catch(() => {
-    toast('Microphone access denied', 'e');
-    wireOne(peerId, {t:'call-dec'});
-  });
+  } catch(e) { toast('Call answer failed','e'); _cleanupCall(); }
 }
 
 function declineCall() {
@@ -608,7 +624,14 @@ function testOneTurn(srv,timeoutMs=4000){
     const iceEntry=srv.username?{urls:srv.urls,username:srv.username,credential:srv.credential}:{urls:srv.urls};
     const tp=new RTCPeerConnection({iceServers:[iceEntry]});
     tp.createDataChannel('t');
-    tp.onicecandidate=e=>{if(e.candidate){clearTimeout(timeout);fin(true);}else if(!done){clearTimeout(timeout);fin(false);}};
+    tp.onicecandidate=e=>{
+      if(done)return;
+      if(!e.candidate){clearTimeout(timeout);fin(false);return;}
+      // Only count srflx (STUN) or relay (TURN) — not host (local) candidates
+      // host candidates appear even with no internet so they give false positives
+      const type=e.candidate.type||e.candidate.candidate.match(/typ (\w+)/)?.[1];
+      if(type==='srflx'||type==='relay'){clearTimeout(timeout);fin(true);}
+    };
     tp.createOffer().then(o=>tp.setLocalDescription(o)).catch(()=>fin(false));
   });
 }
@@ -659,7 +682,7 @@ function fullReset(){
   msgN=sent=recv=reads=sbytes=rbytes=pS=pL=0;
   hist.length=0;Object.keys(pings).forEach(k=>delete pings[k]);
   connAt=null;lastPres=null;myTyping=false;myCode='';isHost=false;
-  pendingCallFrom=null;
+  pendingCallFrom=null; pendingCallSDP=null;
   g('callBanner').classList.remove('show');
 }
 
@@ -849,8 +872,8 @@ const W={
       case 'ping':      return JSON.stringify([6,obj.id]);
       case 'pong':      return JSON.stringify([7,obj.id]);
       case 'relay-msg': return JSON.stringify([8,obj.v,obj.nick,obj.id]);
-      case 'call-req':  return JSON.stringify([9,obj.nick]);
-      case 'call-ans':  return JSON.stringify([10,obj.nick]);
+      case 'call-req':  return JSON.stringify({t:'call-req', nick:obj.nick, sdp:obj.sdp});
+      case 'call-ans':  return JSON.stringify({t:'call-ans', nick:obj.nick, sdp:obj.sdp});
       case 'call-dec':  return '[11]';
       case 'call-end':  return '[12]';
       default:          return JSON.stringify(obj);
@@ -869,8 +892,8 @@ const W={
       case 6:  return {t:'ping',     id:a[1]};
       case 7:  return {t:'pong',     id:a[1]};
       case 8:  return {t:'relay-msg',v:a[1],nick:a[2],id:a[3]};
-      case 9:  return {t:'call-req', nick:a[1]};
-      case 10: return {t:'call-ans', nick:a[1]};
+      case 9:  return {t:'call-req', nick:a[1]}; // legacy compat
+      case 10: return {t:'call-ans', nick:a[1]}; // legacy compat
       case 11: return {t:'call-dec'};
       case 12: return {t:'call-end'};
       default: return {t:'?'};
@@ -967,13 +990,18 @@ function onMsg(fromId,d){
   } else if(d.t==='call-req'){
     if(callPeerId){wireOne(fromId,{t:'call-dec'});return;} // busy
     pendingCallFrom=fromId;
+    pendingCallSDP=d.sdp||null;  // store caller's renegotiation SDP
     const callerName=d.nick||(peer?.nick)||'Someone';
     g('callCallerName').textContent=callerName;
     g('callBanner').classList.add('show');
     playRing();
     sys(`📞 Incoming call from ${callerName}…`);
   } else if(d.t==='call-ans'){
-    // Our call was answered
+    // Callee sent their answer SDP — apply it to complete renegotiation
+    const peer2=peers.get(fromId);
+    if(peer2&&peer2.pc&&d.sdp){
+      try{await peer2.pc.setRemoteDescription(d.sdp);}catch(e){}
+    }
     onCallConnected(fromId);
     sys(`📞 Call connected with ${d.nick||peer?.nick||'peer'}`);
     playBeep(880,0.1);
