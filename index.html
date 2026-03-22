@@ -166,12 +166,24 @@ p b{color:var(--t)}
   <!-- S0: TURN test -->
   <div class="scr" id="s0">
     <div class="back" onclick="scr('s1')">← back</div>
-    <h2>TURN Server Test</h2>
-    <p>Tests which relay servers are reachable and picks the fastest one automatically.</p>
-    <div class="turn-panel" id="turnPanel"><div style="font-size:11px;color:var(--m)">Press Test to start</div></div>
-    <div id="chosenTurn" style="display:none" class="chosen-turn">✓ <span id="chosenTurnName"></span> selected</div>
+    <h2>Server & Resource Test</h2>
+    <p>Tests reachability of all relay servers and resources. Picks the best TURN automatically.</p>
+
+    <div style="font-size:10px;color:var(--m);font-weight:700;text-transform:uppercase;letter-spacing:.08em">🟢 Main Server</div>
+    <div class="turn-panel" id="panelMain"><div style="font-size:11px;color:var(--m)">Press Test to start</div></div>
+
+    <div style="font-size:10px;color:var(--m);font-weight:700;text-transform:uppercase;letter-spacing:.08em">📡 Google STUN</div>
+    <div class="turn-panel" id="panelStun"><div style="font-size:11px;color:var(--m)">Press Test to start</div></div>
+
+    <div style="font-size:10px;color:var(--m);font-weight:700;text-transform:uppercase;letter-spacing:.08em">🔁 Other Servers</div>
+    <div class="turn-panel" id="panelOther"><div style="font-size:11px;color:var(--m)">Press Test to start</div></div>
+
+    <div style="font-size:10px;color:var(--m);font-weight:700;text-transform:uppercase;letter-spacing:.08em">🔗 Other Resources</div>
+    <div class="turn-panel" id="panelResources"><div style="font-size:11px;color:var(--m)">Press Test to start</div></div>
+
+    <div id="chosenTurn" style="display:none" class="chosen-turn">✓ <span id="chosenTurnName"></span> selected as TURN</div>
     <div class="row">
-      <button class="btn b" onclick="runTurnTest()">⚡ Test All Servers</button>
+      <button class="btn b" onclick="runTurnTest()">⚡ Test All</button>
       <button class="btn g" onclick="scr('s1')">Use Selected →</button>
     </div>
   </div>
@@ -301,21 +313,40 @@ p b{color:var(--t)}
 'use strict';
 
 // ── TURN SERVERS ───────────────────────────────────────────────────────────
+// group: 'main' = ExpressTurn, 'stun' = Google STUNs, 'other' = everything else
 const ALL_TURNS = [
-  {label:'Google STUN',        urls:'stun:stun.l.google.com:19302'},
-  {label:'Metered STUN',       urls:'stun:stun.relay.metered.ca:80'},
-  {label:'ExpressTurn',        urls:'turn:free.expressturn.com:3478',              username:'000000002089490852',       credential:'47MfC+l9nOTiijmLTIGyZ32gXqQ='},
-  {label:'Metered TURN :80',   urls:'turn:eu.relay.metered.ca:80',                 username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
-  {label:'Metered TURN TCP80', urls:'turn:eu.relay.metered.ca:80?transport=tcp',   username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
-  {label:'Metered TURN :443',  urls:'turn:eu.relay.metered.ca:443',                username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
-  {label:'Metered TURNS TCP',  urls:'turns:eu.relay.metered.ca:443?transport=tcp', username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
-  {label:'Hubl UDP',           urls:'turn:turn01.hubl.in?transport=udp'},
-  {label:'Hubl TCP',           urls:'turn:turn02.hubl.in?transport=tcp'},
-  {label:'Viagenie',           urls:'turn:numb.viagenie.ca',                        username:'webrtc@live.com',          credential:'muazkh'},
-  {label:'192.158 UDP',        urls:'turn:192.158.29.39:3478?transport=udp',        username:'28224511:1379330808',       credential:'JZEOEt2V3Qb0y27GRntt2u2PAYA='},
-  {label:'192.158 TCP',        urls:'turn:192.158.29.39:3478?transport=tcp',        username:'28224511:1379330808',       credential:'JZEOEt2V3Qb0y27GRntt2u2PAYA='},
-  {label:'Bistri :80',         urls:'turn:turn.bistri.com:80',                      username:'homeo',                    credential:'homeo'},
-  {label:'Anyfirewall TCP443', urls:'turn:turn.anyfirewall.com:443?transport=tcp',  username:'webrtc',                   credential:'webrtc'},
+  // ── Main server ───────────────────────────────────────────────────────────
+  {group:'main', label:'ExpressTurn',         urls:'turn:free.expressturn.com:3478',              username:'000000002089490852',       credential:'47MfC+l9nOTiijmLTIGyZ32gXqQ='},
+  // ── Google STUN ───────────────────────────────────────────────────────────
+  {group:'stun', label:'Google stun.l :19302',     urls:'stun:stun.l.google.com:19302'},
+  {group:'stun', label:'Google stun.l :5349',      urls:'stun:stun.l.google.com:5349'},
+  {group:'stun', label:'Google stun1.l :3478',     urls:'stun:stun1.l.google.com:3478'},
+  {group:'stun', label:'Google stun1.l :5349',     urls:'stun:stun1.l.google.com:5349'},
+  {group:'stun', label:'Google stun2.l :19302',    urls:'stun:stun2.l.google.com:19302'},
+  {group:'stun', label:'Google stun2.l :5349',     urls:'stun:stun2.l.google.com:5349'},
+  {group:'stun', label:'Google stun3.l :3478',     urls:'stun:stun3.l.google.com:3478'},
+  {group:'stun', label:'Google stun3.l :5349',     urls:'stun:stun3.l.google.com:5349'},
+  {group:'stun', label:'Google stun4.l :19302',    urls:'stun:stun4.l.google.com:19302'},
+  {group:'stun', label:'Google stun4.l :5349',     urls:'stun:stun4.l.google.com:5349'},
+  // ── Other TURN/STUN ───────────────────────────────────────────────────────
+  {group:'other', label:'Metered STUN',        urls:'stun:stun.relay.metered.ca:80'},
+  {group:'other', label:'Metered TURN :80',    urls:'turn:eu.relay.metered.ca:80',                 username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
+  {group:'other', label:'Metered TURN TCP80',  urls:'turn:eu.relay.metered.ca:80?transport=tcp',   username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
+  {group:'other', label:'Metered TURN :443',   urls:'turn:eu.relay.metered.ca:443',                username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
+  {group:'other', label:'Metered TURNS TCP',   urls:'turns:eu.relay.metered.ca:443?transport=tcp', username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
+  {group:'other', label:'Hubl UDP',            urls:'turn:turn01.hubl.in?transport=udp'},
+  {group:'other', label:'Hubl TCP',            urls:'turn:turn02.hubl.in?transport=tcp'},
+  {group:'other', label:'Viagenie',            urls:'turn:numb.viagenie.ca',                        username:'webrtc@live.com',          credential:'muazkh'},
+  {group:'other', label:'192.158 UDP',         urls:'turn:192.158.29.39:3478?transport=udp',        username:'28224511:1379330808',       credential:'JZEOEt2V3Qb0y27GRntt2u2PAYA='},
+  {group:'other', label:'192.158 TCP',         urls:'turn:192.158.29.39:3478?transport=tcp',        username:'28224511:1379330808',       credential:'JZEOEt2V3Qb0y27GRntt2u2PAYA='},
+  {group:'other', label:'Bistri :80',          urls:'turn:turn.bistri.com:80',                      username:'homeo',                    credential:'homeo'},
+  {group:'other', label:'Anyfirewall TCP443',  urls:'turn:turn.anyfirewall.com:443?transport=tcp',  username:'webrtc',                   credential:'webrtc'},
+];
+
+// Other resources
+const OTHER_RESOURCES = [
+  {label:'Ringtone (GitHub Pages)', url:'https://good-player.github.io/chatp2p/ringtone.mp3', check: async()=>{ const r=await fetch('https://good-player.github.io/chatp2p/ringtone.mp3',{method:'HEAD'}); return r.ok; }},
+  {label:'ntfy.sh Signaling',       url:'https://ntfy.sh',  check: async()=>{ const r=await fetch('https://ntfy.sh',{method:'HEAD'}); return r.ok; }},
 ];
 
 let ICE = [
@@ -352,7 +383,7 @@ function renderMD(text) {
 }
 
 // ── RINGTONE (MP3) ────────────────────────────────────────────────────────
-const RING_URL = 'https://raw.githubusercontent.com/Good-player/chatp2p/main/ringtone.mp3';
+const RING_URL = 'https://good-player.github.io/chatp2p/ringtone.mp3';
 let ringAudio = null;
 function playRing() {
   stopRing();
@@ -394,37 +425,41 @@ let callTimerTmr = null;
 let isMuted = false;
 let pendingCallFrom = null;   // peerId of incoming unanswered call
 let pendingCallSDP = null;    // SDP from caller for renegotiation
-// For multi-peer: voice goes on the FIRST connected peer's PC (simplest model)
-// Track senders so we can remove them on hang-up
 const audioSenders = new Map(); // peerId → RTCRtpSender
+let audioCtx = null, mixerDest = null;
+const mixerSources = new Map(); // streamId → {source, compressor}
 
 // ── VOICE CALL FUNCTIONS ───────────────────────────────────────────────────
 async function startCall() {
   if (peers.size === 0) { toast('No peers connected'); return; }
   if (callPeerId) { toast('Already in a call'); return; }
-  const targetId = [...peers.keys()][0];
-  const peer = peers.get(targetId);
-  if (!peer) return;
   try {
     localStream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 48000 }
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, sampleRate: 48000 }
     });
   } catch(e) { toast('Microphone access denied', 'e'); return; }
-  callPeerId = targetId;
-  // Add tracks then renegotiate — addTrack alone does nothing on a live PC
-  localStream.getAudioTracks().forEach(track => {
-    const sender = peer.pc.addTrack(track, localStream);
-    audioSenders.set(targetId, sender);
-    setTimeout(() => setOpusBitrate(sender, 128000), 1500);
-  });
-  try {
-    const offer = await peer.pc.createOffer();
-    await peer.pc.setLocalDescription(offer);
-    await gatherICE(peer.pc);
-    // Send call-req WITH the new SDP so callee can complete renegotiation
-    wireOne(targetId, {t:'call-req', nick:myNick, sdp:peer.pc.localDescription});
-  } catch(e) { toast('Call setup failed','e'); _cleanupCall(); return; }
-  toast('Calling ' + (peer.nick || 'peer') + '…');
+
+  // Call ALL connected peers for group voice
+  const peerIds = [...peers.keys()];
+  callPeerId = peerIds[0]; // primary (for display)
+
+  for (const targetId of peerIds) {
+    const peer = peers.get(targetId);
+    if (!peer || !peer.pc) continue;
+    // Add tracks then renegotiate
+    localStream.getAudioTracks().forEach(track => {
+      const sender = peer.pc.addTrack(track, localStream);
+      audioSenders.set(targetId, sender);
+      setTimeout(() => setOpusBitrate(sender, 128000), 1500);
+    });
+    try {
+      const offer = await peer.pc.createOffer();
+      await peer.pc.setLocalDescription(offer);
+      await gatherICE(peer.pc);
+      wireOne(targetId, {t:'call-req', nick:myNick, sdp:peer.pc.localDescription});
+    } catch(e) {}
+  }
+  toast('Calling ' + (peers.size > 1 ? `${peers.size} people` : (peers.get(callPeerId)?.nick || 'peer')) + '…');
 }
 
 async function addAudioToPeer(peerId) {
@@ -531,12 +566,19 @@ function toggleMute() {
 
 function _cleanupCall() {
   clearInterval(callTimerTmr); callTimerTmr = null;
-  // Remove audio senders from PCs
+  // Remove audio senders
   audioSenders.forEach((sender, peerId) => {
     const peer = peers.get(peerId);
     if (peer && peer.pc) try { peer.pc.removeTrack(sender); } catch(e) {}
   });
   audioSenders.clear();
+  // Disconnect mixer sources
+  mixerSources.forEach(({source, compressor}) => {
+    try { source.disconnect(); compressor.disconnect(); } catch(e) {}
+  });
+  mixerSources.clear();
+  // Close audio context
+  if (audioCtx) { try { audioCtx.close(); } catch(e) {} audioCtx = null; mixerDest = null; }
   // Stop mic
   if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
   callPeerId = null; callStartedAt = null; isMuted = false;
@@ -561,12 +603,14 @@ async function autoSelectTurn() {
   const stuns = results.filter(r=>r.ok&&!r.srv.username).sort((a,b)=>a.ms-b.ms);
   const expressTurn = turns.find(r=>r.srv.label==='ExpressTurn');
   const bestTurn = expressTurn || (turns.length>0?turns[0]:null);
-  if (bestTurn||stuns.length>0) {
+  // Best STUN: prefer fastest Google STUN
+  const bestStun = stuns.find(r=>r.srv.group==='stun') || stuns[0];
+  if (bestTurn||bestStun) {
     const newIce=[];
-    if (stuns.length>0) newIce.push({urls:stuns[0].srv.urls});
+    if (bestStun) newIce.push({urls:bestStun.srv.urls});
     if (bestTurn) newIce.push({urls:bestTurn.srv.urls,username:bestTurn.srv.username,credential:bestTurn.srv.credential});
     ICE=newIce; turnAutoSelected=true;
-    const best=bestTurn||stuns[0];
+    const best=bestTurn||bestStun;
     if (btn){btn.textContent=`⚙ TURN: ${best.srv.label} (${best.ms}ms)`;btn.disabled=false;btn.style.color='var(--g)';btn.style.borderColor='var(--g)';}
     if (g('chosenTurnName')){g('chosenTurnName').textContent=best.srv.label;g('chosenTurn').style.display='flex';}
   } else {
@@ -574,39 +618,113 @@ async function autoSelectTurn() {
   }
 }
 
+function makeServerRow(srv) {
+  const row = document.createElement('div');
+  row.className = 'turn-row';
+  const safeId = 'ts-' + srv.label.replace(/[^a-z0-9]/gi,'_');
+  row.innerHTML = `
+    <div class="turn-name" title="${srv.urls}">${srv.label}</div>
+    <div class="turn-bar-wrap"><div class="turn-bar testing" id="tb-${safeId}"></div></div>
+    <div id="tp-${safeId}" style="font-size:10px;color:var(--y);width:54px;text-align:right">…</div>`;
+  return {row, safeId};
+}
+
 async function runTurnTest() {
-  const panel = g('turnPanel'); panel.innerHTML='';
-  for (const srv of ALL_TURNS) {
-    const row=document.createElement('div'); row.className='turn-row';
-    row.innerHTML=`<div class="turn-name" title="${srv.urls}">${srv.label}</div><div class="turn-bar-wrap"><div class="turn-bar testing" id="tb-${srv.label.replace(/\s/g,'_')}"></div></div><div id="tp-${srv.label.replace(/\s/g,'_')}" style="font-size:10px;color:var(--y);width:54px;text-align:right">…</div>`;
-    panel.appendChild(row);
-  }
-  const tests = ALL_TURNS.map(async srv => {
-    const id=srv.label.replace(/\s/g,'_');
-    const bar=g('tb-'+id),ping=g('tp-'+id);
-    const start=performance.now();
-    try {
-      const ok=await testOneTurn(srv);
-      const ms=Math.round(performance.now()-start);
-      if(ok){bar.className='turn-bar ok';bar.style.width=Math.min(100,Math.max(10,100-ms/20))+'%';ping.textContent=ms+'ms';ping.style.color=ms<300?'var(--g)':ms<600?'var(--y)':'var(--r)';return{srv,ms,ok:true};}
-      else{bar.className='turn-bar fail';bar.style.width='100%';ping.textContent='fail';ping.style.color='var(--r)';return{srv,ms:Infinity,ok:false};}
-    } catch(e){bar.className='turn-bar fail';bar.style.width='100%';ping.textContent='err';ping.style.color='var(--r)';return{srv,ms:Infinity,ok:false};}
+  // Clear all panels
+  ['panelMain','panelStun','panelOther','panelResources'].forEach(id=>{
+    const p=g(id); if(p) p.innerHTML='';
   });
-  const allResults=await Promise.all(tests);
-  const turns=allResults.filter(r=>r.ok&&r.srv.username).sort((a,b)=>a.ms-b.ms);
-  const stuns=allResults.filter(r=>r.ok&&!r.srv.username).sort((a,b)=>a.ms-b.ms);
-  const expressTurn=turns.find(r=>r.srv.label==='ExpressTurn');
-  const bestTurn=expressTurn||(turns.length>0?turns[0]:null);
-  if(bestTurn||stuns.length>0){
+
+  // Build rows per group
+  const rowMap = new Map();
+  for (const srv of ALL_TURNS) {
+    const panelId = srv.group==='main'?'panelMain':srv.group==='stun'?'panelStun':'panelOther';
+    const panel = g(panelId);
+    if (!panel) continue;
+    const {row, safeId} = makeServerRow(srv);
+    panel.appendChild(row);
+    rowMap.set(srv.label, safeId);
+  }
+
+  // Build resource rows
+  const resPanel = g('panelResources');
+  if (resPanel) {
+    for (const res of OTHER_RESOURCES) {
+      const row = document.createElement('div');
+      row.className = 'turn-row';
+      const safeId = 'rs-' + res.label.replace(/[^a-z0-9]/gi,'_');
+      row.innerHTML = `
+        <div class="turn-name" title="${res.url}">${res.label}</div>
+        <div class="turn-bar-wrap"><div class="turn-bar testing" id="tb-${safeId}"></div></div>
+        <div id="tp-${safeId}" style="font-size:10px;color:var(--y);width:54px;text-align:right">…</div>`;
+      resPanel.appendChild(row);
+    }
+  }
+
+  // Test servers in parallel
+  const serverTests = ALL_TURNS.map(async srv => {
+    const safeId = rowMap.get(srv.label);
+    const bar = g('tb-'+safeId), ping = g('tp-'+safeId);
+    const start = performance.now();
+    try {
+      const ok = await testOneTurn(srv);
+      const ms = Math.round(performance.now()-start);
+      if (ok) {
+        if(bar){bar.className='turn-bar ok';bar.style.width=Math.min(100,Math.max(10,100-ms/20))+'%';}
+        if(ping){ping.textContent=ms+'ms';ping.style.color=ms<300?'var(--g)':ms<600?'var(--y)':'var(--r)';}
+        return {srv,ms,ok:true};
+      } else {
+        if(bar){bar.className='turn-bar fail';bar.style.width='100%';}
+        if(ping){ping.textContent='fail';ping.style.color='var(--r)';}
+        return {srv,ms:Infinity,ok:false};
+      }
+    } catch(e) {
+      if(bar){bar.className='turn-bar fail';bar.style.width='100%';}
+      if(ping){ping.textContent='err';ping.style.color='var(--r)';}
+      return {srv,ms:Infinity,ok:false};
+    }
+  });
+
+  // Test resources in parallel
+  const resTests = OTHER_RESOURCES.map(async res => {
+    const safeId = 'rs-'+res.label.replace(/[^a-z0-9]/gi,'_');
+    const bar = g('tb-'+safeId), ping = g('tp-'+safeId);
+    const start = performance.now();
+    try {
+      const ok = await res.check();
+      const ms = Math.round(performance.now()-start);
+      if(bar){bar.className='turn-bar '+(ok?'ok':'fail');bar.style.width=ok?Math.min(100,Math.max(10,100-ms/20))+'%':'100%';}
+      if(ping){ping.textContent=ok?ms+'ms':'fail';ping.style.color=ok?(ms<300?'var(--g)':ms<600?'var(--y)':'var(--r)'):'var(--r)';}
+    } catch(e) {
+      if(bar){bar.className='turn-bar fail';bar.style.width='100%';}
+      if(ping){ping.textContent='err';ping.style.color='var(--r)';}
+    }
+  });
+
+  const allResults = await Promise.all([...serverTests, ...resTests.map(p=>p.catch(()=>{}))]);
+  const serverResults = allResults.slice(0, ALL_TURNS.length).filter(Boolean);
+
+  // Pick best
+  const turns = serverResults.filter(r=>r.ok&&r.srv.username).sort((a,b)=>a.ms-b.ms);
+  const stuns = serverResults.filter(r=>r.ok&&!r.srv.username).sort((a,b)=>a.ms-b.ms);
+  const expressTurn = turns.find(r=>r.srv.label==='ExpressTurn');
+  const bestTurn = expressTurn||(turns.length>0?turns[0]:null);
+  const bestStun = stuns.find(r=>r.srv.group==='stun')||stuns[0];
+
+  if (bestTurn||bestStun) {
     const newIce=[];
-    if(stuns.length>0)newIce.push({urls:stuns[0].srv.urls});
-    if(bestTurn)newIce.push({urls:bestTurn.srv.urls,username:bestTurn.srv.username,credential:bestTurn.srv.credential});
-    ICE=newIce;turnAutoSelected=true;
-    const best=bestTurn||stuns[0];
-    g('chosenTurnName').textContent=best.srv.label;g('chosenTurn').style.display='flex';
-    const btn=g('turnStatusBtn');if(btn){btn.textContent=`⚙ TURN: ${best.srv.label} (${best.ms}ms)`;btn.style.color='var(--g)';btn.style.borderColor='var(--g)';}
+    if (bestStun) newIce.push({urls:bestStun.srv.urls});
+    if (bestTurn) newIce.push({urls:bestTurn.srv.urls,username:bestTurn.srv.username,credential:bestTurn.srv.credential});
+    ICE=newIce; turnAutoSelected=true;
+    const best=bestTurn||bestStun;
+    g('chosenTurnName').textContent=best.srv.label; g('chosenTurn').style.display='flex';
+    const btn=g('turnStatusBtn');
+    if(btn){btn.textContent=`⚙ TURN: ${best.srv.label} (${best.ms}ms)`;btn.style.color='var(--g)';btn.style.borderColor='var(--g)';}
     toast(`Best: ${best.srv.label} — ${best.ms}ms`);
-  } else {toast('No servers reachable!','e');const btn=g('turnStatusBtn');if(btn){btn.textContent='⚙ No TURN found';btn.style.color='var(--r)';}}
+  } else {
+    toast('No servers reachable!','e');
+    const btn=g('turnStatusBtn'); if(btn){btn.textContent='⚙ No TURN found';btn.style.color='var(--r)';}
+  }
 }
 
 function testOneTurn(srv,timeoutMs=4000){
@@ -841,15 +959,40 @@ function makePeerConnection(peerId){
     if(s==='disconnected'){const p=peers.get(peerId);if(p){p.online=false;updatePeerList();}sys(`⚠️ ${peers.get(peerId)?.nick||'Peer'} disconnected`);}
   };
   pc.ondatachannel=e=>setupDC(peerId,e.channel);
-  // Handle incoming audio tracks
-  pc.ontrack=e=>{
-    if(e.track.kind==='audio'){
-      const audio=g('remoteAudio');
-      if(!audio.srcObject){audio.srcObject=e.streams[0]||new MediaStream([e.track]);}
-      else{audio.srcObject.addTrack(e.track);}
-    }
+  // Handle incoming audio tracks — use AudioContext mixer for group calls
+  pc.ontrack = e => {
+    if (e.track.kind !== 'audio') return;
+    mixIncomingAudio(e.streams[0] || new MediaStream([e.track]));
   };
   return pc;
+}
+
+// AudioContext mixer — combines all peer audio streams into one output
+function getAudioCtx() {
+  if (!audioCtx || audioCtx.state === 'closed') {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    mixerDest = audioCtx.createMediaStreamDestination();
+    g('remoteAudio').srcObject = mixerDest.stream;
+  }
+  return audioCtx;
+}
+
+function mixIncomingAudio(stream) {
+  try {
+    const ctx = getAudioCtx();
+    const source = ctx.createMediaStreamSource(stream);
+    // Compressor to prevent clipping in group calls
+    const compressor = ctx.createDynamicsCompressor();
+    compressor.threshold.value = -24;
+    compressor.knee.value = 30;
+    compressor.ratio.value = 12;
+    compressor.attack.value = 0.003;
+    compressor.release.value = 0.25;
+    source.connect(compressor);
+    compressor.connect(mixerDest);
+    // Store by stream id for cleanup
+    mixerSources.set(stream.id, {source, compressor});
+  } catch(e) {}
 }
 
 // ── COMPACT WIRE PROTOCOL ─────────────────────────────────────────────────
