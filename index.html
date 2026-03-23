@@ -570,10 +570,9 @@ async function startCall(targetPeerId) {
   const peer = peers.get(targetId);
   if (!peer) { toast('Peer not found'); return; }
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({
-      audio: {echoCancellation:true, noiseSuppression:true, autoGainControl:true, sampleRate:48000}
-    });
-  } catch(e) { toast('Microphone access denied','e'); return; }
+    localStream = await navigator.mediaDevices.getUserMedia({audio:true})
+      .catch(()=>navigator.mediaDevices.getUserMedia({audio:true}));
+  } catch(e) { toast('Microphone access denied: '+e.message,'e'); return; }
   callPeerId = targetId;
   const apc = makeAudioPC();
   localStream.getAudioTracks().forEach(track => {
@@ -609,11 +608,10 @@ async function answerCall() {
   const peer = peers.get(peerId);
   if (!peer) { toast('Peer disconnected','e'); return; }
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({
-      audio: {echoCancellation:true, noiseSuppression:true, autoGainControl:true, sampleRate:48000}
-    });
+    localStream = await navigator.mediaDevices.getUserMedia({audio:true})
+      .catch(()=>navigator.mediaDevices.getUserMedia({audio:true}));
   } catch(e) {
-    toast('Microphone access denied','e');
+    toast('Microphone access denied: '+e.message,'e');
     wireOne(peerId, {t:'call-dec'}); return;
   }
   callPeerId = peerId;
@@ -730,16 +728,43 @@ function closeMicTest(){ micTestStop(); scr('s1'); }
 async function micTestStart(){
   micTestStop();
   const st=g('micStatus'); st.className='mic-status idle'; st.textContent='Requesting microphone…';
-  try{
-    micTestStream=await navigator.mediaDevices.getUserMedia({
-      audio:{echoCancellation:false,noiseSuppression:false,sampleRate:48000}
-    });
-  }catch(e){
+
+  // Try progressively simpler constraints — desktop browsers are picky
+  const attempts=[
+    {audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}},
+    {audio:{echoCancellation:true,noiseSuppression:true}},
+    {audio:true},
+  ];
+  let lastErr='';
+  for(const constraint of attempts){
+    try{
+      micTestStream=await navigator.mediaDevices.getUserMedia(constraint);
+      break; // success
+    }catch(e){
+      lastErr=e.name+': '+e.message;
+      micTestStream=null;
+    }
+  }
+  if(!micTestStream){
     st.className='mic-status err';
-    st.textContent='❌ Microphone denied or not found. Check browser permissions.';
+    const isSecure=location.protocol==='https:'||location.hostname==='localhost';
+    if(!isSecure)
+      st.textContent='❌ Requires HTTPS. Open via https://';
+    else if(lastErr.includes('NotAllowed')||lastErr.includes('Permission'))
+      st.textContent='❌ Permission denied. Click the 🔒 icon in your browser address bar and allow microphone.';
+    else if(lastErr.includes('NotFound')||lastErr.includes('DevicesNotFound'))
+      st.textContent='❌ No microphone found. Plug one in and try again.';
+    else if(lastErr.includes('NotReadable')||lastErr.includes('TrackStart'))
+      st.textContent='❌ Microphone is in use by another app. Close other apps and try again.';
+    else
+      st.textContent='❌ '+lastErr;
     return;
   }
+
+  // AudioContext — MUST resume on desktop (starts suspended after user gesture)
   micTestCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(micTestCtx.state==='suspended') await micTestCtx.resume();
+
   const source=micTestCtx.createMediaStreamSource(micTestStream);
   const analyser=micTestCtx.createAnalyser();
   analyser.fftSize=256; analyser.smoothingTimeConstant=0.5;
@@ -749,7 +774,11 @@ async function micTestStart(){
   const bands=g('micBands').children;
   const binsPerBand=Math.floor(analyser.frequencyBinCount/MIC_BANDS);
   micPeakVal=0; micPeakDecay=0;
-  st.className='mic-status ok'; st.textContent='✅ Microphone active — speak to test!';
+
+  // Show mic device name if available
+  const track=micTestStream.getAudioTracks()[0];
+  const label=track?.label||'Microphone';
+  st.className='mic-status ok'; st.textContent='✅ '+label+' — speak to test!';
   g('micStartBtn').style.display='none'; g('micStopBtn').style.display='';
 
   function frame(){
@@ -1397,6 +1426,8 @@ function getAudioCtx() {
     mixerDest = audioCtx.createMediaStreamDestination();
     g('remoteAudio').srcObject = mixerDest.stream;
   }
+  // Desktop: AudioContext starts suspended, must resume after user interaction
+  if (audioCtx.state === 'suspended') audioCtx.resume();
   return audioCtx;
 }
 
