@@ -543,8 +543,6 @@ let isMuted = false;
 let pendingCallFrom = null;
 let pendingCallSDP = null;
 const audioSenders = new Map();
-let audioCtx = null, mixerDest = null;
-const mixerSources = new Map();
 
 // ── DEDICATED AUDIO PC ─────────────────────────────────────────────────────
 // Completely separate from the data channel PC — no renegotiation needed
@@ -552,12 +550,28 @@ function makeAudioPC() {
   if (callAudioPc) { try{callAudioPc.close();}catch(e){} callAudioPc=null; }
   const apc = new RTCPeerConnection({iceServers: ICE});
   apc.onconnectionstatechange = () => {
+    sys('🔊 Audio PC state: '+apc.connectionState);
     if (apc.connectionState==='failed'||apc.connectionState==='closed') {
       sys('📵 Voice connection lost.'); _cleanupCall();
     }
   };
+  apc.oniceconnectionstatechange = () => {
+    sys('🔊 Audio ICE: '+apc.iceConnectionState);
+  };
+  apc.onicegatheringstatechange = () => {
+    sys('🔊 Audio gather: '+apc.iceGatheringState);
+  };
+  apc.onicecandidate = e => {
+    if(e.candidate) sys('🔊 ICE cand: '+e.candidate.type+' '+e.candidate.protocol);
+    else sys('🔊 ICE gathering done (null)');
+  };
   apc.ontrack = e => {
-    if (e.track.kind==='audio') mixIncomingAudio(e.streams[0]||new MediaStream([e.track]));
+    sys('🔊 ontrack fired! kind='+e.track.kind+' streams='+e.streams.length);
+    if (e.track.kind==='audio') {
+      const stream = e.streams[0] || new MediaStream([e.track]);
+      sys('🔊 Playing remote stream, tracks='+stream.getAudioTracks().length);
+      playRemoteStream(stream);
+    }
   };
   callAudioPc = apc;
   return apc;
@@ -581,11 +595,13 @@ async function startCall(targetPeerId) {
     setTimeout(()=>setOpusBitrate(sender,128000), 1500);
   });
   try {
+    sys('🔊 Creating audio offer…');
     await setLocalAndGather(apc, await apc.createOffer());
+    sys('🔊 Offer ready, candidates in SDP: '+(apc.localDescription.sdp.match(/a=candidate/g)||[]).length);
     wireOne(targetId, {t:'call-req', nick:myNick, sdp:apc.localDescription});
     toast('Calling '+(peer.nick||'peer')+'\u2026');
     updatePeerList();
-  } catch(e) { toast('Call setup failed','e'); _cleanupCall(); }
+  } catch(e) { toast('Call setup failed: '+e.message,'e'); _cleanupCall(); }
 }
 
 async function setOpusBitrate(sender, bitrate) {
@@ -622,12 +638,15 @@ async function answerCall() {
     setTimeout(()=>setOpusBitrate(sender,128000), 1500);
   });
   try {
+    sys('🔊 Applying caller offer, setting remote desc…');
     await apc.setRemoteDescription(incomingSDP);
+    sys('🔊 Creating answer…');
     await setLocalAndGather(apc, await apc.createAnswer());
+    sys('🔊 Answer ready, candidates: '+(apc.localDescription.sdp.match(/a=candidate/g)||[]).length);
     wireOne(peerId, {t:'call-ans', nick:myNick, sdp:apc.localDescription});
     onCallConnected(peerId);
     playBeep(880, 0.1);
-  } catch(e) { toast('Call answer failed: '+e.message,'e'); _cleanupCall(); }
+  } catch(e) { toast('Call answer failed: '+e.message,'e'); sys('🔊 answerCall error: '+e.message); _cleanupCall(); }
 }
 
 function declineCall() {
@@ -689,21 +708,15 @@ function toggleMute() {
 
 function _cleanupCall() {
   clearInterval(callTimerTmr); callTimerTmr = null;
-  // Close dedicated audio PC
   if (callAudioPc) { try{callAudioPc.close();}catch(e){} callAudioPc=null; }
   audioSenders.clear();
-  // Disconnect mixer
-  mixerSources.forEach(({source,compressor})=>{try{source.disconnect();compressor.disconnect();}catch(e){}});
-  mixerSources.clear();
-  if (audioCtx) { try{audioCtx.close();}catch(e){} audioCtx=null; mixerDest=null; }
-  // Stop mic
   if (localStream) { localStream.getTracks().forEach(t=>t.stop()); localStream=null; }
+  const ra=g('remoteAudio'); if(ra){ra.pause();ra.srcObject=null;}
   callPeerId=null; callStartedAt=null; isMuted=false;
   g('callBar').classList.remove('show');
   g('muteBtn').textContent='🎙'; g('muteBtn').classList.remove('active');
   g('callTimer').textContent='0:00';
   g('callVol').style.opacity='1';
-  g('remoteAudio').srcObject=null;
   updatePeerList();
 }
 
@@ -1411,42 +1424,24 @@ function makePeerConnection(peerId){
     if(s==='disconnected'){const p=peers.get(peerId);if(p){p.online=false;updatePeerList();}sys(`⚠️ ${peers.get(peerId)?.nick||'Peer'} disconnected`);}
   };
   pc.ondatachannel=e=>setupDC(peerId,e.channel);
-  // Handle incoming audio tracks — use AudioContext mixer for group calls
-  pc.ontrack = e => {
-    if (e.track.kind !== 'audio') return;
-    mixIncomingAudio(e.streams[0] || new MediaStream([e.track]));
-  };
   return pc;
 }
 
-// AudioContext mixer — combines all peer audio streams into one output
-function getAudioCtx() {
-  if (!audioCtx || audioCtx.state === 'closed') {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    mixerDest = audioCtx.createMediaStreamDestination();
-    g('remoteAudio').srcObject = mixerDest.stream;
-  }
-  // Desktop: AudioContext starts suspended, must resume after user interaction
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  return audioCtx;
-}
+// ── AUDIO PLAYBACK ─────────────────────────────────────────────────────────
+// Use plain <audio> elements - AudioContext requires user gesture on desktop
+// and silently stays suspended when called from WebRTC callbacks
 
-function mixIncomingAudio(stream) {
-  try {
-    const ctx = getAudioCtx();
-    const source = ctx.createMediaStreamSource(stream);
-    // Compressor to prevent clipping in group calls
-    const compressor = ctx.createDynamicsCompressor();
-    compressor.threshold.value = -24;
-    compressor.knee.value = 30;
-    compressor.ratio.value = 12;
-    compressor.attack.value = 0.003;
-    compressor.release.value = 0.25;
-    source.connect(compressor);
-    compressor.connect(mixerDest);
-    // Store by stream id for cleanup
-    mixerSources.set(stream.id, {source, compressor});
-  } catch(e) {}
+function playRemoteStream(stream) {
+  const audio = g('remoteAudio');
+  audio.srcObject = stream;
+  // Must call play() explicitly — autoplay policy blocks it on desktop
+  const playPromise = audio.play();
+  if (playPromise) playPromise.catch(() => {
+    // Autoplay blocked — try again on next user interaction
+    const resume = () => { audio.play().catch(()=>{}); document.removeEventListener('click', resume); document.removeEventListener('touchstart', resume); };
+    document.addEventListener('click', resume, {once:true});
+    document.addEventListener('touchstart', resume, {once:true});
+  });
 }
 
 // ── COMPACT WIRE PROTOCOL ─────────────────────────────────────────────────
@@ -1617,9 +1612,14 @@ async function onMsg(fromId,d){
     playRing();
     sys(`📞 Incoming call from ${callerName}…`);
   } else if(d.t==='call-ans'){
-    // Callee answered — apply their answer SDP to our audio PC
+    sys('🔊 Got call-ans, applying answer SDP…');
     if(callAudioPc && d.sdp){
-      try{ await callAudioPc.setRemoteDescription(d.sdp); }catch(e){ sys('📵 Call setup failed.'); _cleanupCall(); return; }
+      try{
+        await callAudioPc.setRemoteDescription(d.sdp);
+        sys('🔊 Remote desc set on caller side. ICE state: '+callAudioPc.iceConnectionState);
+      }catch(e){ sys('📵 Call setup failed: '+e.message); _cleanupCall(); return; }
+    } else {
+      sys('🔊 call-ans: callAudioPc='+!!callAudioPc+' d.sdp='+!!d.sdp);
     }
     onCallConnected(fromId);
     sys(`📞 Call connected with ${d.nick||peer?.nick||'peer'}`);
