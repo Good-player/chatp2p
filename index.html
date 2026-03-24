@@ -534,74 +534,123 @@ function playBeep(freq=880, dur=0.15) {
 }
 
 // ── VOICE CALL STATE ───────────────────────────────────────────────────────
+// ── VOICE CALL STATE ───────────────────────────────────────────────────────
 let localStream = null;
-let callPeerId = null;
-let callAudioPc = null;   // DEDICATED PC just for audio — never touches the data PC
+let isMuted = false;
 let callStartedAt = null;
 let callTimerTmr = null;
-let isMuted = false;
 let pendingCallFrom = null;
 let pendingCallSDP = null;
-const audioSenders = new Map();
 
-// ── DEDICATED AUDIO PC ─────────────────────────────────────────────────────
-// Completely separate from the data channel PC — no renegotiation needed
-function makeAudioPC() {
-  if (callAudioPc) { try{callAudioPc.close();}catch(e){} callAudioPc=null; }
+// Group call: map of peerId → {apc, audioEl, volume}
+const callPeers = new Map();
+// Track who is "in call" — multiple peers for group call
+function isInCall() { return callPeers.size > 0; }
+function callPeerId() { return callPeers.size > 0 ? [...callPeers.keys()][0] : null; } // compat
+
+// ── PER-PEER AUDIO PC ──────────────────────────────────────────────────────
+function makeAudioPC(peerId) {
+  // Close existing if any
+  removePeerFromCall(peerId);
+
   const apc = new RTCPeerConnection({iceServers: ICE});
+
+  // Create dedicated <audio> element for this peer with its own volume
+  const audioEl = document.createElement('audio');
+  audioEl.autoplay = true;
+  audioEl.setAttribute('playsinline', '');
+  audioEl.volume = 1.0;
+  audioEl.style.display = 'none';
+  document.body.appendChild(audioEl);
+
   apc.onconnectionstatechange = () => {
-    sys('🔊 Audio PC state: '+apc.connectionState);
+    sys('🔊 ['+peerId.slice(0,6)+'] state: '+apc.connectionState);
     if (apc.connectionState==='failed'||apc.connectionState==='closed') {
-      sys('📵 Voice connection lost.'); _cleanupCall();
+      sys('📵 Voice lost with '+( peers.get(peerId)?.nick||'peer'));
+      removePeerFromCall(peerId);
+      if (!isInCall()) _cleanupCall();
     }
   };
-  apc.oniceconnectionstatechange = () => {
-    sys('🔊 Audio ICE: '+apc.iceConnectionState);
-  };
-  apc.onicegatheringstatechange = () => {
-    sys('🔊 Audio gather: '+apc.iceGatheringState);
-  };
+  apc.oniceconnectionstatechange = () => sys('🔊 ['+peerId.slice(0,6)+'] ICE: '+apc.iceConnectionState);
+  apc.onicegatheringstatechange = () => sys('🔊 ['+peerId.slice(0,6)+'] gather: '+apc.iceGatheringState);
   apc.onicecandidate = e => {
-    if(e.candidate) sys('🔊 ICE cand: '+e.candidate.type+' '+e.candidate.protocol);
-    else sys('🔊 ICE gathering done (null)');
+    if(e.candidate) sys('🔊 ICE: '+e.candidate.type+' '+e.candidate.protocol);
+    else sys('🔊 ICE done');
   };
   apc.ontrack = e => {
-    sys('🔊 ontrack fired! kind='+e.track.kind+' streams='+e.streams.length);
+    sys('🔊 ontrack! kind='+e.track.kind+' streams='+e.streams.length);
     if (e.track.kind==='audio') {
       const stream = e.streams[0] || new MediaStream([e.track]);
-      sys('🔊 Playing remote stream, tracks='+stream.getAudioTracks().length);
-      playRemoteStream(stream);
+      const entry = callPeers.get(peerId);
+      if (entry) {
+        entry.audioEl.srcObject = stream;
+        const p = entry.audioEl.play();
+        if (p) p.catch(()=>{
+          const resume=()=>{entry.audioEl.play().catch(()=>{});document.removeEventListener('click',resume);document.removeEventListener('touchstart',resume);};
+          document.addEventListener('click',resume,{once:true});
+          document.addEventListener('touchstart',resume,{once:true});
+        });
+        sys('🔊 Playing audio from '+peerId.slice(0,6));
+      }
     }
   };
-  callAudioPc = apc;
+
+  callPeers.set(peerId, {apc, audioEl, volume: 1.0, senders: []});
   return apc;
 }
 
+function removePeerFromCall(peerId) {
+  const entry = callPeers.get(peerId);
+  if (!entry) return;
+  try { entry.apc.close(); } catch(e) {}
+  entry.audioEl.pause();
+  entry.audioEl.srcObject = null;
+  try { entry.audioEl.remove(); } catch(e) {}
+  callPeers.delete(peerId);
+  updateCallBar();
+  updatePeerList();
+}
+
+// ── OUTGOING CALL ──────────────────────────────────────────────────────────
 async function startCall(targetPeerId) {
   if (peers.size === 0) { toast('No peers connected'); return; }
-  if (callPeerId) { toast('Already in a call'); return; }
-  const targetId = targetPeerId || [...peers.keys()][0];
-  const peer = peers.get(targetId);
+  // Already calling this peer?
+  if (callPeers.has(targetPeerId)) { toast('Already in call with this peer'); return; }
+
+  const peer = peers.get(targetPeerId);
   if (!peer) { toast('Peer not found'); return; }
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({audio:true})
-      .catch(()=>navigator.mediaDevices.getUserMedia({audio:true}));
-  } catch(e) { toast('Microphone access denied: '+e.message,'e'); return; }
-  callPeerId = targetId;
-  const apc = makeAudioPC();
+
+  // Get mic if not already have it
+  if (!localStream) {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({audio:true})
+        .catch(()=>navigator.mediaDevices.getUserMedia({audio:true}));
+    } catch(e) { toast('Microphone access denied: '+e.message,'e'); return; }
+  }
+
+  const apc = makeAudioPC(targetPeerId);
+  const entry = callPeers.get(targetPeerId);
+
   localStream.getAudioTracks().forEach(track => {
     const sender = apc.addTrack(track, localStream);
-    audioSenders.set(targetId, sender);
+    entry.senders.push(sender);
     setTimeout(()=>setOpusBitrate(sender,128000), 1500);
   });
+
   try {
-    sys('🔊 Creating audio offer…');
+    sys('🔊 Creating offer for '+peer.nick+'…');
     await setLocalAndGather(apc, await apc.createOffer());
-    sys('🔊 Offer ready, candidates in SDP: '+(apc.localDescription.sdp.match(/a=candidate/g)||[]).length);
-    wireOne(targetId, {t:'call-req', nick:myNick, sdp:apc.localDescription});
+    sys('🔊 Offer ready, candidates: '+(apc.localDescription.sdp.match(/a=candidate/g)||[]).length);
+    wireOne(targetPeerId, {t:'call-req', nick:myNick, sdp:apc.localDescription});
     toast('Calling '+(peer.nick||'peer')+'\u2026');
+    if (!callStartedAt) startCallTimer();
+    updateCallBar();
     updatePeerList();
-  } catch(e) { toast('Call setup failed: '+e.message,'e'); _cleanupCall(); }
+  } catch(e) {
+    toast('Call setup failed: '+e.message,'e');
+    removePeerFromCall(targetPeerId);
+    if (!isInCall()) _cleanupCall();
+  }
 }
 
 async function setOpusBitrate(sender, bitrate) {
@@ -614,6 +663,7 @@ async function setOpusBitrate(sender, bitrate) {
   } catch(e) {}
 }
 
+// ── INCOMING CALL ──────────────────────────────────────────────────────────
 async function answerCall() {
   if (!pendingCallFrom) return;
   stopRing();
@@ -621,24 +671,31 @@ async function answerCall() {
   const peerId = pendingCallFrom;
   const incomingSDP = pendingCallSDP;
   pendingCallFrom = null; pendingCallSDP = null;
+
   const peer = peers.get(peerId);
   if (!peer) { toast('Peer disconnected','e'); return; }
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({audio:true})
-      .catch(()=>navigator.mediaDevices.getUserMedia({audio:true}));
-  } catch(e) {
-    toast('Microphone access denied: '+e.message,'e');
-    wireOne(peerId, {t:'call-dec'}); return;
+
+  if (!localStream) {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({audio:true})
+        .catch(()=>navigator.mediaDevices.getUserMedia({audio:true}));
+    } catch(e) {
+      toast('Microphone access denied: '+e.message,'e');
+      wireOne(peerId, {t:'call-dec'}); return;
+    }
   }
-  callPeerId = peerId;
-  const apc = makeAudioPC();
+
+  const apc = makeAudioPC(peerId);
+  const entry = callPeers.get(peerId);
+
   localStream.getAudioTracks().forEach(track => {
     const sender = apc.addTrack(track, localStream);
-    audioSenders.set(peerId, sender);
+    entry.senders.push(sender);
     setTimeout(()=>setOpusBitrate(sender,128000), 1500);
   });
+
   try {
-    sys('🔊 Applying caller offer, setting remote desc…');
+    sys('🔊 Setting remote offer…');
     await apc.setRemoteDescription(incomingSDP);
     sys('🔊 Creating answer…');
     await setLocalAndGather(apc, await apc.createAnswer());
@@ -646,54 +703,48 @@ async function answerCall() {
     wireOne(peerId, {t:'call-ans', nick:myNick, sdp:apc.localDescription});
     onCallConnected(peerId);
     playBeep(880, 0.1);
-  } catch(e) { toast('Call answer failed: '+e.message,'e'); sys('🔊 answerCall error: '+e.message); _cleanupCall(); }
+  } catch(e) {
+    toast('Call answer failed: '+e.message,'e');
+    sys('🔊 answerCall error: '+e.message);
+    removePeerFromCall(peerId);
+    if (!isInCall()) _cleanupCall();
+  }
 }
 
 function declineCall() {
   if (!pendingCallFrom) return;
   stopRing();
   wireOne(pendingCallFrom, {t:'call-dec'});
-  pendingCallFrom = null;
+  pendingCallFrom = null; pendingCallSDP = null;
   g('callBanner').classList.remove('show');
 }
 
 function onCallConnected(peerId) {
-  const peer = peers.get(peerId);
-  // Only start timer once — if already in call (group: another peer answered), just update display
-  if (!callStartedAt) {
-    callStartedAt = Date.now();
-    callTimerTmr = setInterval(() => {
-      const s = Math.floor((Date.now() - callStartedAt) / 1000);
-      const m = Math.floor(s / 60), sec = s % 60;
-      g('callTimer').textContent = m + ':' + String(sec).padStart(2,'0');
-    }, 1000);
-  }
-  // Update display: show group count if multiple peers in call
-  const callCount = audioSenders.size;
-  g('callPeerName').textContent = callCount > 1
-    ? `${callCount} people`
-    : (peer?.nick || 'Peer');
-  g('callBar').classList.add('show');
-  g('callBtn') && (g('callBtn').innerHTML = '🔴');
-  if (isMuted) g('callVol').style.opacity = '0.3';
+  if (!callStartedAt) startCallTimer();
+  updateCallBar();
   updatePeerList();
+  sys('📞 Call connected with '+(peers.get(peerId)?.nick||'peer'));
+}
+
+function startCallTimer() {
+  callStartedAt = Date.now();
+  callTimerTmr = setInterval(() => {
+    const s = Math.floor((Date.now()-callStartedAt)/1000);
+    g('callTimer').textContent = Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+  }, 1000);
+}
+
+function endCallWith(peerId) {
+  wireOne(peerId, {t:'call-end'});
+  removePeerFromCall(peerId);
+  if (!isInCall()) { _cleanupCall(); playBeep(440,0.2); }
 }
 
 function endCall() {
   stopRing();
-  // Notify all peers we called
-  audioSenders.forEach((_, peerId) => wireOne(peerId, {t:'call-end'}));
-  if (callPeerId && !audioSenders.has(callPeerId)) wireOne(callPeerId, {t:'call-end'});
+  callPeers.forEach((_, peerId) => wireOne(peerId, {t:'call-end'}));
   _cleanupCall();
   playBeep(440, 0.2);
-}
-
-function declineCall() {
-  if (!pendingCallFrom) return;
-  stopRing();
-  wireOne(pendingCallFrom, {t:'call-dec'});
-  pendingCallFrom = null; pendingCallSDP = null; // Bug 4: also clear SDP
-  g('callBanner').classList.remove('show');
 }
 
 function toggleMute() {
@@ -706,19 +757,45 @@ function toggleMute() {
   g('callVol').style.opacity = isMuted ? '0.3' : '1';
 }
 
+// Set volume for a specific peer (0.0 – 2.0, allows boost)
+function setPeerVolume(peerId, vol) {
+  const entry = callPeers.get(peerId);
+  if (!entry) return;
+  entry.volume = vol;
+  entry.audioEl.volume = Math.min(1.0, vol); // native capped at 1.0
+  // For >1.0 we'd need GainNode but keep it simple for now
+}
+
+function updateCallBar() {
+  if (!isInCall()) {
+    g('callBar').classList.remove('show');
+    return;
+  }
+  g('callBar').classList.add('show');
+  // Show names of everyone in call
+  const names = [...callPeers.keys()].map(id=>peers.get(id)?.nick||'?');
+  g('callPeerName').textContent = names.length===1 ? names[0] : names.length+' people';
+  g('callVol').style.opacity = isMuted ? '0.3' : '1';
+}
+
 function _cleanupCall() {
-  clearInterval(callTimerTmr); callTimerTmr = null;
-  if (callAudioPc) { try{callAudioPc.close();}catch(e){} callAudioPc=null; }
-  audioSenders.clear();
+  clearInterval(callTimerTmr); callTimerTmr=null;
+  // Close all peer audio PCs
+  callPeers.forEach((entry, peerId) => {
+    try { entry.apc.close(); } catch(e) {}
+    entry.audioEl.pause(); entry.audioEl.srcObject=null;
+    try { entry.audioEl.remove(); } catch(e) {}
+  });
+  callPeers.clear();
   if (localStream) { localStream.getTracks().forEach(t=>t.stop()); localStream=null; }
-  const ra=g('remoteAudio'); if(ra){ra.pause();ra.srcObject=null;}
-  callPeerId=null; callStartedAt=null; isMuted=false;
+  callStartedAt=null; isMuted=false;
   g('callBar').classList.remove('show');
   g('muteBtn').textContent='🎙'; g('muteBtn').classList.remove('active');
   g('callTimer').textContent='0:00';
   g('callVol').style.opacity='1';
   updatePeerList();
 }
+
 
 // ── MIC TEST ───────────────────────────────────────────────────────────────
 let micTestStream=null,micTestCtx=null,micTestAnim=null;
@@ -1529,7 +1606,7 @@ function removePeer(peerId,reason){
   const peer=peers.get(peerId);if(!peer)return;
   if(reason)sys(`❌ ${peer.nick||'Peer'}: ${reason}`);
   // If in call with this peer, clean up
-  if(callPeerId===peerId){_cleanupCall();sys('📵 Call ended — peer left');}
+  if(callPeers.has(peerId)){removePeerFromCall(peerId);if(!isInCall())_cleanupCall();sys('📵 Call ended — peer left');}
   try{if(peer.dc)peer.dc.close();}catch(e){}
   try{if(peer.pc)peer.pc.close();}catch(e){}
   peers.delete(peerId);updatePeerList();sv('s-peers',countOnline(),'sg');
@@ -1540,36 +1617,59 @@ function countOnline(){let n=0;peers.forEach(p=>{if(p.online!==false)n++;});retu
 
 function updatePeerList(){
   const list=g('peerList');
-  // Keep the public badge if present
   const badge=g('pubBadge');
   list.innerHTML='';
   if(badge)list.appendChild(badge);
 
-  // Self chip
   const me=document.createElement('div');me.className='peer-chip on';
   me.textContent='👤 '+myNick+' (you)';list.appendChild(me);
 
-  // Each peer with direct call button
   peers.forEach((peer,id)=>{
-    const wrap=document.createElement('div');wrap.style.cssText='display:flex;align-items:center;gap:2px';
+    const wrap=document.createElement('div');wrap.style.cssText='display:flex;align-items:center;gap:4px;flex-wrap:wrap';
 
     const chip=document.createElement('div');
     chip.className='peer-chip '+(peer.online!==false?'on':'');
     chip.textContent=(peer.online!==false?'👤 ':'💤 ')+peer.nick;
     wrap.appendChild(chip);
 
-    // Call button — only show if peer is online
     if(peer.online!==false){
-      const isThisCall=(callPeerId===id);
+      const inThisCall = callPeers.has(id);
+      // Call / end call button
       const cbtn=document.createElement('button');
-      cbtn.className='peer-call-btn'+(isThisCall?' in-call':'');
-      cbtn.title=isThisCall?'In call with '+peer.nick:'Call '+peer.nick;
-      cbtn.textContent=isThisCall?'📵':'📞';
-      cbtn.onclick=()=>{
-        if(isThisCall){endCall();}
-        else{startCall(id);}
-      };
+      cbtn.className='peer-call-btn'+(inThisCall?' in-call':'');
+      cbtn.title=inThisCall?'End call with '+peer.nick:'Call '+peer.nick;
+      cbtn.textContent=inThisCall?'📵':'📞';
+      cbtn.onclick=()=>{ inThisCall?endCallWith(id):startCall(id); };
       wrap.appendChild(cbtn);
+
+      // Volume slider — only visible during active call
+      if(inThisCall){
+        const volWrap=document.createElement('div');
+        volWrap.style.cssText='display:flex;align-items:center;gap:3px;font-size:9px;color:var(--m)';
+        volWrap.innerHTML='🔊';
+        const slider=document.createElement('input');
+        slider.type='range'; slider.min='0'; slider.max='200'; slider.step='5';
+        const entry=callPeers.get(id);
+        slider.value=entry?Math.round(entry.volume*100):100;
+        slider.style.cssText='width:60px;height:20px;cursor:pointer;accent-color:var(--g)';
+        slider.oninput=()=>{
+          const vol=parseInt(slider.value)/100;
+          setPeerVolume(id, vol);
+          volWrap.childNodes[0].textContent = vol===0?'🔇':vol>1.5?'📢':'🔊';
+        };
+        volWrap.appendChild(slider);
+        const pct=document.createElement('span');
+        pct.textContent=(entry?Math.round(entry.volume*100):100)+'%';
+        pct.style.cssText='min-width:28px;font-size:9px';
+        slider.oninput=(ev=>{
+          const vol=parseInt(slider.value)/100;
+          setPeerVolume(id,vol);
+          pct.textContent=slider.value+'%';
+          volWrap.childNodes[0].textContent=vol===0?'🔇':vol>1.5?'📢':'🔊';
+        });
+        volWrap.appendChild(pct);
+        wrap.appendChild(volWrap);
+      }
     }
     list.appendChild(wrap);
   });
@@ -1603,31 +1703,38 @@ async function onMsg(fromId,d){
   } else if(d.t==='styp'){clearTimeout(window._pt);g('typi').classList.remove('on');sv('s-typing','no','sm');
   // ── CALL SIGNALS ──
   } else if(d.t==='call-req'){
-    if(callPeerId){wireOne(fromId,{t:'call-dec'});return;} // busy
+    // Allow joining an active group call — don't reject if already in call
     pendingCallFrom=fromId;
-    pendingCallSDP=d.sdp||null;  // store caller's renegotiation SDP
+    pendingCallSDP=d.sdp||null;
     const callerName=d.nick||(peer?.nick)||'Someone';
     g('callCallerName').textContent=callerName;
     g('callBanner').classList.add('show');
     playRing();
     sys(`📞 Incoming call from ${callerName}…`);
   } else if(d.t==='call-ans'){
-    sys('🔊 Got call-ans, applying answer SDP…');
-    if(callAudioPc && d.sdp){
+    sys('🔊 Got call-ans from '+fromId.slice(0,6)+', sdp='+!!d.sdp);
+    const entry = callPeers.get(fromId);
+    if(entry && d.sdp){
       try{
-        await callAudioPc.setRemoteDescription(d.sdp);
-        sys('🔊 Remote desc set on caller side. ICE state: '+callAudioPc.iceConnectionState);
-      }catch(e){ sys('📵 Call setup failed: '+e.message); _cleanupCall(); return; }
+        await entry.apc.setRemoteDescription(d.sdp);
+        sys('🔊 Remote desc set. ICE: '+entry.apc.iceConnectionState);
+      }catch(e){ sys('📵 Call setup failed: '+e.message); removePeerFromCall(fromId); if(!isInCall())_cleanupCall(); return; }
     } else {
-      sys('🔊 call-ans: callAudioPc='+!!callAudioPc+' d.sdp='+!!d.sdp);
+      sys('🔊 call-ans: entry='+!!entry+' d.sdp='+!!d.sdp);
     }
     onCallConnected(fromId);
-    sys(`📞 Call connected with ${d.nick||peer?.nick||'peer'}`);
     playBeep(880,0.1);
   } else if(d.t==='call-dec'){
-    stopRing();_cleanupCall();sys('📵 Call declined.');toast('Call declined');
+    stopRing();
+    removePeerFromCall(fromId);
+    if(!isInCall()) _cleanupCall();
+    sys('📵 Call declined by '+(peer?.nick||'peer'));
+    toast('Call declined');
   } else if(d.t==='call-end'){
-    stopRing();_cleanupCall();sys('📵 Call ended.');playBeep(440,0.2);
+    stopRing();
+    removePeerFromCall(fromId);
+    if(!isInCall()) { _cleanupCall(); playBeep(440,0.2); }
+    sys('📵 Call ended by '+(peer?.nick||'peer'));
   }
 }
 
@@ -1682,7 +1789,7 @@ function sys(txt){const box=g('msgs'),d=document.createElement('div');d.classNam
 // ── DISCONNECT ────────────────────────────────────────────────────────────
 function disc(){
   if(!confirm('Leave room?'))return;
-  if(callPeerId)endCall();
+  if(isInCall())endCall();
   broadcast({t:'pres',s:'offline'});
   setTimeout(()=>{
     fullReset();
@@ -1738,7 +1845,7 @@ function toast(msg,type=''){document.querySelectorAll('.toast').forEach(t=>t.rem
 
 g('msgIn').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
 g('msgIn').addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px';onType();});
-window.addEventListener('beforeunload',()=>{if(callPeerId)endCall();broadcast({t:'pres',s:'offline'});});
+window.addEventListener('beforeunload',()=>{if(isInCall())endCall();broadcast({t:'pres',s:'offline'});});
 document.addEventListener('visibilitychange',()=>{if(peers.size>0)broadcast({t:'pres',s:document.hidden?'away':'online'});});
 
 autoSelectTurn();
