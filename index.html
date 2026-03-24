@@ -107,10 +107,21 @@ p b{color:var(--t)}
 .cbtn.ans:hover{opacity:.85}
 .cbtn.dec{background:var(--r);color:var(--bg)}
 .cbtn.dec:hover{opacity:.85}
-/* active call bar */
-.call-bar{display:none;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(74,222,128,.06);border-bottom:1px solid rgba(74,222,128,.2);gap:8px}
+/* call bar */
+.call-bar{display:none;flex-direction:column;background:rgba(74,222,128,.05);border-bottom:1px solid rgba(74,222,128,.2)}
 .call-bar.show{display:flex}
-.call-bar-left{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--g)}
+.call-bar-top{display:flex;align-items:center;justify-content:space-between;padding:6px 10px}
+/* participant tiles */
+.call-participants{display:flex;flex-wrap:wrap;gap:6px;padding:0 10px 8px}
+.call-tile{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:8px 10px;min-width:72px;flex:1;max-width:120px;position:relative;transition:.15s}
+.call-tile.speaking{border-color:var(--g);box-shadow:0 0 8px rgba(74,222,128,.3)}
+.call-tile.muted{border-color:var(--r)}
+.call-tile-avatar{width:36px;height:36px;border-radius:50%;background:var(--b);display:flex;align-items:center;justify-content:center;font-size:16px;position:relative}
+.call-tile-avatar .mic-icon{position:absolute;bottom:-2px;right:-2px;font-size:10px;line-height:1}
+.call-tile-name{font-size:10px;font-weight:700;color:var(--t);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;max-width:100px}
+.call-tile-vol{width:100%;display:flex;align-items:center;gap:3px;margin-top:2px}
+.call-tile-vol input[type=range]{flex:1;height:16px;cursor:pointer;accent-color:var(--g)}
+.call-tile-vol-pct{font-size:9px;color:var(--m);min-width:24px;text-align:right}
 .call-timer{font-size:11px;color:var(--m);font-variant-numeric:tabular-nums}
 .call-vol{display:flex;align-items:center;gap:3px;height:16px}
 .vol-bar{width:3px;border-radius:2px;background:var(--g);animation:vol .6s ease-in-out infinite}
@@ -339,17 +350,21 @@ p b{color:var(--t)}
       <button class="cbtn dec" onclick="declineCall()">❌ Decline</button>
     </div>
   </div>
-  <!-- Active call bar -->
+  <!-- Active call panel - Discord style -->
   <div class="call-bar" id="callBar">
-    <div class="call-bar-left">
-      <div class="call-vol" id="callVol"><div class="vol-bar"></div><div class="vol-bar"></div><div class="vol-bar"></div><div class="vol-bar"></div><div class="vol-bar"></div></div>
-      <span id="callPeerName" style="font-weight:700">Call</span>
-      <span class="call-timer" id="callTimer">0:00</span>
+    <div class="call-bar-top">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="call-vol" id="callVol"><div class="vol-bar"></div><div class="vol-bar"></div><div class="vol-bar"></div></div>
+        <span style="font-size:10px;color:var(--g);font-weight:700">VOICE CONNECTED</span>
+        <span class="call-timer" id="callTimer">0:00</span>
+      </div>
+      <div style="display:flex;gap:4px">
+        <button class="ctl-btn" id="muteBtn" onclick="toggleMute()" title="Mute/Unmute">🎙</button>
+        <button class="ctl-btn end" onclick="endCall()" title="End call">📵</button>
+      </div>
     </div>
-    <div class="call-bar-right">
-      <button class="ctl-btn" id="muteBtn" onclick="toggleMute()" title="Mute/Unmute">🎙</button>
-      <button class="ctl-btn end" onclick="endCall()" title="End call">📵</button>
-    </div>
+    <!-- Participant tiles - updated by updateCallPanel() -->
+    <div class="call-participants" id="callParticipants"></div>
   </div>
   <!-- peer list with public room badge -->
   <div class="peer-list" id="peerList"><span id="pubBadge" style="display:none" class="pub-badge">🌐 <span id="pubBadgeName"></span></span></div>
@@ -385,8 +400,6 @@ p b{color:var(--t)}
   </div>
 </div>
 
-<!-- hidden audio elements -->
-<audio id="remoteAudio" autoplay playsinline style="display:none"></audio>
 
 </div>
 <script>
@@ -445,17 +458,19 @@ const OTHER_RESOURCES = [
 ];
 
 let ICE = [
-  // STUN
+  // STUN — Google ports 19302/3478 work, 5349 fail
   {urls:'stun:stun.l.google.com:19302'},
-  {urls:'stun:stun1.l.google.com:19302'},
-  // Open Relay (confirmed working, completely free, no account needed)
-  {urls:'turn:openrelay.metered.ca:80',                 username:'openrelayproject', credential:'openrelayproject'},
-  {urls:'turn:openrelay.metered.ca:80?transport=tcp',   username:'openrelayproject', credential:'openrelayproject'},
-  {urls:'turn:openrelay.metered.ca:443?transport=tcp',  username:'openrelayproject', credential:'openrelayproject'},
-  {urls:'turns:openrelay.metered.ca:443?transport=tcp', username:'openrelayproject', credential:'openrelayproject'},
-  // Metered fallback (same account, may still work)
+  {urls:'stun:stun1.l.google.com:3478'},
+  {urls:'stun:stun2.l.google.com:19302'},
+  {urls:'stun:stun3.l.google.com:3478'},
+  {urls:'stun:stun4.l.google.com:19302'},
+  // ExpressTurn — confirmed working 96ms in test
+  {urls:'turn:free.expressturn.com:3478', username:'000000002089490852', credential:'47MfC+l9nOTiijmLTIGyZ32gXqQ='},
+  // Metered — confirmed working 50-116ms in test
   {urls:'turn:eu.relay.metered.ca:80',                  username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
-  {urls:'turn:eu.relay.metered.ca:443?transport=tcp',   username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
+  {urls:'turn:eu.relay.metered.ca:80?transport=tcp',    username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
+  {urls:'turn:eu.relay.metered.ca:443',                 username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
+  {urls:'turns:eu.relay.metered.ca:443?transport=tcp',  username:'2cf116991a6a04cbee8fcd9a', credential:'/NmwpIw3nexKDXIi'},
 ];
 let turnAutoSelected = false;
 
@@ -591,6 +606,7 @@ function makeAudioPC(peerId) {
           document.addEventListener('touchstart',resume,{once:true});
         });
         sys('🔊 Playing audio from '+peerId.slice(0,6));
+        startSpeakingDetection(peerId, stream);
       }
     }
   };
@@ -600,6 +616,7 @@ function makeAudioPC(peerId) {
 }
 
 function removePeerFromCall(peerId) {
+  stopSpeakingDetection(peerId);
   const entry = callPeers.get(peerId);
   if (!entry) return;
   try { entry.apc.close(); } catch(e) {}
@@ -755,6 +772,13 @@ function toggleMute() {
   btn.textContent = isMuted ? '🔇' : '🎙';
   btn.classList.toggle('active', isMuted);
   g('callVol').style.opacity = isMuted ? '0.3' : '1';
+  // Refresh self tile
+  const selfTile = g('ctile-self');
+  if (selfTile) {
+    selfTile.className = 'call-tile'+(isMuted?' muted':'');
+    const mic = selfTile.querySelector('.mic-icon');
+    if (mic) mic.textContent = isMuted?'🔇':'🎙';
+  }
 }
 
 // Set volume for a specific peer (0.0 – 2.0, allows boost)
@@ -766,22 +790,104 @@ function setPeerVolume(peerId, vol) {
   // For >1.0 we'd need GainNode but keep it simple for now
 }
 
+// Speaking detection — per-peer analyser to show who is talking
+const speakingAnalysers = new Map(); // peerId → {ctx, analyser, raf}
+
+function startSpeakingDetection(peerId, stream) {
+  stopSpeakingDetection(peerId);
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    if (ctx.state==='suspended') ctx.resume();
+    const src = ctx.createMediaStreamSource(stream);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 256; analyser.smoothingTimeConstant = 0.4;
+    src.connect(analyser);
+    const buf = new Uint8Array(analyser.fftSize);
+    let raf;
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      analyser.getByteTimeDomainData(buf);
+      let sum = 0;
+      for (let i=0;i<buf.length;i++){const v=(buf[i]-128)/128;sum+=v*v;}
+      const rms = Math.sqrt(sum/buf.length);
+      const tile = document.getElementById('ctile-'+peerId);
+      if (tile) tile.classList.toggle('speaking', rms > 0.02);
+    };
+    raf = requestAnimationFrame(tick);
+    speakingAnalysers.set(peerId, {ctx, raf});
+  } catch(e) {}
+}
+
+function stopSpeakingDetection(peerId) {
+  const s = speakingAnalysers.get(peerId);
+  if (!s) return;
+  cancelAnimationFrame(s.raf);
+  try { s.ctx.close(); } catch(e) {}
+  speakingAnalysers.delete(peerId);
+}
+
+function getInitials(name) {
+  return (name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+}
+
 function updateCallBar() {
   if (!isInCall()) {
     g('callBar').classList.remove('show');
     return;
   }
   g('callBar').classList.add('show');
-  // Show names of everyone in call
-  const names = [...callPeers.keys()].map(id=>peers.get(id)?.nick||'?');
-  g('callPeerName').textContent = names.length===1 ? names[0] : names.length+' people';
   g('callVol').style.opacity = isMuted ? '0.3' : '1';
+
+  const panel = g('callParticipants');
+  panel.innerHTML = '';
+
+  // Self tile
+  const selfTile = document.createElement('div');
+  selfTile.className = 'call-tile' + (isMuted?' muted':'');
+  selfTile.id = 'ctile-self';
+  selfTile.innerHTML = `
+    <div class="call-tile-avatar">${getInitials(myNick)}<span class="mic-icon">${isMuted?'🔇':'🎙'}</span></div>
+    <div class="call-tile-name">${esc(myNick)} (you)</div>`;
+  panel.appendChild(selfTile);
+
+  // Peer tiles
+  callPeers.forEach((entry, peerId) => {
+    const peerInfo = peers.get(peerId);
+    const nick = peerInfo?.nick || 'Peer';
+    const vol = Math.round(entry.volume * 100);
+
+    const tile = document.createElement('div');
+    tile.className = 'call-tile';
+    tile.id = 'ctile-'+peerId;
+    tile.innerHTML = `
+      <div class="call-tile-avatar">${getInitials(nick)}</div>
+      <div class="call-tile-name">${esc(nick)}</div>
+      <div class="call-tile-vol">
+        <span style="font-size:9px">${vol===0?'🔇':vol>150?'📢':'🔊'}</span>
+        <input type="range" min="0" max="200" step="5" value="${vol}"
+          oninput="onTileVolume('${peerId}',this)"
+          style="flex:1;height:16px;cursor:pointer;accent-color:var(--g)">
+        <span class="call-tile-vol-pct" id="cvol-${peerId}">${vol}%</span>
+      </div>`;
+    panel.appendChild(tile);
+  });
+}
+
+function onTileVolume(peerId, slider) {
+  const vol = parseInt(slider.value)/100;
+  setPeerVolume(peerId, vol);
+  const pct = g('cvol-'+peerId);
+  if (pct) pct.textContent = slider.value+'%';
+  const icon = slider.parentElement?.firstElementChild;
+  if (icon) icon.textContent = vol===0?'🔇':vol>1.5?'📢':'🔊';
 }
 
 function _cleanupCall() {
   clearInterval(callTimerTmr); callTimerTmr=null;
+  // Stop all speaking detectors
+  speakingAnalysers.forEach((_, id) => stopSpeakingDetection(id));
   // Close all peer audio PCs
-  callPeers.forEach((entry, peerId) => {
+  callPeers.forEach((entry) => {
     try { entry.apc.close(); } catch(e) {}
     entry.audioEl.pause(); entry.audioEl.srcObject=null;
     try { entry.audioEl.remove(); } catch(e) {}
@@ -926,8 +1032,8 @@ async function autoSelectTurn() {
   }));
   const turns = results.filter(r=>r.ok&&r.srv.username).sort((a,b)=>a.ms-b.ms);
   const stuns = results.filter(r=>r.ok&&!r.srv.username).sort((a,b)=>a.ms-b.ms);
-  const openRelay = turns.find(r=>r.srv.label.startsWith('OpenRelay')&&r.ok); const expressTurn = turns.find(r=>r.srv.label==='ExpressTurn'&&r.ok);
-  const bestTurn = openRelay || expressTurn || (turns.length>0?turns[0]:null);
+  const expressTurn = turns.find(r=>r.srv.label==='ExpressTurn'&&r.ok);
+  const bestTurn = expressTurn || (turns.length>0?turns[0]:null);
   // Best STUN: prefer fastest Google STUN
   const bestStun = stuns.find(r=>r.srv.group==='stun') || stuns[0];
   if (bestTurn||bestStun) {
@@ -1032,8 +1138,8 @@ async function runTurnTest() {
   // Pick best
   const turns = serverResults.filter(r=>r.ok&&r.srv.username).sort((a,b)=>a.ms-b.ms);
   const stuns = serverResults.filter(r=>r.ok&&!r.srv.username).sort((a,b)=>a.ms-b.ms);
-  const openRelay = turns.find(r=>r.srv.label.startsWith('OpenRelay')&&r.ok); const expressTurn = turns.find(r=>r.srv.label==='ExpressTurn'&&r.ok);
-  const bestTurn = openRelay || expressTurn || (turns.length>0?turns[0]:null);
+  const expressTurn = turns.find(r=>r.srv.label==='ExpressTurn'&&r.ok);
+  const bestTurn = expressTurn || (turns.length>0?turns[0]:null);
   const bestStun = stuns.find(r=>r.srv.group==='stun')||stuns[0];
 
   if (bestTurn||bestStun) {
@@ -1273,14 +1379,27 @@ function fullReset(){
 function gatherICE(pc, maxMs=5000){
   return new Promise(res=>{
     if(pc.iceGatheringState==='complete'){res();return;}
-    let done=false, hasSrflx=false;
-    const finish=()=>{if(!done){done=true;pc.removeEventListener('icecandidate',handler);res();}};
+    let done=false, hasSrflx=false, hasRelay=false, srflxTimer=null;
+    const finish=()=>{
+      if(!done){done=true;if(srflxTimer)clearTimeout(srflxTimer);pc.removeEventListener('icecandidate',handler);res();}
+    };
     const handler=e=>{
       if(!e.candidate){finish();return;}
       const t=e.candidate.type||(e.candidate.candidate.match(/typ (\w+)/)||[])[1];
-      if(t==='srflx'||t==='relay'){hasSrflx=true;setTimeout(finish,300);}
+      if(t==='relay'){
+        hasRelay=true;
+        // Got a relay candidate — wait 200ms more for additional relay candidates then done
+        if(srflxTimer)clearTimeout(srflxTimer);
+        srflxTimer=setTimeout(finish,200);
+      } else if(t==='srflx'&&!hasRelay){
+        hasSrflx=true;
+        // Got STUN candidate — give TURN servers 2s to produce relay candidates
+        // (TURN takes longer than STUN to respond)
+        if(!srflxTimer) srflxTimer=setTimeout(finish,2000);
+      }
     };
     pc.addEventListener('icecandidate',handler);
+    // Hard cap
     setTimeout(finish,maxMs);
   });
 }
@@ -1508,18 +1627,7 @@ function makePeerConnection(peerId){
 // Use plain <audio> elements - AudioContext requires user gesture on desktop
 // and silently stays suspended when called from WebRTC callbacks
 
-function playRemoteStream(stream) {
-  const audio = g('remoteAudio');
-  audio.srcObject = stream;
-  // Must call play() explicitly — autoplay policy blocks it on desktop
-  const playPromise = audio.play();
-  if (playPromise) playPromise.catch(() => {
-    // Autoplay blocked — try again on next user interaction
-    const resume = () => { audio.play().catch(()=>{}); document.removeEventListener('click', resume); document.removeEventListener('touchstart', resume); };
-    document.addEventListener('click', resume, {once:true});
-    document.addEventListener('touchstart', resume, {once:true});
-  });
-}
+// playRemoteStream removed — each call peer has its own <audio> element
 
 // ── COMPACT WIRE PROTOCOL ─────────────────────────────────────────────────
 const W={
