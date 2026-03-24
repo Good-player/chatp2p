@@ -122,6 +122,12 @@ p b{color:var(--t)}
 .call-tile-vol{width:100%;display:flex;align-items:center;gap:3px;margin-top:2px}
 .call-tile-vol input[type=range]{flex:1;height:16px;cursor:pointer;accent-color:var(--g)}
 .call-tile-vol-pct{font-size:9px;color:var(--m);min-width:24px;text-align:right}
+/* screen share */
+.screen-share-view{border-top:1px solid rgba(96,165,250,.2);background:#000}
+.screen-share-header{display:flex;align-items:center;justify-content:space-between;padding:5px 10px;font-size:11px;color:var(--bl);background:rgba(96,165,250,.07)}
+.screen-close-btn{background:none;border:none;color:var(--m);cursor:pointer;font-size:14px;padding:0 4px;line-height:1}
+.screen-close-btn:hover{color:var(--t)}
+.ctl-btn.sharing{color:var(--bl);border-color:var(--bl);background:rgba(96,165,250,.1)}
 .call-timer{font-size:11px;color:var(--m);font-variant-numeric:tabular-nums}
 .call-vol{display:flex;align-items:center;gap:3px;height:16px}
 .vol-bar{width:3px;border-radius:2px;background:var(--g);animation:vol .6s ease-in-out infinite}
@@ -359,12 +365,26 @@ p b{color:var(--t)}
         <span class="call-timer" id="callTimer">0:00</span>
       </div>
       <div style="display:flex;gap:4px">
+        <button class="ctl-btn" id="shareBtn" onclick="toggleScreenShare()" title="Share screen">🖥️</button>
         <button class="ctl-btn" id="muteBtn" onclick="toggleMute()" title="Mute/Unmute">🎙</button>
         <button class="ctl-btn end" onclick="endCall()" title="End call">📵</button>
       </div>
     </div>
-    <!-- Participant tiles - updated by updateCallPanel() -->
+    <!-- Participant tiles -->
     <div class="call-participants" id="callParticipants"></div>
+    <!-- Screen share view — shown when someone is sharing -->
+    <div class="screen-share-view" id="screenView" style="display:none">
+      <div class="screen-share-header">
+        <span id="screenSharerName">Someone</span> is sharing their screen
+        <button class="screen-close-btn" onclick="closeScreenView()" title="Close view">✕</button>
+      </div>
+      <video id="screenVideo" autoplay playsinline muted style="width:100%;border-radius:0 0 6px 6px;background:#000;display:block;max-height:220px;object-fit:contain"></video>
+    </div>
+  </div>
+  <!-- Screen share button in chat toolbar (works without call too) -->
+  <div id="screenShareBar" style="display:none;padding:4px 10px;background:rgba(96,165,250,.07);border-bottom:1px solid rgba(96,165,250,.2);font-size:11px;color:var(--bl);align-items:center;justify-content:space-between">
+    <span>🖥️ You are sharing your screen</span>
+    <button onclick="stopScreenShare()" style="font-size:10px;color:var(--r);background:rgba(248,113,113,.1);border:1px solid var(--r);padding:2px 8px;border-radius:5px;cursor:pointer;font-family:var(--f)">Stop sharing</button>
   </div>
   <!-- peer list with public room badge -->
   <div class="peer-list" id="peerList"><span id="pubBadge" style="display:none" class="pub-badge">🌐 <span id="pubBadgeName"></span></span></div>
@@ -395,6 +415,7 @@ p b{color:var(--t)}
     <textarea id="msgIn" placeholder="Message… supports **bold**, *italic*, \`code\`" rows="1" disabled></textarea>
     <div class="cright">
       <button class="btn g" id="sndBtn" onclick="send()" disabled>Send</button>
+      <button class="btn b" id="shareBtn2" onclick="toggleScreenShare()" disabled title="Share screen" style="width:auto;padding:0 10px;height:38px;font-size:15px">🖥️</button>
       <button class="btn r" id="dscBtn" onclick="disc()" disabled>⏏</button>
     </div>
   </div>
@@ -548,7 +569,160 @@ function playBeep(freq=880, dur=0.15) {
   } catch(e) {}
 }
 
-// ── VOICE CALL STATE ───────────────────────────────────────────────────────
+// ── SCREEN SHARE STATE ─────────────────────────────────────────────────────
+let screenStream = null;          // our outgoing screen capture
+let screenSharingActive = false;
+const screenPCs = new Map();       // peerId → RTCPeerConnection (for sending screen)
+const screenRxPCs = new Map();     // peerId → RTCPeerConnection (for receiving screen)
+
+// ── SCREEN SHARE — SEND ────────────────────────────────────────────────────
+async function toggleScreenShare() {
+  if (screenSharingActive) { stopScreenShare(); return; }
+  if (peers.size === 0) { toast('No peers connected'); return; }
+
+  try {
+    screenStream = await navigator.mediaDevices.getDisplayMedia({
+      video: {frameRate:{ideal:15,max:30}, width:{ideal:1920}, height:{ideal:1080}},
+      audio: false
+    });
+  } catch(e) {
+    if (e.name !== 'NotAllowedError') toast('Screen share failed: '+e.message, 'e');
+    return;
+  }
+
+  screenSharingActive = true;
+  [g('shareBtn'), g('shareBtn2')].forEach(b => { if(b){b.classList.add('sharing');b.title='Stop sharing';} });
+  g('screenShareBar').style.display = 'flex';
+  sys('🖥️ You started screen sharing');
+
+  // When user stops via browser's built-in stop button
+  screenStream.getVideoTracks()[0].onended = () => stopScreenShare();
+
+  // Offer screen to all connected peers
+  for (const [peerId] of peers) {
+    await offerScreenToPeer(peerId);
+  }
+}
+
+async function offerScreenToPeer(peerId) {
+  if (!screenStream || !screenStream.active) return;
+  const peer = peers.get(peerId);
+  if (!peer || !peer.dc || peer.dc.readyState !== 'open') return;
+
+  // Close existing screen PC for this peer
+  const existing = screenPCs.get(peerId);
+  if (existing) { try{existing.close();}catch(e){} }
+
+  const spc = new RTCPeerConnection({iceServers: ICE});
+  screenPCs.set(peerId, spc);
+
+  // Add the screen video track
+  screenStream.getVideoTracks().forEach(t => spc.addTrack(t, screenStream));
+
+  try {
+    await setLocalAndGather(spc, await spc.createOffer());
+    wireOne(peerId, {t:'screen-offer', nick:myNick, sdp:spc.localDescription});
+  } catch(e) {
+    sys('🖥️ Screen share offer failed: '+e.message);
+  }
+}
+
+function stopScreenShare() {
+  if (!screenSharingActive) return;
+  screenSharingActive = false;
+
+  // Stop tracks
+  if (screenStream) { screenStream.getTracks().forEach(t=>t.stop()); screenStream=null; }
+
+  // Close all sending PCs and notify peers
+  screenPCs.forEach((spc, peerId) => {
+    wireOne(peerId, {t:'screen-end'});
+    try{spc.close();}catch(e){}
+  });
+  screenPCs.clear();
+
+  [g('shareBtn'), g('shareBtn2')].forEach(b => { if(b){b.classList.remove('sharing');b.title='Share screen';} });
+  g('screenShareBar').style.display = 'none';
+  sys('🖥️ Screen share stopped');
+}
+
+// ── SCREEN SHARE — RECEIVE ─────────────────────────────────────────────────
+async function handleScreenOffer(fromId, sdp, nick) {
+  const existing = screenRxPCs.get(fromId);
+  if (existing) { try{existing.close();}catch(e){} }
+
+  const rpc = new RTCPeerConnection({iceServers: ICE});
+  screenRxPCs.set(fromId, rpc);
+
+  rpc.ontrack = e => {
+    if (e.track.kind === 'video') {
+      const vid = g('screenVideo');
+      vid.srcObject = e.streams[0] || new MediaStream([e.track]);
+      vid.play().catch(()=>{});
+      g('screenSharerName').textContent = nick || peers.get(fromId)?.nick || 'Someone';
+      g('screenView').style.display = 'block';
+      // Scroll into view
+      vid.scrollIntoView({behavior:'smooth', block:'nearest'});
+    }
+  };
+
+  rpc.onconnectionstatechange = () => {
+    if (rpc.connectionState === 'failed' || rpc.connectionState === 'closed') {
+      closeScreenView();
+      screenRxPCs.delete(fromId);
+    }
+  };
+
+  try {
+    await rpc.setRemoteDescription(sdp);
+    await setLocalAndGather(rpc, await rpc.createAnswer());
+    wireOne(fromId, {t:'screen-ans', sdp:rpc.localDescription});
+  } catch(e) {
+    sys('🖥️ Screen receive failed: '+e.message);
+    screenRxPCs.delete(fromId);
+  }
+}
+
+function handleScreenAnswer(fromId, sdp) {
+  const spc = screenPCs.get(fromId);
+  if (!spc) { sys('🖥️ screen-ans: no sending PC for '+fromId.slice(0,6)); return; }
+  spc.setRemoteDescription(sdp).catch(e => sys('🖥️ screen-ans error: '+e.message));
+}
+
+function handleScreenEnd(fromId) {
+  const rpc = screenRxPCs.get(fromId);
+  if (rpc) { try{rpc.close();}catch(e){} screenRxPCs.delete(fromId); }
+  // Only close view if this person was the one sharing
+  const vid = g('screenVideo');
+  if (vid && vid.srcObject) {
+    const sharerName = g('screenSharerName').textContent;
+    const peerNick = peers.get(fromId)?.nick || '';
+    if (sharerName === peerNick || sharerName === 'Someone') closeScreenView();
+  }
+  sys('🖥️ '+(peers.get(fromId)?.nick||'Peer')+' stopped sharing');
+}
+
+function closeScreenView() {
+  const vid = g('screenVideo');
+  if (vid) { vid.pause(); vid.srcObject=null; }
+  g('screenView').style.display = 'none';
+}
+
+// Also offer screen to newly joined peers if already sharing
+function maybeOfferScreenToNewPeer(peerId) {
+  if (screenSharingActive && screenStream?.active) {
+    setTimeout(() => offerScreenToPeer(peerId), 500);
+  }
+}
+
+// Clean up screen share on full reset
+function _cleanupScreenShare() {
+  stopScreenShare();
+  screenRxPCs.forEach(rpc => { try{rpc.close();}catch(e){} });
+  screenRxPCs.clear();
+  closeScreenView();
+}
+
 // ── VOICE CALL STATE ───────────────────────────────────────────────────────
 let localStream = null;
 let isMuted = false;
@@ -579,21 +753,15 @@ function makeAudioPC(peerId) {
   document.body.appendChild(audioEl);
 
   apc.onconnectionstatechange = () => {
-    sys('🔊 ['+peerId.slice(0,6)+'] state: '+apc.connectionState);
     if (apc.connectionState==='failed'||apc.connectionState==='closed') {
       sys('📵 Voice lost with '+( peers.get(peerId)?.nick||'peer'));
       removePeerFromCall(peerId);
       if (!isInCall()) _cleanupCall();
     }
   };
-  apc.oniceconnectionstatechange = () => sys('🔊 ['+peerId.slice(0,6)+'] ICE: '+apc.iceConnectionState);
-  apc.onicegatheringstatechange = () => sys('🔊 ['+peerId.slice(0,6)+'] gather: '+apc.iceGatheringState);
   apc.onicecandidate = e => {
-    if(e.candidate) sys('🔊 ICE: '+e.candidate.type+' '+e.candidate.protocol);
-    else sys('🔊 ICE done');
   };
   apc.ontrack = e => {
-    sys('🔊 ontrack! kind='+e.track.kind+' streams='+e.streams.length);
     if (e.track.kind==='audio') {
       const stream = e.streams[0] || new MediaStream([e.track]);
       const entry = callPeers.get(peerId);
@@ -605,7 +773,6 @@ function makeAudioPC(peerId) {
           document.addEventListener('click',resume,{once:true});
           document.addEventListener('touchstart',resume,{once:true});
         });
-        sys('🔊 Playing audio from '+peerId.slice(0,6));
         startSpeakingDetection(peerId, stream);
       }
     }
@@ -655,9 +822,7 @@ async function startCall(targetPeerId) {
   });
 
   try {
-    sys('🔊 Creating offer for '+peer.nick+'…');
     await setLocalAndGather(apc, await apc.createOffer());
-    sys('🔊 Offer ready, candidates: '+(apc.localDescription.sdp.match(/a=candidate/g)||[]).length);
     wireOne(targetPeerId, {t:'call-req', nick:myNick, sdp:apc.localDescription});
     toast('Calling '+(peer.nick||'peer')+'\u2026');
     if (!callStartedAt) startCallTimer();
@@ -712,11 +877,8 @@ async function answerCall() {
   });
 
   try {
-    sys('🔊 Setting remote offer…');
     await apc.setRemoteDescription(incomingSDP);
-    sys('🔊 Creating answer…');
     await setLocalAndGather(apc, await apc.createAnswer());
-    sys('🔊 Answer ready, candidates: '+(apc.localDescription.sdp.match(/a=candidate/g)||[]).length);
     wireOne(peerId, {t:'call-ans', nick:myNick, sdp:apc.localDescription});
     onCallConnected(peerId);
     playBeep(880, 0.1);
@@ -1361,6 +1523,7 @@ function fullReset(){
   clearInterval(upTmr);clearTimeout(typOff);upTmr=null;typOff=null;
   stopSig();
   _cleanupCall();
+  _cleanupScreenShare();
   stopRing();
   // Close hostTemplatePc (legacy offer PC)
   if(hostTemplatePc){try{hostTemplatePc.close();}catch(e){} hostTemplatePc=null;}
@@ -1642,10 +1805,13 @@ const W={
       case 'ping':      return JSON.stringify([6,obj.id]);
       case 'pong':      return JSON.stringify([7,obj.id]);
       case 'relay-msg': return JSON.stringify([8,obj.v,obj.nick,obj.id]);
-      case 'call-req':  return JSON.stringify({t:'call-req', nick:obj.nick, sdp:obj.sdp});
-      case 'call-ans':  return JSON.stringify({t:'call-ans', nick:obj.nick, sdp:obj.sdp});
-      case 'call-dec':  return '[11]';
-      case 'call-end':  return '[12]';
+      case 'call-req':    return JSON.stringify({t:'call-req', nick:obj.nick, sdp:obj.sdp});
+      case 'call-ans':    return JSON.stringify({t:'call-ans', nick:obj.nick, sdp:obj.sdp});
+      case 'call-dec':    return '[11]';
+      case 'call-end':    return '[12]';
+      case 'screen-offer': return JSON.stringify({t:'screen-offer', nick:obj.nick, sdp:obj.sdp});
+      case 'screen-ans':   return JSON.stringify({t:'screen-ans', sdp:obj.sdp});
+      case 'screen-end':   return '[13]';
       default:          return JSON.stringify(obj);
     }
   },
@@ -1666,6 +1832,7 @@ const W={
       case 10: return {t:'call-ans', nick:a[1]}; // legacy compat
       case 11: return {t:'call-dec'};
       case 12: return {t:'call-end'};
+      case 13: return {t:'screen-end'};
       default: return {t:'?'};
     }
   }
@@ -1708,6 +1875,7 @@ function onPeerConnected(peerId){
   sv('s-peers', countOnline(), 'sg'); // peer is already in map, countOnline() is correct
   updatePeerList();
   if(isHost&&!sigPoll)hostListenLoop();
+  maybeOfferScreenToNewPeer(peerId);
 }
 
 function removePeer(peerId,reason){
@@ -1820,15 +1988,12 @@ async function onMsg(fromId,d){
     playRing();
     sys(`📞 Incoming call from ${callerName}…`);
   } else if(d.t==='call-ans'){
-    sys('🔊 Got call-ans from '+fromId.slice(0,6)+', sdp='+!!d.sdp);
     const entry = callPeers.get(fromId);
     if(entry && d.sdp){
       try{
         await entry.apc.setRemoteDescription(d.sdp);
-        sys('🔊 Remote desc set. ICE: '+entry.apc.iceConnectionState);
-      }catch(e){ sys('📵 Call setup failed: '+e.message); removePeerFromCall(fromId); if(!isInCall())_cleanupCall(); return; }
+        }catch(e){ sys('📵 Call setup failed: '+e.message); removePeerFromCall(fromId); if(!isInCall())_cleanupCall(); return; }
     } else {
-      sys('🔊 call-ans: entry='+!!entry+' d.sdp='+!!d.sdp);
     }
     onCallConnected(fromId);
     playBeep(880,0.1);
@@ -1843,6 +2008,13 @@ async function onMsg(fromId,d){
     removePeerFromCall(fromId);
     if(!isInCall()) { _cleanupCall(); playBeep(440,0.2); }
     sys('📵 Call ended by '+(peer?.nick||'peer'));
+  } else if(d.t==='screen-offer'){
+    sys('🖥️ '+(d.nick||peer?.nick||'Peer')+' wants to share screen');
+    await handleScreenOffer(fromId, d.sdp, d.nick||peer?.nick);
+  } else if(d.t==='screen-ans'){
+    handleScreenAnswer(fromId, d.sdp);
+  } else if(d.t==='screen-end'){
+    handleScreenEnd(fromId);
   }
 }
 
@@ -1941,8 +2113,8 @@ function copyCode(){if(!myCode)return;navigator.clipboard.writeText(myCode).then
 function cpyEl(srcId,btnId){const el=g(srcId);if(!el)return;const v=el.value;if(!v||v.startsWith('⏳')){toast('Not ready yet');return;}navigator.clipboard.writeText(v).then(()=>{const b=g(btnId);const o=b.textContent;b.textContent='✓ Copied!';setTimeout(()=>b.textContent=o,2000);});}
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
-function enableIn(){g('msgIn').disabled=false;g('sndBtn').disabled=false;g('dscBtn').disabled=false;g('msgIn').focus();}
-function disableIn(){g('msgIn').disabled=true;g('sndBtn').disabled=true;}
+function enableIn(){g('msgIn').disabled=false;g('sndBtn').disabled=false;g('dscBtn').disabled=false;if(g('shareBtn2'))g('shareBtn2').disabled=false;g('msgIn').focus();}
+function disableIn(){g('msgIn').disabled=true;g('sndBtn').disabled=true;if(g('shareBtn2'))g('shareBtn2').disabled=true;}
 function pstat(txt,on){g('ptxt').textContent=txt;g('pill').classList.toggle('on',on);}
 function sv(id,val,cls){const e=g(id);if(!e)return;e.textContent=val;e.className='sval '+(cls||'');}
 function upt(s){return s<60?s+'s':s<3600?Math.floor(s/60)+'m'+Math.floor(s%60)+'s':Math.floor(s/3600)+'h'+Math.floor((s%3600)/60)+'m';}
