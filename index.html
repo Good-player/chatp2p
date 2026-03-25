@@ -1254,6 +1254,13 @@ body.modern .section-header {
 }
 body.modern .btn-sm-sub {
   background: transparent !important;
+  color: #55556a;
+  border-color: #23232e;
+}
+body.modern .btn-sm-sub:hover {
+  color: #e2e2ec;
+  border-color: #55556a;
+  background: rgba(255,255,255,.04) !important;
 }
 
 .voice-connected-label {
@@ -1502,8 +1509,8 @@ body.modern .btn:focus-visible {
       </div>
     </div>
     <div class="row">
-      <button class="btn sm" id="turnStatusBtn" onclick="scr('s0')" class="btn-sm-sub"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 5.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5zm0-4.5l-1 2.5A5 5 0 004.5 5L2 4 1 6l2 1.5A5 5 0 003 9.5l-2 1 1 2 2.5-1A5 5 0 006.5 13l1 2h3l1-2A5 5 0 0013.5 11.5l2.5 1 1-2-2-1A5 5 0 0015 7.5L17 6l-1-2-2.5 1A5 5 0 0011.5 3.5L10.5 1z"/></svg> Testing servers...</button>
-      <button class="btn sm" onclick="openMicTest()" class="btn-sm-sub"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16"><rect x="5" y="1" width="6" height="8" rx="3" fill="currentColor"/><path d="M3 8a5 5 0 0010 0" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="13" x2="8" y2="15" stroke="currentColor" stroke-width="1.5"/><line x1="6" y1="15" x2="10" y2="15" stroke="currentColor" stroke-width="1.5"/></svg> Test Mic</button>
+      <button class="btn sm btn-sm-sub" id="turnStatusBtn" onclick="scr('s0')"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 5.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5zm0-4.5l-1 2.5A5 5 0 004.5 5L2 4 1 6l2 1.5A5 5 0 003 9.5l-2 1 1 2 2.5-1A5 5 0 006.5 13l1 2h3l1-2A5 5 0 0013.5 11.5l2.5 1 1-2-2-1A5 5 0 0015 7.5L17 6l-1-2-2.5 1A5 5 0 0011.5 3.5L10.5 1z"/></svg> Testing servers...</button>
+      <button class="btn sm btn-sm-sub" onclick="openMicTest()"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16"><rect x="5" y="1" width="6" height="8" rx="3" fill="currentColor"/><path d="M3 8a5 5 0 0010 0" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="13" x2="8" y2="15" stroke="currentColor" stroke-width="1.5"/><line x1="6" y1="15" x2="10" y2="15" stroke="currentColor" stroke-width="1.5"/></svg> Test Mic</button>
     </div>
   </div>
 
