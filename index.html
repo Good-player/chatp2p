@@ -25,6 +25,15 @@
   --win-gray:  #c0c0c0;
   --win-inset: #808080;
   --f: 'VT323', 'Courier New', monospace;
+  /* Semantic color vars — used by JS inline styles, must work in both themes */
+  --g:  #008000;  /* green  */
+  --r:  #800000;  /* red    */
+  --y:  #8b6000;  /* yellow */
+  --bl: #000080;  /* blue   */
+  --m:  #808080;  /* muted  */
+  --t:  #000000;  /* text   */
+  --bg: #c0c0c0;  /* background */
+  --b:  #808080;  /* border */
 }
 
 /* Win95 raised bevel */
@@ -696,7 +705,16 @@ body.modern {
   background: #0d0d12;
   font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
-  color: #e2e2ec; /* global text color — overrides Win95 black */
+  color: #e2e2ec;
+  /* Override semantic vars for modern theme */
+  --g:  #4ade80;
+  --r:  #f87171;
+  --y:  #fbbf24;
+  --bl: #60a5fa;
+  --m:  #55556a;
+  --t:  #e2e2ec;
+  --bg: #0d0d12;
+  --b:  #23232e;
 }
 
 /* Global Win95 override — reset beveled borders on specific elements, not * */
@@ -1244,59 +1262,55 @@ body.modern .video-grid { background: #0a0a0f; border-radius: 8px; padding: 6px;
 
 
 /* ── SEMANTIC CLASSES (theme-aware) ── */
+.turn-panel-hint { font-size: 13px; color: #808080; }
+body.modern .turn-panel-hint { font-size: 11px; color: #55556a; }
+
+.screen-stop-btn {
+  font-size: 12px; color: #c0c0c0; background: #800000;
+  border-top: 1px solid #c0c0c0; border-left: 1px solid #c0c0c0;
+  border-right: 1px solid #404040; border-bottom: 1px solid #404040;
+  padding: 1px 8px; cursor: pointer; font-family: var(--f);
+}
+body.modern .screen-stop-btn {
+  font-size: 10px; color: #f87171; background: rgba(248,113,113,.1);
+  border: 1px solid #f87171; border-radius: 5px;
+  padding: 2px 8px; font-family: 'JetBrains Mono', monospace;
+}
+
+.peer-vol-wrap { display:flex; align-items:center; gap:3px; font-size:9px; color:var(--m); }
+body.modern .peer-vol-wrap { color: #55556a; }
+
 .section-header {
   font-size: 13px; color: #808080; font-weight: 700;
   border-bottom: 1px solid #c0c0c0; padding-bottom: 2px;
 }
 body.modern .section-header {
-  color: #55556a; border-bottom: 1px solid #23232e; font-size: 11px;
+  color: #55556a; border-bottom: 1px solid #23232e; font-size: 10px;
   text-transform: uppercase; letter-spacing: .06em;
 }
 
-.btn-sm-sub {
-  background: var(--win-face);
-}
-body.modern .btn-sm-sub {
-  background: transparent !important;
-  color: #55556a;
-  border-color: #23232e;
-}
-body.modern .btn-sm-sub:hover {
-  color: #e2e2ec;
-  border-color: #55556a;
-  background: rgba(255,255,255,.04) !important;
-}
+.btn-sm-sub { background: var(--win-face); }
+body.modern .btn-sm-sub { background: transparent !important; color: #55556a; border-color: #23232e; }
+body.modern .btn-sm-sub:hover { color: #e2e2ec; border-color: #55556a; background: rgba(255,255,255,.04) !important; }
 
-.voice-connected-label {
-  font-size: 14px; color: #006000; font-weight: 700;
-}
-body.modern .voice-connected-label {
-  font-size: 10px; color: #4ade80; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .08em;
-}
+.voice-connected-label { font-size: 14px; color: #006000; font-weight: 700; }
+body.modern .voice-connected-label { font-size: 10px; color: #4ade80; font-weight: 700; letter-spacing: .08em; }
 
 .screen-share-bar-active {
-  padding: 3px 8px; background: #000080;
-  border-bottom: 2px solid #404040;
-  font-size: 14px; color: #fff;
-  align-items: center; justify-content: space-between;
+  padding: 3px 8px; background: #000080; border-bottom: 2px solid #404040;
+  font-size: 14px; color: #fff; align-items: center; justify-content: space-between;
   font-family: var(--f);
 }
 body.modern .screen-share-bar-active {
-  background: rgba(96,165,250,.1);
-  border-bottom: 1px solid rgba(96,165,250,.3);
-  font-size: 11px; color: #60a5fa;
+  background: rgba(96,165,250,.08); border-bottom: 1px solid rgba(96,165,250,.2);
+  font-size: 11px; color: #60a5fa; font-family: 'JetBrains Mono', monospace;
 }
-body.modern .screen-share-bar-active button {
-  background: rgba(248,113,113,.1) !important;
-  border: 1px solid #f87171 !important;
-  color: #f87171 !important;
-  border-radius: 5px;
-  font-size: 11px;
-  padding: 2px 8px;
+body.modern .screen-share-bar-active .screen-stop-btn {
+  background: rgba(248,113,113,.1) !important; border: 1px solid #f87171 !important;
+  color: #f87171 !important; border-radius: 5px; font-size: 10px; padding: 2px 8px;
 }
 
-/* Missing modern overrides */
+/* Other missing modern overrides */
 body.modern .call-participants { background: transparent; padding: 4px 8px; gap: 6px; }
 body.modern .screen-share-view { border-top: 1px solid #23232e; }
 body.modern #screenView video { border-radius: 0 0 8px 8px; }
@@ -1466,16 +1480,16 @@ body.modern .btn:focus-visible {
     <p>Tests relay servers and picks the fastest one automatically.</p>
 
     <div class="section-header"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M9 1L4 9h5l-2 6 7-9H9z"/></svg> MAIN SERVER</div>
-    <div class="turn-panel" id="panelMain"><div style="font-size:13px;color:#808080">Press Test to start</div></div>
+    <div class="turn-panel" id="panelMain"><div class="turn-panel-hint">Press Test to start</div></div>
 
     <div class="section-header"><svg width="12" height="12"></svg> GOOGLE STUN</div>
-    <div class="turn-panel" id="panelStun"><div style="font-size:13px;color:#808080">Press Test to start</div></div>
+    <div class="turn-panel" id="panelStun"><div class="turn-panel-hint">Press Test to start</div></div>
 
     <div class="section-header">OTHER SERVERS</div>
-    <div class="turn-panel" id="panelOther"><div style="font-size:13px;color:#808080">Press Test to start</div></div>
+    <div class="turn-panel" id="panelOther"><div class="turn-panel-hint">Press Test to start</div></div>
 
     <div class="section-header"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 8a3 3 0 004.2.9l2-2a3 3 0 00-4.2-4.2L6.8 3.9"/><path d="M10 8a3 3 0 00-4.2-.9l-2 2a3 3 0 004.2 4.2l1.2-1.2"/></svg> OTHER RESOURCES</div>
-    <div class="turn-panel" id="panelResources"><div style="font-size:13px;color:#808080">Press Test to start</div></div>
+    <div class="turn-panel" id="panelResources"><div class="turn-panel-hint">Press Test to start</div></div>
 
     <div id="chosenTurn" style="display:none" class="chosen-turn"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 8l4 5L14 3"/></svg> <span id="chosenTurnName"></span> selected as TURN</div>
     <div class="row">
@@ -1638,7 +1652,7 @@ body.modern .btn:focus-visible {
   <!-- Screen share active bar -->
   <div id="screenShareBar" class="screen-share-bar-active" style="display:none">
     <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="10" rx="1"/><path d="M5 14h6M8 12v2"/></svg> You are sharing your screen</span>
-    <button onclick="stopScreenShare()" style="font-size:12px;color:#c0c0c0;background:#800000;border-top:1px solid #c0c0c0;border-left:1px solid #c0c0c0;border-right:1px solid #404040;border-bottom:1px solid #404040;padding:1px 8px;cursor:pointer;font-family:var(--f)">Stop sharing</button>
+    <button onclick="stopScreenShare()" class="screen-stop-btn">Stop sharing</button>
   </div>
   <!-- Peer list -->
   <div class="peer-list" id="peerList"><span id="pubBadge" style="display:none" class="pub-badge"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 2a9 9 0 010 12M8 2a9 9 0 000 12M2 8h12"/></svg> <span id="pubBadgeName"></span></span></div>
@@ -2440,37 +2454,71 @@ function updateCallBar() {
   g('callVol').style.opacity = isMuted ? '0.3' : '1';
 
   const panel = g('callParticipants');
-  panel.innerHTML = '';
+  const SVG_MIC_ON  = `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 16 16"><rect x="5" y="1" width="6" height="8" rx="3" fill="currentColor"/><path d="M3 8a5 5 0 0010 0" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="13" x2="8" y2="15" stroke="currentColor" stroke-width="1.5"/><line x1="6" y1="15" x2="10" y2="15" stroke="currentColor" stroke-width="1.5"/></svg>`;
+  const SVG_MIC_OFF = `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 16 16"><rect x="5" y="1" width="6" height="8" rx="3" fill="currentColor"/><path d="M3 8a5 5 0 0010 0" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="13" x2="8" y2="15" stroke="currentColor" stroke-width="1.5"/><line x1="6" y1="15" x2="10" y2="15" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="1" x2="14" y2="15" stroke="currentColor" stroke-width="2"/></svg>`;
+  const volSVG = v => v===0
+    ? `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M2 6h3l4-4v12l-4-4H2z"/><line x1="12" y1="6" x2="15" y2="9" stroke="currentColor" stroke-width="1.5"/><line x1="15" y1="6" x2="12" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>`
+    : v>150
+    ? `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M2 6h3l4-4v12l-4-4H2z"/><path d="M11 5a4 4 0 010 6M13 3a7 7 0 010 10" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="3" r="1.5"/></svg>`
+    : `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M2 6h3l4-4v12l-4-4H2z"/><path d="M11 5a4 4 0 010 6M13 3a7 7 0 010 10" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
 
-  // Self tile
-  const selfTile = document.createElement('div');
-  selfTile.className = 'call-tile' + (isMuted?' muted':'');
-  selfTile.id = 'ctile-self';
-  selfTile.innerHTML = `
-    <div class="call-tile-avatar">${getInitials(myNick)}<span class="mic-icon">${isMuted?`<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 16 16"><rect x="5" y="1" width="6" height="8" rx="3" fill="currentColor"/><path d="M3 8a5 5 0 0010 0" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="13" x2="8" y2="15" stroke="currentColor" stroke-width="1.5"/><line x1="6" y1="15" x2="10" y2="15" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="1" x2="14" y2="15" stroke="currentColor" stroke-width="2"/></svg>`:`<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 16 16"><rect x="5" y="1" width="6" height="8" rx="3" fill="currentColor"/><path d="M3 8a5 5 0 0010 0" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="13" x2="8" y2="15" stroke="currentColor" stroke-width="1.5"/><line x1="6" y1="15" x2="10" y2="15" stroke="currentColor" stroke-width="1.5"/></svg>`}</span></div>
-    <div class="call-tile-name">${esc(myNick)} (you)</div>`;
-  panel.appendChild(selfTile);
+  // Track which tile IDs should exist
+  const wantedIds = new Set(['ctile-self']);
+  callPeers.forEach((_, peerId) => wantedIds.add('ctile-'+peerId));
 
-  // Peer tiles
+  // Remove tiles that no longer belong
+  Array.from(panel.children).forEach(el => {
+    if (!wantedIds.has(el.id)) el.remove();
+  });
+
+  // ── Self tile ──
+  let selfTile = g('ctile-self');
+  if (!selfTile) {
+    selfTile = document.createElement('div');
+    selfTile.id = 'ctile-self';
+    selfTile.innerHTML = `
+      <div class="call-tile-avatar">${getInitials(myNick)}<span class="mic-icon"></span></div>
+      <div class="call-tile-name">${esc(myNick)} (you)</div>`;
+    panel.insertBefore(selfTile, panel.firstChild);
+  }
+  // Update mute state without full rebuild
+  selfTile.className = 'call-tile' + (isMuted ? ' muted' : '');
+  const selfMicIcon = selfTile.querySelector('.mic-icon');
+  if (selfMicIcon) selfMicIcon.innerHTML = isMuted ? SVG_MIC_OFF : SVG_MIC_ON;
+
+  // ── Peer tiles ──
   callPeers.forEach((entry, peerId) => {
     const peerInfo = peers.get(peerId);
     const nick = peerInfo?.nick || 'Peer';
     const vol = Math.round(entry.volume * 100);
 
-    const tile = document.createElement('div');
-    tile.className = 'call-tile';
-    tile.id = 'ctile-'+peerId;
-    tile.innerHTML = `
-      <div class="call-tile-avatar">${getInitials(nick)}</div>
-      <div class="call-tile-name">${esc(nick)}</div>
-      <div class="call-tile-vol">
-        <span class="vol-icon">${vol===0?`<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M2 6h3l4-4v12l-4-4H2z"/><line x1="12" y1="6" x2="15" y2="9" stroke="currentColor" stroke-width="1.5"/><line x1="15" y1="6" x2="12" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>`:vol>150?`<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M2 6h3l4-4v12l-4-4H2z"/><path d="M11 5a4 4 0 010 6M13 3a7 7 0 010 10" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="3" r="1.5"/></svg>`:`<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M2 6h3l4-4v12l-4-4H2z"/><path d="M11 5a4 4 0 010 6M13 3a7 7 0 010 10" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`}</span>
-        <input type="range" min="0" max="200" step="5" value="${vol}"
-          oninput="onTileVolume('${peerId}',this)"
-          style="flex:1;height:16px;cursor:pointer;accent-color:var(--g)">
-        <span class="call-tile-vol-pct" id="cvol-${peerId}">${vol}%</span>
-      </div>`;
-    panel.appendChild(tile);
+    let tile = g('ctile-'+peerId);
+    if (!tile) {
+      // Create new tile — only runs once per peer joining
+      tile = document.createElement('div');
+      tile.className = 'call-tile';
+      tile.id = 'ctile-'+peerId;
+      tile.innerHTML = `
+        <div class="call-tile-avatar">${getInitials(nick)}</div>
+        <div class="call-tile-name">${esc(nick)}</div>
+        <div class="call-tile-vol">
+          <span class="vol-icon">${volSVG(vol)}</span>
+          <input type="range" min="0" max="200" step="5" value="${vol}"
+            oninput="onTileVolume('${peerId}',this)"
+            style="flex:1;height:16px;cursor:pointer;accent-color:var(--g)">
+          <span class="call-tile-vol-pct" id="cvol-${peerId}">${vol}%</span>
+        </div>`;
+      panel.appendChild(tile);
+    }
+    // Only update vol display if slider isn't being dragged
+    const slider = tile.querySelector('input[type=range]');
+    if (slider && document.activeElement !== slider) {
+      slider.value = vol;
+      const pct = g('cvol-'+peerId);
+      if (pct) pct.textContent = vol+'%';
+      const icon = tile.querySelector('.vol-icon');
+      if (icon) icon.innerHTML = volSVG(vol);
+    }
   });
 }
 
@@ -2997,6 +3045,7 @@ function fullReset(){
   _cleanupCall();
   _cleanupScreenShare();
   cleanupCamera();
+  stopKeepAlive();
   stopRing();
   // Close hostTemplatePc (legacy offer PC)
   if(hostTemplatePc){try{hostTemplatePc.close();}catch(e){} hostTemplatePc=null;}
@@ -3125,9 +3174,12 @@ async function generateHostOffer(){
 function hostListenLoop() {
   stopSig();
   sigPost(myCode, {type:'beacon', nick:myNick}).catch(()=>{});
-  // Poll every 2s for new join-requests using timestamp
+  startKeepAlive(); // prevent timer throttling while hosting
   let lastTime = Math.floor(Date.now()/1000) - 2;
-  sigPollTimer = setInterval(async () => {
+  let _running = true;
+
+  async function poll() {
+    if (!_running || !isHost) return;
     try {
       const r = await fetch(`${SIG}/direct-${myCode.toLowerCase()}/json?poll=1&since=${lastTime}`);
       const txt = await r.text();
@@ -3139,8 +3191,20 @@ function hostListenLoop() {
           if (msg.type === 'join-request') await handleNewPeer(msg);
         } catch(_) {}
       }
+      // Re-send beacon every ~10s to stay visible to late joiners
+      if (Date.now() - _lastBeacon > 10000) {
+        _lastBeacon = Date.now();
+        sigPost(myCode, {type:'beacon', nick:myNick}).catch(()=>{});
+      }
     } catch(_) {}
-  }, 2000);
+    if (_running && isHost) {
+      sigPollTimer = setTimeout(poll, 2000);
+    }
+  }
+
+  let _lastBeacon = Date.now();
+  // sigPollTimer now holds a setTimeout id (not interval) — stopSig clears it the same way
+  sigPollTimer = setTimeout(poll, 100); // first poll almost immediately
 }
 
 async function handleNewPeer(msg){
@@ -3248,12 +3312,30 @@ function makePeerConnection(peerId){
     sv('s-ice',pc.iceConnectionState,{connected:'sg',completed:'sg',failed:'sr',disconnected:'sr',checking:'sy'}[pc.iceConnectionState]||'sm');
     if(pc.iceConnectionState==='connected'||pc.iceConnectionState==='completed')detectRelay(pc);
   };
+  let _disconnectTimer=null;
   pc.onconnectionstatechange=()=>{
     if(!pc)return;
     const s=pc.connectionState;
-    if(s==='connected')onPeerConnected(peerId);
-    if(s==='failed'||s==='closed')removePeer(peerId,'Connection failed');
-    if(s==='disconnected'){const p=peers.get(peerId);if(p){p.online=false;updatePeerList();}sys(`[!] ${peers.get(peerId)?.nick||'Peer'} disconnected`);}
+    if(s==='connected'){
+      // Cancel any pending disconnect timeout
+      if(_disconnectTimer){clearTimeout(_disconnectTimer);_disconnectTimer=null;}
+      const p=peers.get(peerId);if(p&&p.online===false){p.online=true;updatePeerList();}
+      onPeerConnected(peerId);
+    }
+    if(s==='failed'||s==='closed'){
+      if(_disconnectTimer){clearTimeout(_disconnectTimer);_disconnectTimer=null;}
+      removePeer(peerId,'Connection failed');
+    }
+    if(s==='disconnected'){
+      const p=peers.get(peerId);if(p){p.online=false;updatePeerList();}
+      sys(`[!] ${peers.get(peerId)?.nick||'Peer'} disconnected — waiting for recovery...`);
+      // Give WebRTC 8 seconds to recover before giving up
+      _disconnectTimer=setTimeout(()=>{
+        _disconnectTimer=null;
+        if(pc.connectionState==='disconnected'||pc.connectionState==='failed')
+          removePeer(peerId,'Connection lost');
+      },8000);
+    }
   };
   pc.ondatachannel=e=>setupDC(peerId,e.channel);
   return pc;
@@ -3351,7 +3433,7 @@ function onPeerConnected(peerId){
   }
   sv('s-peers', countOnline(), 'sg'); // peer is already in map, countOnline() is correct
   updatePeerList();
-  if(isHost&&!sigPoll)hostListenLoop();
+  if(isHost&&!sigPollTimer)hostListenLoop();
   maybeOfferScreenToNewPeer(peerId);
 }
 
@@ -3398,7 +3480,7 @@ function updatePeerList(){
       // Volume slider — only visible during active call
       if(inThisCall){
         const volWrap=document.createElement('div');
-        volWrap.style.cssText='display:flex;align-items:center;gap:3px;font-size:9px;color:var(--m)';
+        volWrap.className='peer-vol-wrap';
         volWrap.innerHTML='<b>Vol:</b>';
         const slider=document.createElement('input');
         slider.type='range'; slider.min='0'; slider.max='200'; slider.step='5';
@@ -3588,8 +3670,8 @@ function stripSDP(sdp){
 
 function sigPost(code,data){return fetch(`${SIG}/direct-${code.toLowerCase()}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});}
 function stopSig(){
-  if(sigPollTimer){clearInterval(sigPollTimer);sigPollTimer=null;}
-  if(sigAnswerTimer){clearInterval(sigAnswerTimer);sigAnswerTimer=null;}
+  if(sigPollTimer){clearTimeout(sigPollTimer);clearInterval(sigPollTimer);sigPollTimer=null;}
+  if(sigAnswerTimer){clearTimeout(sigAnswerTimer);clearInterval(sigAnswerTimer);sigAnswerTimer=null;}
   if(sigPoll){sigPoll.close();sigPoll=null;}
   if(sigPollAnswer){sigPollAnswer.close();sigPollAnswer=null;}
 }
@@ -3612,7 +3694,83 @@ function toast(msg,type=''){document.querySelectorAll('.toast').forEach(t=>t.rem
 g('msgIn').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
 g('msgIn').addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px';onType();});
 window.addEventListener('beforeunload',()=>{if(isInCall())endCall();broadcast({t:'pres',s:'offline'});});
-document.addEventListener('visibilitychange',()=>{if(peers.size>0)broadcast({t:'pres',s:document.hidden?'away':'online'});});
+
+// ── TAB VISIBILITY — keep connections alive when tab is hidden ─────────────
+// Browsers throttle setInterval to ~1min when hidden. We chain setTimeout
+// inside the poll itself so it always re-arms from within, bypassing throttle.
+// On visibility restore we immediately re-poll and resume AudioContexts.
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    // Tab hidden — broadcast away but DON'T disconnect anything
+    if (peers.size > 0) broadcast({t:'pres', s:'away'});
+  } else {
+    // Tab visible again — immediately catch up
+    if (peers.size > 0) broadcast({t:'pres', s:'online'});
+
+    // Resume any suspended AudioContexts (speaking detection)
+    speakingAnalysers.forEach(s => {
+      try { if (s.ctx && s.ctx.state === 'suspended') s.ctx.resume(); } catch(e) {}
+    });
+
+    // If host, re-arm beacon immediately so joiners see us
+    if (isHost && sigPollTimer) {
+      sigPost(myCode, {type:'beacon', nick:myNick}).catch(()=>{});
+    }
+
+    // If host timer died while hidden, restart it
+    if (isHost && !sigPollTimer && peers.size >= 0 && myCode) {
+      hostListenLoop();
+    }
+  }
+});
+
+// Keep a silent AudioContext ticking to prevent browser from throttling timers
+// (the "no-sleep" trick — a silent oscillator prevents aggressive timer clamping)
+let _keepAliveCtx = null;
+function startKeepAlive() {
+  if (_keepAliveCtx) return;
+  try {
+    _keepAliveCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const osc = _keepAliveCtx.createOscillator();
+    const gain = _keepAliveCtx.createGain();
+    gain.gain.value = 0; // silent
+    osc.connect(gain); gain.connect(_keepAliveCtx.destination);
+    osc.start();
+  } catch(e) {}
+}
+function stopKeepAlive() {
+  if (!_keepAliveCtx) return;
+  try { _keepAliveCtx.close(); } catch(e) {}
+  _keepAliveCtx = null;
+}
+
+// Start keep-alive when in a call or hosting
+const _origOnPeerConnected = typeof onPeerConnected === 'function' ? onPeerConnected : null;
+
+// Patch startCall and answerCall to start keep-alive
+const _origStartCallTimer = startCallTimer;
+function startCallTimer() {
+  startKeepAlive();
+  _origStartCallTimer();
+}
+
+// Patch _cleanupCall to stop keep-alive
+const _orig_cleanupCall = _cleanupCall;
+// (keep-alive is stopped in fullReset instead, so it covers all paths)
+
+// Also start keep-alive when hosting (beacon needs to keep firing)
+function _hostBeaconKeepAlive() {
+  // Called right after hostListenLoop starts
+  startKeepAlive();
+}
+
+// Override disc() to stop keep-alive
+const _origDisc = disc;
+function disc() {
+  stopKeepAlive();
+  _origDisc();
+}
 
 autoSelectTurn();
 
