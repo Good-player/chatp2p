@@ -982,8 +982,12 @@ body.modern .mic-label-row { color: #55556a; }
 
 /* ── VIDEO GRID ── */
 body.modern .video-grid { background: #0a0a0f; border-radius: 8px; padding: 6px; border: 1px solid #23232e; margin: 0 4px 4px; }
-body.modern .video-self-wrap, body.modern .video-peer-wrap { border: 1px solid #23232e; border-radius: 8px; }
-body.modern .video-label { font-size: 10px; font-family: 'JetBrains Mono', monospace; }
+body.modern .video-self-wrap, body.modern .video-peer-wrap { border: 1px solid #23232e; border-radius: 8px; background: #111; }
+body.modern .video-label { font-size: 10px; font-family: 'JetBrains Mono', monospace; border-radius: 4px; }
+body.modern .screen-share-view { border-top: 1px solid #23232e; }
+body.modern .screen-share-header { background: rgba(96,165,250,.07); color: #60a5fa; border: none; font-size: 11px; font-family: 'JetBrains Mono',monospace; }
+body.modern .screen-close-btn { background: transparent; border: none; color: #55556a; font-size: 14px; padding: 0 4px; }
+body.modern .screen-close-btn:hover { color: #e2e2ec; }
 
 /* ── THEME TOGGLE ── */
 body.modern #themeToggle {
@@ -1022,38 +1026,52 @@ body.modern .stats::after { background: linear-gradient(90deg,transparent,#0d0d1
 /* ══════════════════════════════════════════════════════════════════════════
    VIDEO GRID (camera + screen share)
    ══════════════════════════════════════════════════════════════════════════ */
+/* ── VIDEO GRID — proper 16:9 tiles, no clipping ── */
 .video-grid {
   display: none;
   flex-wrap: wrap;
   gap: 4px;
-  padding: 4px 6px;
+  padding: 4px 6px 6px;
   background: #000;
-  max-height: 260px;
-  overflow: hidden;
 }
 .video-grid.active { display: flex; }
+
+/* Each tile maintains 16:9 via padding-top trick */
 .video-self-wrap, .video-peer-wrap {
   position: relative;
   background: #111;
-  flex: 1;
-  min-width: 100px;
-  height: 120px;
+  flex: 1 1 140px;          /* grow, shrink, min 140px wide */
+  max-width: calc(50% - 2px);
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   border-top:    2px solid var(--win-dark);
   border-left:   2px solid var(--win-dark);
   border-right:  2px solid var(--win-white);
   border-bottom: 2px solid var(--win-white);
 }
+/* When only 1 tile — let it be full width */
+.video-self-wrap:only-child {
+  max-width: 100%;
+}
+.video-self-wrap video, .video-peer-wrap video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .video-label {
   position: absolute;
-  bottom: 3px;
-  left: 4px;
+  bottom: 4px;
+  left: 5px;
   font-size: 11px;
   color: #fff;
-  background: rgba(0,0,0,.6);
-  padding: 1px 5px;
+  background: rgba(0,0,0,.65);
+  padding: 1px 6px;
+  border-radius: 2px;
   font-family: var(--f);
   pointer-events: none;
+  z-index: 2;
 }
 .video-off-overlay {
   position: absolute;
@@ -1062,22 +1080,48 @@ body.modern .stats::after { background: linear-gradient(90deg,transparent,#0d0d1
   align-items: center;
   justify-content: center;
   background: #1a1a1a;
+  z-index: 1;
 }
 .video-speaking-ring {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  border: 3px solid #4ade80;
-  opacity: 0;
-  transition: opacity 0.15s;
+  border: 3px solid transparent;
+  transition: border-color 0.15s;
+  z-index: 3;
 }
-.video-speaking-ring.on { opacity: 1; animation: speak-pulse 0.8s ease-in-out infinite; }
+.video-speaking-ring.on { border-color: #4ade80; animation: speak-pulse 0.8s ease-in-out infinite; }
 @keyframes speak-pulse { 0%,100%{border-color:#4ade80} 50%{border-color:#22ff88} }
 
-/* screen share view inside video grid */
+/* ── SCREEN SHARE VIEW ── */
 .screen-share-view { border-top: 2px solid var(--win-dark); background: #000; }
-.screen-share-header { display:flex;align-items:center;justify-content:space-between;padding:3px 8px;font-size:13px;color:var(--win-white);background:var(--win-blue) }
-.screen-close-btn { background:var(--win-face);border-top:2px solid var(--win-white);border-left:2px solid var(--win-white);border-right:2px solid var(--win-dark);border-bottom:2px solid var(--win-dark);color:var(--win-black);cursor:pointer;font-size:12px;padding:0 4px;font-family:var(--f);line-height:1.2 }
+.screen-share-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 3px 8px; font-size: 13px;
+  color: var(--win-white); background: var(--win-blue);
+}
+.screen-close-btn {
+  background: var(--win-face);
+  border-top: 2px solid var(--win-white); border-left: 2px solid var(--win-white);
+  border-right: 2px solid var(--win-dark); border-bottom: 2px solid var(--win-dark);
+  color: var(--win-black); cursor: pointer; font-size: 12px;
+  padding: 0 4px; font-family: var(--f); line-height: 1.2;
+}
+/* "View screen" button shown when screen share active but view is hidden */
+.screen-view-btn {
+  display: none;
+  align-items: center; gap: 4px;
+  padding: 3px 8px; background: var(--win-blue);
+  border-top: 2px solid var(--win-white); border-left: 2px solid var(--win-white);
+  border-right: 2px solid var(--win-dark); border-bottom: 2px solid var(--win-dark);
+  color: var(--win-white); font-family: var(--f); font-size: 12px;
+  cursor: pointer; margin: 3px 6px;
+}
+.screen-view-btn.visible { display: inline-flex; }
+body.modern .screen-view-btn {
+  background: rgba(96,165,250,.1); border: 1px solid #60a5fa; color: #60a5fa;
+  border-radius: 5px; font-family: 'JetBrains Mono',monospace; font-size: 10px;
+}
 
 /* ══════════════════════════════════════════════════════════════════════════
    ANIMATIONS — Win95 & Modern
@@ -1644,10 +1688,14 @@ body.modern .btn:focus-visible {
     <div class="screen-share-view" id="screenView" style="display:none">
       <div class="screen-share-header">
         <span id="screenSharerName">Someone</span> is sharing their screen
-        <button class="screen-close-btn" onclick="closeScreenView()">X</button>
+        <button class="screen-close-btn" onclick="closeScreenView()" title="Hide (stream stays active)">X</button>
       </div>
-      <video id="screenVideo" autoplay playsinline muted style="width:100%;background:#000;display:block;max-height:220px;object-fit:contain"></video>
+      <video id="screenVideo" autoplay playsinline muted style="width:100%;background:#000;display:block;aspect-ratio:16/9;max-height:300px;object-fit:contain"></video>
     </div>
+    <button class="screen-view-btn" id="screenViewBtn" onclick="reopenScreenView()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="10" rx="1"/><path d="M5 14h6M8 12v2"/></svg>
+      View screen
+    </button>
   </div>
   <!-- Screen share active bar -->
   <div id="screenShareBar" class="screen-share-bar-active" style="display:none">
@@ -2138,7 +2186,7 @@ async function handleScreenOffer(fromId, sdp, nick) {
 
   rpc.onconnectionstatechange = () => {
     if (rpc.connectionState === 'failed' || rpc.connectionState === 'closed') {
-      closeScreenView();
+      _fullyClearScreenView();
       screenRxPCs.delete(fromId);
     }
   };
@@ -2162,20 +2210,40 @@ function handleScreenAnswer(fromId, sdp) {
 function handleScreenEnd(fromId) {
   const rpc = screenRxPCs.get(fromId);
   if (rpc) { try{rpc.close();}catch(e){} screenRxPCs.delete(fromId); }
-  // Only close view if this person was the one sharing
-  const vid = g('screenVideo');
-  if (vid && vid.srcObject) {
-    const sharerName = g('screenSharerName').textContent;
-    const peerNick = peers.get(fromId)?.nick || '';
-    if (sharerName === peerNick || sharerName === 'Someone') closeScreenView();
-  }
+  const sharerName = g('screenSharerName')?.textContent || '';
+  const peerNick = peers.get(fromId)?.nick || '';
+  if (sharerName === peerNick || sharerName === 'Someone') _fullyClearScreenView();
   sys('[Screen] '+(peers.get(fromId)?.nick||'Peer')+' stopped sharing');
 }
 
 function closeScreenView() {
-  const vid = g('screenVideo');
-  if (vid) { vid.pause(); vid.srcObject=null; }
+  // Just HIDE the view — don't destroy srcObject so user can re-open
   g('screenView').style.display = 'none';
+  // Show "View screen" button if stream is still active
+  const vid = g('screenVideo');
+  const btn = g('screenViewBtn');
+  if (vid && vid.srcObject && btn) {
+    btn.classList.add('visible');
+  }
+}
+
+function reopenScreenView() {
+  const btn = g('screenViewBtn');
+  if (btn) btn.classList.remove('visible');
+  const vid = g('screenVideo');
+  if (vid && vid.srcObject) {
+    vid.play().catch(()=>{});
+    g('screenView').style.display = 'block';
+  }
+}
+
+function _fullyClearScreenView() {
+  // Called only when stream actually ends (sender stopped sharing)
+  const vid = g('screenVideo');
+  if (vid) { vid.pause(); vid.srcObject = null; }
+  g('screenView').style.display = 'none';
+  const btn = g('screenViewBtn');
+  if (btn) btn.classList.remove('visible');
 }
 
 // Also offer screen to newly joined peers if already sharing
@@ -2193,7 +2261,7 @@ function _cleanupScreenShare() {
   stopScreenShare();
   screenRxPCs.forEach(rpc => { try{rpc.close();}catch(e){} });
   screenRxPCs.clear();
-  closeScreenView();
+  _fullyClearScreenView();
 }
 
 // ── VOICE CALL STATE ───────────────────────────────────────────────────────
