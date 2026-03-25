@@ -1696,6 +1696,26 @@ body.modern .btn:focus-visible {
 const SVG_PHONE_SMALL='<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"10\" height=\"10\" viewBox=\"0 0 16 16\" fill=\"currentColor\"><path d=\"M3.6 1l2.4 3-1.5 1.5c.6 1.4 1.6 2.8 3 4.2 1.4 1.4 2.8 2.4 4.2 3L13.2 11l3 2.4-1.8 1.8C11 14.8 1.2 5 1.8-.4z\"/></svg>';
 const SVG_HANGUP_SMALL='<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"10\" height=\"10\" viewBox=\"0 0 16 16\" fill=\"currentColor\"><path d=\"M8 5.5C5.5 5.5 3.3 6.4 1.6 8L0 6.4C2 4.4 4.9 3 8 3s6 1.4 8 3.4L14.4 8C12.7 6.4 10.5 5.5 8 5.5z\" transform=\"rotate(135,8,8)\"/></svg>';
 
+// ── KEEP-ALIVE — silent AudioContext prevents browser timer throttling ─────
+let _keepAliveCtx = null;
+function startKeepAlive() {
+  if (_keepAliveCtx) return;
+  try {
+    _keepAliveCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = _keepAliveCtx.createOscillator();
+    const gain = _keepAliveCtx.createGain();
+    gain.gain.value = 0; // completely silent
+    osc.connect(gain);
+    gain.connect(_keepAliveCtx.destination);
+    osc.start();
+  } catch(e) {}
+}
+function stopKeepAlive() {
+  if (!_keepAliveCtx) return;
+  try { _keepAliveCtx.close(); } catch(e) {}
+  _keepAliveCtx = null;
+}
+
 // ── TURN SERVERS ───────────────────────────────────────────────────────────
 // group: 'main' = primary TURN, 'stun' = Google STUNs, 'other' = everything else
 const ALL_TURNS = [
@@ -2359,6 +2379,7 @@ function onCallConnected(peerId) {
 }
 
 function startCallTimer() {
+  startKeepAlive(); // prevent timer throttle during call
   callStartedAt = Date.now();
   callTimerTmr = setInterval(() => {
     const s = Math.floor((Date.now()-callStartedAt)/1000);
@@ -3637,6 +3658,7 @@ function sys(txt){const box=g('msgs'),d=document.createElement('div');d.classNam
 // ── DISCONNECT ────────────────────────────────────────────────────────────
 function disc(){
   if(!confirm('Leave room?'))return;
+  stopKeepAlive(); // stop keep-alive immediately on leave
   if(isInCall())endCall();
   broadcast({t:'pres',s:'offline'});
   setTimeout(()=>{
@@ -3724,53 +3746,6 @@ document.addEventListener('visibilitychange', () => {
     }
   }
 });
-
-// Keep a silent AudioContext ticking to prevent browser from throttling timers
-// (the "no-sleep" trick — a silent oscillator prevents aggressive timer clamping)
-let _keepAliveCtx = null;
-function startKeepAlive() {
-  if (_keepAliveCtx) return;
-  try {
-    _keepAliveCtx = new (window.AudioContext||window.webkitAudioContext)();
-    const osc = _keepAliveCtx.createOscillator();
-    const gain = _keepAliveCtx.createGain();
-    gain.gain.value = 0; // silent
-    osc.connect(gain); gain.connect(_keepAliveCtx.destination);
-    osc.start();
-  } catch(e) {}
-}
-function stopKeepAlive() {
-  if (!_keepAliveCtx) return;
-  try { _keepAliveCtx.close(); } catch(e) {}
-  _keepAliveCtx = null;
-}
-
-// Start keep-alive when in a call or hosting
-const _origOnPeerConnected = typeof onPeerConnected === 'function' ? onPeerConnected : null;
-
-// Patch startCall and answerCall to start keep-alive
-const _origStartCallTimer = startCallTimer;
-function startCallTimer() {
-  startKeepAlive();
-  _origStartCallTimer();
-}
-
-// Patch _cleanupCall to stop keep-alive
-const _orig_cleanupCall = _cleanupCall;
-// (keep-alive is stopped in fullReset instead, so it covers all paths)
-
-// Also start keep-alive when hosting (beacon needs to keep firing)
-function _hostBeaconKeepAlive() {
-  // Called right after hostListenLoop starts
-  startKeepAlive();
-}
-
-// Override disc() to stop keep-alive
-const _origDisc = disc;
-function disc() {
-  stopKeepAlive();
-  _origDisc();
-}
 
 autoSelectTurn();
 
