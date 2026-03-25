@@ -696,6 +696,7 @@ body.modern {
   background: #0d0d12;
   font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
+  color: #e2e2ec; /* global text color — overrides Win95 black */
 }
 
 /* Global Win95 override — reset beveled borders on specific elements, not * */
@@ -831,6 +832,9 @@ body.modern .pub-room:hover { border-color: #60a5fa; background: rgba(96,165,250
 body.modern .pub-room:active { border-color: #60a5fa; transform: translateY(0); padding: 10px 12px; }
 body.modern .pub-name { color: #e2e2ec; font-size: 13px; }
 body.modern .pub-sub { color: #55556a; font-size: 10px; }
+body.modern .pub-icon { color: #55556a; } /* SVG currentColor */
+body.modern .pub-join { color: #60a5fa; font-size: 11px; }
+body.modern .sval { color: #e2e2ec; } /* stat values default white */
 body.modern .pub-join { color: #60a5fa; font-size: 11px; }
 body.modern .pub-badge { color: #60a5fa; border: 1px solid rgba(96,165,250,.3); background: rgba(96,165,250,.05); border-radius: 99px; }
 
