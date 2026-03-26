@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DIRECT - P2P Chat</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23000080'/><rect x='2' y='2' width='28' height='28' fill='none' stroke='%23c0c0c0' stroke-width='2'/><text x='16' y='22' text-anchor='middle' font-size='16' fill='%23ffffff' font-family='monospace' font-weight='bold'>D</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=VT323&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 /* ── WINDOWS 95 THEME ──────────────────────────────────────────────────── */
@@ -1636,6 +1637,147 @@ body.modern .fl-empty { color: #55556a; }
 body.modern .fl-req-row { background: rgba(74,222,128,.07); border: 1px solid rgba(74,222,128,.3); border-radius: 8px; }
 body.modern .fl-req-name { color: #e2e2ec; }
 
+/* ── FULLSCREEN BUTTON on video tiles ── */
+.video-fullscreen-btn {
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 20px; height: 20px;
+  background: rgba(0,0,0,.6);
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: 3px;
+  color: #fff;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  transition: opacity .15s;
+  z-index: 10;
+  padding: 0;
+}
+.video-self-wrap:hover .video-fullscreen-btn,
+.video-peer-wrap:hover .video-fullscreen-btn,
+.screen-share-view:hover .video-fullscreen-btn { opacity: 1; }
+.screen-share-view .video-fullscreen-btn {
+  position: absolute; top: 30px; right: 6px; /* below header */
+}
+
+/* ── FULLSCREEN OVERLAY ── */
+#fullscreenOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 99999;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+#fullscreenOverlay.open { display: flex; }
+#fullscreenOverlay video {
+  width: 100%; height: 100%;
+  object-fit: contain;
+}
+#fullscreenOverlay .fs-label {
+  position: absolute;
+  bottom: 16px; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,.6);
+  color: #fff;
+  font-family: var(--f);
+  font-size: 13px;
+  padding: 4px 14px;
+  border-radius: 4px;
+}
+#fullscreenOverlay .fs-close {
+  position: absolute;
+  top: 12px; right: 16px;
+  background: rgba(0,0,0,.6);
+  border: 1px solid rgba(255,255,255,.3);
+  color: #fff;
+  font-size: 18px;
+  width: 32px; height: 32px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10;
+  font-family: monospace;
+}
+#fullscreenOverlay .fs-close:hover { background: rgba(255,255,255,.2); }
+
+/* ── PICTURE-IN-PICTURE MINI WINDOW ── */
+#pipWindow {
+  display: none;
+  position: fixed;
+  bottom: 16px; right: 16px;
+  width: 200px;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,.7);
+  z-index: 9998;
+  cursor: move;
+  border: 2px solid rgba(255,255,255,.2);
+}
+#pipWindow.visible { display: block; }
+#pipWindow video {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: contain;
+  display: block;
+}
+.pip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: rgba(0,0,0,.8);
+  font-size: 11px;
+  color: #fff;
+  font-family: var(--f);
+}
+.pip-close {
+  background: none; border: none; color: #fff;
+  cursor: pointer; font-size: 14px; padding: 0 2px; line-height: 1;
+}
+.pip-close:hover { color: #f87171; }
+.pip-maximize {
+  background: none; border: none; color: #fff;
+  cursor: pointer; font-size: 11px; padding: 0 2px; line-height: 1;
+}
+.pip-maximize:hover { color: #4ade80; }
+
+/* Win95 fullscreen close button */
+body:not(.modern) #fullscreenOverlay .fs-close {
+  border-top: 2px solid #fff; border-left: 2px solid #fff;
+  border-right: 2px solid #808080; border-bottom: 2px solid #808080;
+  border-radius: 0; background: #c0c0c0; color: #000;
+  font-family: 'VT323', monospace;
+}
+body:not(.modern) #pipWindow {
+  border: 2px solid #000080; border-radius: 0;
+}
+body:not(.modern) .pip-header { background: #000080; font-family: 'VT323', monospace; }
+/* Friend invite banner */
+.friend-invite-banner {
+  position: fixed;
+  top: 12px; left: 50%; transform: translateX(-50%);
+  background: var(--win-face);
+  border-top: 2px solid var(--win-white); border-left: 2px solid var(--win-white);
+  border-right: 2px solid var(--win-darker); border-bottom: 2px solid var(--win-darker);
+  padding: 8px 12px;
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--f); font-size: 13px; color: var(--win-black);
+  z-index: 9997;
+  max-width: 90vw;
+  animation: banner-drop .3s cubic-bezier(.2,.8,.3,1) both;
+  box-shadow: 2px 2px 8px rgba(0,0,0,.3);
+}
+body.modern .friend-invite-banner {
+  background: #171720; border: 1px solid #4ade80; border-radius: 10px;
+  color: #e2e2ec; font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+}
+body.modern .friend-invite-banner b { color: #4ade80; }
+
 </style>
 </head>
 <body>
@@ -1934,6 +2076,26 @@ body.modern .fl-req-name { color: #e2e2ec; }
 </div>
 
 </div>
+
+<!-- Fullscreen overlay -->
+<div id="fullscreenOverlay">
+  <video id="fullscreenVideo" autoplay playsinline muted></video>
+  <div class="fs-label" id="fullscreenLabel"></div>
+  <button class="fs-close" onclick="closeFullscreen()">X</button>
+</div>
+
+<!-- Picture-in-Picture mini window -->
+<div id="pipWindow">
+  <div class="pip-header">
+    <span id="pipLabel">Camera</span>
+    <div style="display:flex;gap:4px">
+      <button class="pip-maximize" onclick="pipMaximize()">[ ]</button>
+      <button class="pip-close" onclick="closePip()">X</button>
+    </div>
+  </div>
+  <video id="pipVideo" autoplay playsinline muted></video>
+</div>
+
 <script>
 'use strict';
 const SVG_PHONE_SMALL='<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"10\" height=\"10\" viewBox=\"0 0 16 16\" fill=\"currentColor\"><path d=\"M3.6 1l2.4 3-1.5 1.5c.6 1.4 1.6 2.8 3 4.2 1.4 1.4 2.8 2.4 4.2 3L13.2 11l3 2.4-1.8 1.8C11 14.8 1.2 5 1.8-.4z\"/></svg>';
@@ -2134,12 +2296,13 @@ async function toggleCamera() {
   selfVid.play().catch(()=>{});
   g('selfVideoOff').style.display = 'none';
   showVideoGrid();
+  _addSelfFsBtn(); // add fullscreen button to self tile
 
   // Offer camera to all peers in call
   for (const [peerId] of callPeers) {
     await offerCameraToPeer(peerId);
   }
-  sys('[Cam] Camera on');
+  sys('Camera on');
 }
 
 async function offerCameraToPeer(peerId) {
@@ -2176,7 +2339,7 @@ function stopCamera() {
 
   const camBtn = g('camBtn');
   if (camBtn) { camBtn.classList.remove('cam-on'); camBtn.title='Camera'; camBtn.innerHTML=SVG_CAM; }
-  sys('[Cam] Camera off');
+  sys('Camera off');
   updateVideoGrid();
 }
 
@@ -2306,7 +2469,7 @@ async function toggleScreenShare() {
   screenSharingActive = true;
   [g('shareBtn'), g('shareBtn2')].forEach(b => { if(b){b.classList.add('sharing');b.title='Stop sharing';} });
   g('screenShareBar').style.display = 'flex';
-  sys('[Screen] You started screen sharing');
+  sys('You started screen sharing');
 
   // When user stops via browser's built-in stop button
   screenStream.getVideoTracks()[0].onended = () => stopScreenShare();
@@ -2356,7 +2519,7 @@ function stopScreenShare() {
 
   [g('shareBtn'), g('shareBtn2')].forEach(b => { if(b){b.classList.remove('sharing');b.title='Share screen';} });
   g('screenShareBar').style.display = 'none';
-  sys('[Screen] Screen share stopped');
+  sys('Screen share stopped');
 }
 
 // ── SCREEN SHARE — RECEIVE ─────────────────────────────────────────────────
@@ -2374,7 +2537,7 @@ async function handleScreenOffer(fromId, sdp, nick) {
       vid.play().catch(()=>{});
       g('screenSharerName').textContent = nick || peers.get(fromId)?.nick || 'Someone';
       g('screenView').style.display = 'block';
-      // Scroll into view
+      _addScreenFsBtn(); // add fullscreen button to screen view
       vid.scrollIntoView({behavior:'smooth', block:'nearest'});
     }
   };
@@ -2408,7 +2571,7 @@ function handleScreenEnd(fromId) {
   const sharerName = g('screenSharerName')?.textContent || '';
   const peerNick = peers.get(fromId)?.nick || '';
   if (sharerName === peerNick || sharerName === 'Someone') _fullyClearScreenView();
-  sys('[Screen] '+(peers.get(fromId)?.nick||'Peer')+' stopped sharing');
+  sys((peers.get(fromId)?.nick||'Peer')+' stopped sharing');
 }
 
 function closeScreenView() {
@@ -2620,7 +2783,7 @@ async function answerCall() {
     playBeep(880, 0.1);
   } catch(e) {
     toast('Call answer failed: '+e.message,'e');
-    sys('[Voice] answerCall error: '+e.message);
+    sys('Call error: '+e.message);
     removePeerFromCall(peerId);
     if (!isInCall()) _cleanupCall();
   }
@@ -2638,7 +2801,7 @@ function onCallConnected(peerId) {
   if (!callStartedAt) startCallTimer();
   updateCallBar();
   updatePeerList();
-  sys('[Call] Call connected with '+(peers.get(peerId)?.nick||'peer'));
+  sys('Call connected with '+(peers.get(peerId)?.nick||'peer'));
 }
 
 function startCallTimer() {
@@ -3248,7 +3411,7 @@ async function joinPublic(roomCode) {
     setTimeout(()=>{
       if (!got) {
         stopSig();
-        sys('[!] Host not responding — you are now hosting.');
+        sys('Host not responding — you are now hosting.');
         const p = peers.get(peerId);
         if (p) { try{p.dc&&p.dc.close();}catch(_){} try{p.pc.close();}catch(_){} }
         peers.delete(peerId);
@@ -3543,21 +3706,28 @@ async function doJoin(){
       try{const msg=JSON.parse(JSON.parse(line).message);if(msg.type==='host-answer'&&msg.peerId===peerId&&!got){got=true;await pc.setRemoteDescription(msg.sdp);}}catch(_){}
     }
   }catch(_){}
-  // Repeat poll every 1.5s until answer arrives or timeout
+  // Poll with chained setTimeout (not setInterval) to avoid concurrent requests
   if(!got){
     let since=Math.floor(Date.now()/1000)-2;
-    sigAnswerTimer=setInterval(async()=>{
-      if(got){clearInterval(sigAnswerTimer);sigAnswerTimer=null;return;}
+    let _joinPolling=false;
+    const pollAnswer = async () => {
+      if(got || !sigAnswerTimer) return;
+      if(_joinPolling){ sigAnswerTimer=setTimeout(pollAnswer,3000); return; }
+      _joinPolling=true;
       try{
         const r=await fetch(`${SIG}/direct-${code.toLowerCase()}/json?poll=1&since=${since}`);
+        if(r.status===429){ _joinPolling=false; sigAnswerTimer=setTimeout(pollAnswer,10000); return; }
         const txt=await r.text();
         since=Math.floor(Date.now()/1000)-1;
         for(const line of txt.trim().split('\n')){
           if(!line)continue;
-          try{const msg=JSON.parse(JSON.parse(line).message);if(msg.type==='host-answer'&&msg.peerId===peerId&&!got){got=true;clearInterval(sigAnswerTimer);sigAnswerTimer=null;await pc.setRemoteDescription(msg.sdp);}}catch(_){}
+          try{const msg=JSON.parse(JSON.parse(line).message);if(msg.type==='host-answer'&&msg.peerId===peerId&&!got){got=true;clearTimeout(sigAnswerTimer);sigAnswerTimer=null;await pc.setRemoteDescription(msg.sdp);}}catch(_){}
         }
       }catch(_){}
-    },3000);
+      _joinPolling=false;
+      if(!got && sigAnswerTimer!==null) sigAnswerTimer=setTimeout(pollAnswer,3000);
+    };
+    sigAnswerTimer=setTimeout(pollAnswer,3000);
   }
   setTimeout(()=>{
     if(!got){
@@ -3622,7 +3792,7 @@ function makePeerConnection(peerId){
     }
     if(s==='disconnected'){
       const p=peers.get(peerId);if(p){p.online=false;updatePeerList();}
-      sys(`[!] ${peers.get(peerId)?.nick||'Peer'} disconnected — waiting for recovery...`);
+      sys(`${peers.get(peerId)?.nick||'Peer'} disconnected — waiting for recovery...`);
       // Give WebRTC 8 seconds to recover before giving up
       _disconnectTimer=setTimeout(()=>{
         _disconnectTimer=null;
@@ -3733,9 +3903,9 @@ function onPeerConnected(peerId){
 
 function removePeer(peerId,reason){
   const peer=peers.get(peerId);if(!peer)return;
-  if(reason)sys(`[x] ${peer.nick||'Peer'}: ${reason}`);
+  if(reason)sys(`${peer.nick||'Peer'}: ${reason}`);
   // If in call with this peer, clean up
-  if(callPeers.has(peerId)){removePeerFromCall(peerId);if(!isInCall())_cleanupCall();sys('[Call] Call ended — peer left');}
+  if(callPeers.has(peerId)){removePeerFromCall(peerId);if(!isInCall())_cleanupCall();sys('Call ended');}
   try{if(peer.dc)peer.dc.close();}catch(e){}
   try{if(peer.pc)peer.pc.close();}catch(e){}
   peers.delete(peerId);updatePeerList();sv('s-peers',countOnline(),'sg');
@@ -3810,7 +3980,7 @@ async function onMsg(fromId,d){
   const peer=peers.get(fromId);
   if(d.t==='hi'){
     if(peer){peer.nick=d.nick||'?';peer.online=true;}
-    updatePeerList();sys('[+] '+d.nick+' joined!');sv('s-peers',countOnline(),'sg');
+    updatePeerList();sys(d.nick+' joined!');sv('s-peers',countOnline(),'sg');
   } else if(d.t==='msg'){
     recv++;rbytes+=String(d.v||'').length;sv('s-recv',recv,'sb');sv('s-bdn',(rbytes/1024).toFixed(1),'sb');
     addMsg(d.v,d.nick||(peer?.nick||'?'),d.id,false);
@@ -3862,14 +4032,14 @@ async function onMsg(fromId,d){
     if(!isInCall()) { _cleanupCall(); playBeep(440,0.2); }
     sys('[Call] Call ended by '+(peer?.nick||'peer'));
   } else if(d.t==='screen-offer'){
-    sys('[Screen] '+(d.nick||peer?.nick||'Peer')+' wants to share screen');
+    sys((d.nick||peer?.nick||'Peer')+' is sharing screen');
     await handleScreenOffer(fromId, d.sdp, d.nick||peer?.nick);
   } else if(d.t==='screen-ans'){
     handleScreenAnswer(fromId, d.sdp);
   } else if(d.t==='screen-end'){
     handleScreenEnd(fromId);
   } else if(d.t==='cam-offer'){
-    sys('[Cam] '+(d.nick||peer?.nick||'Peer')+' turned on camera');
+    sys((d.nick||peer?.nick||'Peer')+' turned on camera');
     await handleCamOffer(fromId, d.sdp, d.nick||peer?.nick);
   } else if(d.t==='cam-ans'){
     handleCamAnswer(fromId, d.sdp);
@@ -3971,9 +4141,11 @@ function sigPost(code, data) {
   const now = Date.now();
   const wait = Math.max(0, SIG_MIN_INTERVAL - (now - _sigLastPost));
   _sigLastPost = now + wait;
+  // MUST use text/plain — ntfy.sh rejects application/json with CORS preflight error
+  // ntfy accepts JSON string in the body regardless of content-type
   const doPost = () => fetch(`${SIG}/direct-${code.toLowerCase()}`, {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: {'Content-Type': 'text/plain'},
     body: JSON.stringify(data)
   });
   if (wait <= 0) return doPost();
@@ -4207,22 +4379,27 @@ async function sendFriendRequest() {
 
   const nick = g('nick')?.value.trim() || g('nick2')?.value.trim() || localStorage.getItem('direct_last_nick') || 'Someone';
 
+  const addBtn = g('addFriendInp')?.parentElement?.querySelector('.btn');
+  if (addBtn) { addBtn.disabled = true; addBtn.innerHTML = '<span class="spin"></span>'; }
   try {
-    // Post to their friend-code channel
     const r = await fetch(`${SIG}/direct-fr-${code.toLowerCase()}`, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'text/plain'},
       body: JSON.stringify({type: 'friend-req', fromCode: myCode, fromNick: nick})
     });
-    if (r.ok) {
-      toast('Friend request sent!');
+    if (r.ok || r.status === 404) {
+      // 404 just means topic is new (no subscribers yet) — message was stored
+      toast('Friend request sent! They will see it next time they open the app.');
       inp.value = '';
+    } else if (r.status === 429) {
+      toast('Too many requests — wait a moment and try again', 'e');
     } else {
-      toast('Could not send request', 'e');
+      toast('Could not send request (error ' + r.status + ')', 'e');
     }
   } catch(e) {
-    toast('Network error: ' + e.message, 'e');
+    toast('Network error — check your connection', 'e');
   }
+  if (addBtn) { addBtn.disabled = false; addBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 8l4 5L14 3"/></svg> Add'; }
 }
 
 // ── Copy friend code ──────────────────────────────────────────────────────
@@ -4236,93 +4413,167 @@ function copyFriendCode() {
   });
 }
 
-// ── Connect to a friend (start room and share code) ───────────────────────
+// ── Connect to a friend — start room and invite them via ntfy ────────────
 async function connectToFriend(friendCode, friendNick) {
-  // Pre-fill nick if not already set
+  // Need a nick first
   const nickInp = g('nick');
-  if (!nickInp.value.trim()) {
-    const storedNick = localStorage.getItem('direct_last_nick') || '';
-    nickInp.value = storedNick;
-  }
+  const storedNick = localStorage.getItem('direct_last_nick') || '';
+  if (nickInp && !nickInp.value.trim()) nickInp.value = storedNick || 'Me';
+
   scr('s1');
+  toast(`Starting room to invite ${friendNick}...`);
 
-  // Show a toast with instructions
-  toast(`Start a room, then your friend "${friendNick}" can join with your code`);
+  // Short delay so the UI updates
+  await new Promise(r => setTimeout(r, 100));
 
-  // Also post a "hey I'm hosting" message to their friend channel so they know
-  // This lets the friend's notification dot show up
-  const myCode = getMyFriendCode();
-  const myNick = g('nick')?.value.trim() || 'Me';
+  // Start a room (reuse doStart logic but capture the code)
+  myNick = (g('nick')?.value.trim()) || storedNick || 'Me';
+  myCode = WORDS[Math.floor(Math.random() * WORDS.length)];
+  isHost = true;
+  const el = g('myWord'); if(el) el.textContent = myCode;
+  sv('s-code', myCode, 'sg');
+  pstat('hosting…', false);
+  g('mainCard').style.display = 'none';
+  g('chatCard').style.display = 'block';
+  g('msgs').innerHTML = '<div class="sys">Room is open.</div>';
+  enableIn();
+  hostListenLoop();
+  pstat('hosting', true);
+
+  // Now send the invite to the friend's channel
+  const myFriendCode = getMyFriendCode();
   try {
-    await fetch(`${SIG}/direct-fr-${friendCode.toLowerCase()}`, {
+    const r = await fetch(`${SIG}/direct-fr-${friendCode.toLowerCase()}`, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({type: 'friend-ping', fromCode: myCode, fromNick: myNick})
+      headers: {'Content-Type': 'text/plain'},
+      body: JSON.stringify({
+        type: 'friend-invite',
+        fromCode: myFriendCode,
+        fromNick: myNick,
+        roomCode: myCode
+      })
     });
-  } catch(e) {}
+    if (r.ok) {
+      sys(`Invite sent to ${friendNick}! Room code: ${myCode}`);
+      toast(`Room open! Invite sent to ${friendNick}`);
+    } else {
+      sys(`Room open! Share code ${myCode} with ${friendNick}`);
+      toast(`Room ready — share code ${myCode} manually`);
+    }
+  } catch(e) {
+    sys(`Room open! Share code ${myCode} with ${friendNick}`);
+    toast(`Room ready — share code ${myCode} manually`);
+  }
 }
 
 // ── Poll for incoming friend requests ─────────────────────────────────────
 let _frPollTimer = null;
-let _frPollSince = Math.floor(Date.now()/1000) - 60; // look back 1 min on first poll
+let _frPollSince = Math.floor(Date.now()/1000) - 300; // look back 5 min on first poll
 let _frPolling = false;
+let _frStopped = false; // separate stop flag to avoid race with null check
 
 function startFriendRequestPoll() {
+  _frStopped = false;
   if (_frPollTimer) return;
-  _frPoll();
+  _frPollTimer = setTimeout(_frPoll, 500);
 }
 
 function stopFriendRequestPoll() {
+  _frStopped = true;
   if (_frPollTimer) { clearTimeout(_frPollTimer); _frPollTimer = null; }
+  _frPolling = false;
 }
 
 async function _frPoll() {
-  if (_frPolling) { _frPollTimer = setTimeout(_frPoll, 8000); return; }
+  _frPollTimer = null;
+  if (_frStopped) return; // check stop flag, not timer
+  if (_frPolling) {
+    if (!_frStopped) _frPollTimer = setTimeout(_frPoll, 10000);
+    return;
+  }
   _frPolling = true;
   const myCode = getMyFriendCode();
   try {
     const r = await fetch(`${SIG}/direct-fr-${myCode.toLowerCase()}/json?poll=1&since=${_frPollSince}`);
+    _frPollSince = Math.floor(Date.now()/1000) - 1;
+    if (r.status === 429) {
+      _frPolling = false;
+      if (!_frStopped) _frPollTimer = setTimeout(_frPoll, 30000);
+      return;
+    }
     if (r.ok) {
       const txt = await r.text();
-      _frPollSince = Math.floor(Date.now()/1000) - 1;
       for (const line of txt.trim().split('\n')) {
         if (!line) continue;
         try {
           const msg = JSON.parse(JSON.parse(line).message);
-          if (msg.type === 'friend-req') {
-            _handleIncomingFriendReq(msg);
-          }
+          if (msg.type === 'friend-req')    _handleIncomingFriendReq(msg);
+          if (msg.type === 'friend-invite') _handleFriendInvite(msg);
         } catch(_) {}
       }
     }
   } catch(e) {}
   _frPolling = false;
-  _frPollTimer = setTimeout(_frPoll, 10000); // poll every 10s (low rate)
+  if (!_frStopped) {
+    _frPollTimer = setTimeout(_frPoll, 15000); // poll every 15s — low rate
+  }
 }
 
 function _handleIncomingFriendReq(msg) {
   if (!msg.fromCode || !msg.fromNick) return;
   const myCode = getMyFriendCode();
-  if (msg.fromCode === myCode) return; // ignore self
+  if (msg.fromCode === myCode) return;
 
-  // Already friends?
   const friends = flLoad();
   if (friends.find(f => f.code === msg.fromCode)) return;
 
-  // Already have this request?
   const reqs = flLoadReqs();
   if (reqs.find(r => r.code === msg.fromCode)) return;
 
-  // Add request
   reqs.push({nick: msg.fromNick, code: msg.fromCode, at: Date.now()});
   flSaveReqs(reqs);
-
-  // Update UI
   updateFriendNotifDot();
-  if (g('s5')?.classList.contains('on')) {
-    renderFriendRequests();
-  }
+  if (g('s5')?.classList.contains('on')) renderFriendRequests();
   toast(`Friend request from ${msg.fromNick}!`);
+}
+
+function _handleFriendInvite(msg) {
+  // A friend has started a room and sent us their room code
+  if (!msg.fromCode || !msg.roomCode || !msg.fromNick) return;
+  const myCode = getMyFriendCode();
+  if (msg.fromCode === myCode) return;
+
+  // Show a prominent banner to join
+  const banner = document.createElement('div');
+  banner.className = 'friend-invite-banner';
+  banner.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><circle cx="5" cy="5" r="3"/><path d="M0 14c0-2.8 2.2-5 5-5"/><path d="M16 14c0-2.8-2.2-5-5-5M8 9c2.8 0 5 2.2 5 5H3c0-2.8 2.2-5 5-5z"/></svg>
+    <span><b>${esc(msg.fromNick)}</b> invited you to join room <b>${esc(msg.roomCode)}</b></span>
+    <button class="fl-btn g" onclick="acceptFriendInvite('${esc(msg.roomCode)}','${esc(msg.fromNick)}',this.parentElement)">Join</button>
+    <button class="fl-btn" onclick="this.parentElement.remove()" style="margin-left:2px">X</button>
+  `;
+  document.body.appendChild(banner);
+  setTimeout(() => banner.remove(), 60000); // auto-dismiss after 1 min
+  toast(`${msg.fromNick} invited you to a room!`);
+}
+
+function acceptFriendInvite(roomCode, nick, bannerEl) {
+  if (bannerEl) bannerEl.remove();
+  // Pre-fill name and code then join
+  const storedNick = localStorage.getItem('direct_last_nick') || '';
+  const nickInp = g('nick2') || g('nick');
+  if (nickInp && !nickInp.value.trim()) nickInp.value = storedNick;
+  // Switch to join screen and fill in the code
+  scr('s1');
+  setTimeout(() => {
+    goJoin();
+    setTimeout(() => {
+      const codeInp = g('codeInp');
+      if (codeInp) { codeInp.value = roomCode.toUpperCase(); }
+      const nick2 = g('nick2');
+      if (nick2 && !nick2.value.trim()) nick2.value = storedNick;
+    }, 100);
+  }, 50);
 }
 
 // ── Persist last nick ─────────────────────────────────────────────────────
@@ -4344,6 +4595,172 @@ setTimeout(() => {
   updateFriendNotifDot();
   startFriendRequestPoll();
 }, 2000);
+
+// ══════════════════════════════════════════════════════════════════════════════
+// FULLSCREEN & PICTURE-IN-PICTURE
+// ══════════════════════════════════════════════════════════════════════════════
+
+let _fsSource = null; // the original video element being fullscreened
+let _pipSource = null;
+let _pipLabel  = '';
+
+// ── SVG icons for fullscreen buttons ──
+const SVG_EXPAND = `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 6V1h5M10 1h5v5M15 10v5h-5M6 15H1v-5"/></svg>`;
+
+// ── Add fullscreen button to a video wrapper ──
+function addFullscreenBtn(wrap, getStream, label) {
+  const btn = document.createElement('button');
+  btn.className = 'video-fullscreen-btn';
+  btn.innerHTML = SVG_EXPAND;
+  btn.title = 'Fullscreen';
+  btn.onclick = (e) => { e.stopPropagation(); openFullscreen(getStream(), label); };
+  wrap.appendChild(btn);
+}
+
+// ── Open fullscreen overlay ──
+function openFullscreen(stream, label) {
+  if (!stream) return;
+  const overlay = g('fullscreenOverlay');
+  const vid = g('fullscreenVideo');
+  _fsSource = stream;
+  vid.srcObject = stream;
+  vid.muted = true;
+  vid.play().catch(()=>{});
+  g('fullscreenLabel').textContent = label || '';
+  overlay.classList.add('open');
+  document.addEventListener('keydown', _fsKeyHandler);
+}
+
+function closeFullscreen() {
+  const overlay = g('fullscreenOverlay');
+  overlay.classList.remove('open');
+  const vid = g('fullscreenVideo');
+  vid.pause(); vid.srcObject = null;
+  _fsSource = null;
+  document.removeEventListener('keydown', _fsKeyHandler);
+}
+
+function _fsKeyHandler(e) {
+  if (e.key === 'Escape') closeFullscreen();
+}
+
+// ── Inject fullscreen buttons into video grid tiles ──
+// Called after addRemoteVideo and in toggleCamera
+function _addFsBtnToTile(tileEl, getStreamFn, label) {
+  if (!tileEl || tileEl.querySelector('.video-fullscreen-btn')) return;
+  addFullscreenBtn(tileEl, getStreamFn, label);
+}
+
+// ── PICTURE-IN-PICTURE ──
+function openPip(stream, label) {
+  if (!stream || !stream.active) return;
+  _pipSource = stream;
+  _pipLabel = label;
+  const vid = g('pipVideo');
+  vid.srcObject = stream;
+  vid.muted = true;
+  vid.play().catch(()=>{});
+  g('pipLabel').textContent = label;
+  g('pipWindow').classList.add('visible');
+}
+
+function closePip() {
+  _pipSource = null;
+  const vid = g('pipVideo');
+  vid.pause(); vid.srcObject = null;
+  g('pipWindow').classList.remove('visible');
+}
+
+function pipMaximize() {
+  if (_pipSource) openFullscreen(_pipSource, _pipLabel);
+}
+
+// ── Auto-PiP when tab becomes hidden ──
+// Show mini window when camera/screen is active and user switches tabs
+function _updatePipOnVisibility() {
+  if (document.hidden) {
+    // Show PiP if camera is active
+    if (cameraStream && cameraStream.active && !g('pipWindow').classList.contains('visible')) {
+      openPip(cameraStream, 'Your Camera');
+    }
+  } else {
+    // Tab visible again — hide PiP (user can see full UI)
+    if (g('pipWindow').classList.contains('visible')) {
+      // Only close if the stream is still the same (not manually opened)
+      if (_pipSource === cameraStream) closePip();
+    }
+  }
+}
+
+// Hook into the existing visibility change handler
+document.addEventListener('visibilitychange', _updatePipOnVisibility);
+
+// ── Draggable PiP window ──
+(function makeDraggable() {
+  const pip = g('pipWindow');
+  if (!pip) return;
+  let ox=0, oy=0, isDragging=false;
+  const hdr = pip.querySelector('.pip-header');
+  if (!hdr) return;
+
+  hdr.addEventListener('pointerdown', e => {
+    if (e.target.tagName === 'BUTTON') return;
+    isDragging = true;
+    ox = e.clientX - pip.getBoundingClientRect().left;
+    oy = e.clientY - pip.getBoundingClientRect().top;
+    hdr.setPointerCapture(e.pointerId);
+    pip.style.transition = 'none';
+  });
+  hdr.addEventListener('pointermove', e => {
+    if (!isDragging) return;
+    const x = Math.min(Math.max(0, e.clientX - ox), window.innerWidth - pip.offsetWidth);
+    const y = Math.min(Math.max(0, e.clientY - oy), window.innerHeight - pip.offsetHeight);
+    pip.style.right = 'auto';
+    pip.style.bottom = 'auto';
+    pip.style.left = x + 'px';
+    pip.style.top  = y + 'px';
+  });
+  hdr.addEventListener('pointerup', () => {
+    isDragging = false;
+    pip.style.transition = '';
+  });
+})();
+
+// ── Inject FS buttons after camera/screen tiles are created ──
+// Patch addRemoteVideo to add FS button
+const _origAddRemoteVideo = addRemoteVideo;
+function addRemoteVideo(peerId, nick, stream) {
+  _origAddRemoteVideo(peerId, nick, stream);
+  // Find the tile just created and add FS button
+  setTimeout(() => {
+    const tile = g('cam-peer-'+peerId);
+    if (tile) _addFsBtnToTile(tile, () => stream, nick + "'s camera");
+  }, 50);
+}
+
+// Add FS button to self video after camera starts
+function _addSelfFsBtn() {
+  const wrap = g('selfVideo')?.parentElement;
+  if (wrap) _addFsBtnToTile(wrap, () => cameraStream, 'Your camera');
+}
+
+// Add FS button to screen share view
+function _addScreenFsBtn() {
+  const vid = g('screenVideo');
+  if (!vid) return;
+  const existing = vid.parentElement?.querySelector('.video-fullscreen-btn');
+  if (existing) return;
+  const btn = document.createElement('button');
+  btn.className = 'video-fullscreen-btn';
+  btn.style.cssText = 'top:36px;right:6px;opacity:1;'; // always visible for screen
+  btn.innerHTML = SVG_EXPAND;
+  btn.title = 'Fullscreen';
+  btn.onclick = () => {
+    const stream = g('screenVideo')?.srcObject;
+    openFullscreen(stream, g('screenSharerName')?.textContent + "'s screen");
+  };
+  vid.parentElement?.appendChild(btn);
+}
 
 autoSelectTurn();
 
