@@ -7,7 +7,10 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow create: if request.auth != null
         && request.resource.data.keys().hasAll(['isPublic','createdAt','createdBy']);
-      allow update: if request.auth != null;
+      // Only allow updating memberCount and metadata, not overwriting the whole doc
+      allow update: if request.auth != null
+        && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['createdBy','isPublic']);
 
       // Messages — any authenticated user can read/write in any room
       match /messages/{msgId} {
@@ -15,12 +18,14 @@ service cloud.firestore {
         allow create: if request.auth != null
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.keys().hasAll(['uid','nick','text','type','ts']);
-        // Only author can edit/delete their own messages
-        allow update: if request.auth != null && resource.data.uid == request.auth.uid;
-        allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+        // Only author can edit/soft-delete their own messages
+        allow update: if request.auth != null
+          && resource.data.uid == request.auth.uid;
+        allow delete: if request.auth != null
+          && resource.data.uid == request.auth.uid;
       }
 
-      // Members presence
+      // Members presence — each user writes only their own doc
       match /members/{uid} {
         allow read: if request.auth != null;
         allow write: if request.auth != null && request.auth.uid == uid;
@@ -29,16 +34,28 @@ service cloud.firestore {
     }
 
     // ── Direct messages ───────────────────────────────────────────────────
+    // dmId is always "uid1_uid2" sorted — both members can read/write
     match /dms/{dmId} {
-      allow read, write: if request.auth != null
+      // Read: only if you are one of the members (doc must exist)
+      allow read: if request.auth != null
+        && resource != null
         && request.auth.uid in resource.data.members;
+      // Create: only if you include yourself in members
       allow create: if request.auth != null
-        && request.auth.uid in request.resource.data.members;
+        && request.auth.uid in request.resource.data.members
+        && request.resource.data.members.size() == 2;
+      // Update: members list never changes
+      allow update: if false;
 
       match /messages/{msgId} {
-        allow read: if request.auth != null;
+        // Read: if you are a member of the parent DM thread
+        allow read: if request.auth != null
+          && get(/databases/$(database)/documents/dms/$(dmId)).data.members
+             .hasAny([request.auth.uid]);
         allow create: if request.auth != null
-          && request.resource.data.uid == request.auth.uid;
+          && request.resource.data.uid == request.auth.uid
+          && get(/databases/$(database)/documents/dms/$(dmId)).data.members
+             .hasAny([request.auth.uid]);
         allow update, delete: if request.auth != null
           && resource.data.uid == request.auth.uid;
       }
@@ -46,7 +63,9 @@ service cloud.firestore {
 
     // ── Users ─────────────────────────────────────────────────────────────
     match /users/{uid} {
+      // Any logged-in user can read profiles (needed for friend code lookup)
       allow read: if request.auth != null;
+      // Only you can write your own profile
       allow write: if request.auth != null && request.auth.uid == uid;
 
       match /friends/{friendUid} {
@@ -54,16 +73,23 @@ service cloud.firestore {
         allow write, delete: if request.auth != null
           && (request.auth.uid == uid || request.auth.uid == friendUid);
       }
+
       match /friendRequests/{fromUid} {
         allow read, delete: if request.auth != null && request.auth.uid == uid;
-        allow create: if request.auth != null && request.auth.uid == fromUid;
+        allow create: if request.auth != null
+          && request.auth.uid == fromUid
+          && request.resource.data.keys().hasAll(['fromUid','nick','email','friendCode','sentAt']);
       }
+
       match /invites/{inviteId} {
         allow read, delete: if request.auth != null && request.auth.uid == uid;
-        allow create: if request.auth != null;
+        allow create: if request.auth != null
+          && request.resource.data.keys().hasAll(['fromUid','fromNick','roomCode','sentAt'])
+          && request.resource.data.fromUid == request.auth.uid;
       }
     }
 
+    // ── Block everything else ─────────────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;
     }
