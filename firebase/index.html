@@ -2,74 +2,126 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DIRECT — P2P Chat</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23000080'/><rect x='2' y='2' width='28' height='28' fill='none' stroke='%23c0c0c0' stroke-width='2'/><text x='16' y='22' text-anchor='middle' font-size='16' fill='%23ffffff' font-family='monospace' font-weight='bold'>D</text></svg>">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>DIRECT — Firebase Chat</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23000080'/><text x='16' y='22' text-anchor='middle' font-size='16' fill='white' font-family='monospace' font-weight='bold'>D</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=VT323&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/app.css">
 <style>
-/* data-screen active states — cards use block, auth wrap uses flex */
-[data-screen="auth"].active  { display: flex; }
-[data-screen="home"].active,
-[data-screen="chat"].active  { display: block; }
+/* ── data-screen system ── */
+[data-screen]{display:none}
+[data-screen="auth"].active{display:flex}
+[data-screen="home"].active{display:block}
+[data-screen="chat"].active{display:grid}
+
+/* ── chat layout: sidebar + main ── */
+[data-screen="chat"].active{
+  grid-template-columns:200px 1fr;
+  grid-template-rows:auto 1fr auto;
+  height:100vh;max-height:100vh;
+  overflow:hidden;
+}
+.chat-header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:4px 10px;background:var(--win-blue);color:#fff;font-family:var(--f);font-size:14px;font-weight:700}
+body.modern .chat-header{background:#171720;border-bottom:1px solid #23232e;color:#e2e2ec}
+.chat-sidebar{grid-column:1;grid-row:2/4;display:flex;flex-direction:column;background:var(--win-face);border-right:2px solid var(--win-dark);overflow:hidden}
+body.modern .chat-sidebar{background:#0f0f17;border-right:1px solid #23232e}
+.sidebar-section{padding:4px 8px;font-size:11px;font-weight:700;color:#808080;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--win-dark)}
+body.modern .sidebar-section{color:#55556a;border-bottom:1px solid #23232e}
+.member-list{flex:1;overflow-y:auto;padding:4px 0}
+.member-row{display:flex;align-items:center;gap:5px;padding:3px 8px;font-size:13px;color:var(--win-black);cursor:default}
+.member-row:hover{background:#d4d0c8}
+body.modern .member-row{color:#e2e2ec;font-family:'JetBrains Mono',monospace;font-size:11px}
+body.modern .member-row:hover{background:#1e1e2e}
+.member-dot{width:7px;height:7px;border-radius:50%;background:#808080;flex-shrink:0}
+.member-dot.online{background:var(--win-green)}
+body.modern .member-dot.online{background:#4ade80;box-shadow:0 0 4px rgba(74,222,128,.5)}
+.member-nick{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.member-dm-btn{background:none;border:none;cursor:pointer;color:#808080;font-size:12px;padding:0 2px;opacity:0}
+.member-row:hover .member-dm-btn{opacity:1}
+body.modern .member-dm-btn:hover{color:#60a5fa}
+
+/* ── room code in sidebar ── */
+.sidebar-code{padding:6px 8px;font-size:11px;border-top:1px solid var(--win-dark)}
+body.modern .sidebar-code{border-top:1px solid #23232e;color:#55556a;font-family:'JetBrains Mono',monospace}
+.sidebar-code span{font-weight:700;color:var(--win-blue);cursor:pointer}
+body.modern .sidebar-code span{color:#4ade80}
+
+/* ── messages area ── */
+.msgs-area{grid-column:2;grid-row:2;overflow-y:auto;padding:8px 12px;display:flex;flex-direction:column;gap:2px;background:var(--win-white)}
+body.modern .msgs-area{background:transparent;padding:12px}
+.msgs-area::-webkit-scrollbar{width:8px}
+.msgs-area::-webkit-scrollbar-thumb{background:var(--win-dark)}
+body.modern .msgs-area::-webkit-scrollbar{width:3px}
+body.modern .msgs-area::-webkit-scrollbar-thumb{background:#23232e}
+
+/* ── message styles ── */
+.msg-ts{font-size:10px;color:#aaa;margin-left:4px}
+.msg.deleted .mb{opacity:.4;font-style:italic}
+.msg-actions{display:none;margin-top:1px}
+.msg:hover .msg-actions{display:block}
+.msg-del-btn{background:none;border:none;cursor:pointer;color:var(--r);font-size:14px;padding:0 3px;line-height:1}
+
+/* ── input area ── */
+.input-area{grid-column:2;grid-row:3;display:flex;gap:6px;padding:8px 10px;border-top:2px solid var(--win-dark);background:var(--win-face)}
+body.modern .input-area{border-top:1px solid #23232e;background:transparent;padding:10px}
+.input-area textarea{flex:1;min-height:36px;max-height:80px;resize:none;font-family:var(--f);font-size:14px;background:var(--win-white);border-top:2px solid var(--win-dark);border-left:2px solid var(--win-dark);border-right:2px solid var(--win-white);border-bottom:2px solid var(--win-white);padding:4px 6px;outline:none;line-height:1.4}
+body.modern .input-area textarea{background:#0d0d12;border:1px solid #23232e;border-radius:7px;color:#e2e2ec;font-family:'JetBrains Mono',monospace;font-size:12px;padding:10px}
+body.modern .input-area textarea:focus{border-color:#60a5fa}
+.typi-bar{grid-column:2;font-size:11px;color:#808080;padding:0 12px 2px;min-height:16px;display:none}
+.typi-bar.on{display:block}
+body.modern .typi-bar{color:#55556a;font-family:'JetBrains Mono',monospace}
+
+/* ── auth card ── */
+.auth-wrap{min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.auth-card{width:100%;max-width:380px;background:var(--win-face);border-top:2px solid var(--win-white);border-left:2px solid var(--win-white);border-right:2px solid var(--win-darker);border-bottom:2px solid var(--win-darker)}
+body.modern .auth-card{background:#171720;border:1px solid #23232e;border-radius:12px;overflow:hidden}
+.auth-title-bar{background:linear-gradient(90deg,var(--win-blue),var(--win-blue2));padding:4px 8px;color:#fff;font-size:14px;font-weight:700;font-family:var(--f)}
+body.modern .auth-title-bar{background:linear-gradient(135deg,#171720,#0d0d12);border-bottom:1px solid #23232e}
+.auth-body{padding:16px;display:flex;flex-direction:column;gap:10px}
+.auth-tabs{display:flex;border-bottom:2px solid var(--win-dark)}
+.auth-tab{padding:3px 14px;font-size:13px;cursor:pointer;background:var(--win-face);color:#808080;border-top:2px solid var(--win-white);border-left:2px solid var(--win-white);border-right:2px solid var(--win-dark);border-bottom:0;margin-right:2px}
+.auth-tab.active{color:var(--win-black);border-bottom:2px solid var(--win-face);margin-bottom:-2px;z-index:1;position:relative}
+body.modern .auth-tabs{border-bottom:1px solid #23232e}
+body.modern .auth-tab{background:transparent;border:none;border-bottom:2px solid transparent;color:#55556a;font-family:'JetBrains Mono',monospace;font-size:11px}
+body.modern .auth-tab.active{border-bottom:2px solid #60a5fa;color:#60a5fa}
+.auth-error{color:var(--win-red);font-size:12px;padding:4px 6px;display:none;background:rgba(128,0,0,.08)}
+body.modern .auth-error{color:#f87171;background:rgba(248,113,113,.08);border-radius:4px}
+.auth-link{font-size:11px;color:var(--win-blue);cursor:pointer;text-align:center}
+body.modern .auth-link{color:#60a5fa}
+.auth-link:hover{text-decoration:underline}
 </style>
 </head>
 <body>
-<div class="box">
 
-<!-- ──────────────────────────────────────────────────────────────────────
-     TITLE BAR (always visible)
-     ────────────────────────────────────────────────────────────────────── -->
-<div class="hdr">
-  <div class="logo">
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="10" rx="1"/><path d="M5 14h6M8 12v2"/></svg>
-    DIRECT <span>Firebase Edition</span>
-  </div>
-  <div style="display:flex;align-items:center;gap:6px">
-    <div class="pill" id="pill"><div class="dot"></div><span id="ptxt">offline</span></div>
-    <button id="themeToggle" onclick="toggleTheme()" title="Switch theme">
-      <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M8 3a5 5 0 100 10A5 5 0 008 3zm0-2a7 7 0 110 14A7 7 0 018 1z"/></svg>
-      <span id="themeLabel">Modern</span>
-    </button>
-    <div class="win-controls">
-      <div class="win-ctrl-btn">_</div>
-      <div class="win-ctrl-btn">[]</div>
-      <div class="win-ctrl-btn" style="font-weight:700">X</div>
-    </div>
-  </div>
-</div>
-
-<!-- ──────────────────────────────────────────────────────────────────────
-     SCREEN: AUTH (login / register)
-     ────────────────────────────────────────────────────────────────────── -->
-<div data-screen="auth" class="auth-wrap active">
+<!-- ─────────────────────────────────────────────────────────────────────
+     AUTH SCREEN
+     ───────────────────────────────────────────────────────────────────── -->
+<div data-screen="auth" class="auth-wrap">
   <div class="auth-card">
-    <div class="auth-title-bar">
-      <span>DIRECT — Sign In</span>
-    </div>
+    <div class="auth-title-bar">DIRECT — Sign In</div>
     <div class="auth-body">
       <div class="auth-tabs">
         <div class="auth-tab active" id="tab-login"  onclick="authTab('login')">Sign In</div>
-        <div class="auth-tab"        id="tab-reg"    onclick="authTab('reg')">Register</div>
+        <div class="auth-tab"       id="tab-reg"     onclick="authTab('reg')">Register</div>
       </div>
 
-      <!-- Login form -->
       <div id="form-login">
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
           <input class="ninp" id="loginEmail"    type="email"    placeholder="Email"    autocomplete="email"/>
-          <input class="ninp" id="loginPassword" type="password" placeholder="Password" autocomplete="current-password"/>
+          <input class="ninp" id="loginPassword" type="password" placeholder="Password" autocomplete="current-password"
+            onkeydown="if(event.key==='Enter')doLogin()"/>
           <div class="auth-error" id="loginError"></div>
           <button class="btn g" id="loginBtn" onclick="doLogin()">Sign In</button>
-          <div class="auth-toggle" onclick="doResetPw()">Forgot password?</div>
+          <div class="auth-link" onclick="doResetPw()">Forgot password?</div>
         </div>
       </div>
 
-      <!-- Register form -->
       <div id="form-reg" style="display:none">
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
           <input class="ninp" id="regNick"     type="text"     placeholder="Display name" maxlength="20" autocomplete="username"/>
           <input class="ninp" id="regEmail"    type="email"    placeholder="Email"         autocomplete="email"/>
-          <input class="ninp" id="regPassword" type="password" placeholder="Password (6+ chars)" autocomplete="new-password"/>
+          <input class="ninp" id="regPassword" type="password" placeholder="Password (6+)" autocomplete="new-password"
+            onkeydown="if(event.key==='Enter')doRegister()"/>
           <div class="auth-error" id="regError"></div>
           <button class="btn g" id="regBtn" onclick="doRegister()">Create Account</button>
         </div>
@@ -78,368 +130,243 @@
   </div>
 </div>
 
-<!-- ──────────────────────────────────────────────────────────────────────
-     SCREEN: HOME (main menu)
-     ────────────────────────────────────────────────────────────────────── -->
-<div data-screen="home" id="mainCard" class="card">
-
-  <!-- S1: Choose action -->
-  <div class="scr on" id="s1">
-    <h2>DIRECT — P2P Chat</h2>
-    <p>Signed in as <b data-my-nick></b> &nbsp;|&nbsp; <span style="cursor:pointer;color:var(--bl)" onclick="doLogout()">Sign out</span></p>
-    <input class="ninp" id="nick" placeholder="Display name (shown in chat)" maxlength="20" oninput="UI.emit('updateNick',{nick:this.value})"/>
-    <div class="row">
-      <button class="btn" id="friendsBtn" onclick="openFriends()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><circle cx="5" cy="5" r="3"/><circle cx="11" cy="5" r="3"/><path d="M0 14c0-2.8 2.2-5 5-5M16 14c0-2.8-2.2-5-5-5M8 9c2.8 0 5 2.2 5 5H3c0-2.8 2.2-5 5-5z"/></svg>
-        <span class="fl-notif-dot" id="friendNotifDot" style="display:none">!</span> Friends
-      </button>
-      <button class="btn g" id="startBtn" onclick="UI.emit('startRoom',{})">
-        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6H2z"/></svg>
-        Start Room
-      </button>
-      <button class="btn b" onclick="goJoin()">Join Room</button>
-    </div>
-
-    <div class="div"><div class="div-line"></div><div class="div-txt">- or join a public room -</div><div class="div-line"></div></div>
-    <div class="pub-rooms">
-      <div class="pub-room" onclick="UI.emit('joinPublic',{room:'LOBBY'})">
-        <div class="pub-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1L1 7h2v7h4v-4h2v4h4V7h2z"/></svg></div>
-        <div class="pub-info"><div class="pub-name">Lobby</div><div class="pub-sub">General hangout</div></div>
-        <div class="pub-join">Join →</div>
-      </div>
-      <div class="pub-room" onclick="UI.emit('joinPublic',{room:'GENERAL'})">
-        <div class="pub-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h12v9H9l-3 3v-3H2z"/></svg></div>
-        <div class="pub-info"><div class="pub-name">General</div><div class="pub-sub">Open discussion</div></div>
-        <div class="pub-join">Join →</div>
-      </div>
-      <div class="pub-room" onclick="UI.emit('joinPublic',{room:'RANDOM'})">
-        <div class="pub-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="5" cy="5" r="1.2" fill="currentColor"/><circle cx="11" cy="5" r="1.2" fill="currentColor"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="5" cy="11" r="1.2" fill="currentColor"/><circle cx="11" cy="11" r="1.2" fill="currentColor"/></svg></div>
-        <div class="pub-info"><div class="pub-name">Random</div><div class="pub-sub">Meet strangers</div></div>
-        <div class="pub-join">Join →</div>
+<!-- ─────────────────────────────────────────────────────────────────────
+     HOME SCREEN
+     ───────────────────────────────────────────────────────────────────── -->
+<div data-screen="home" class="box">
+  <!-- Title bar -->
+  <div class="hdr">
+    <div class="logo">DIRECT <span>Firebase Chat</span></div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <div class="pill" id="pill"><div class="dot on"></div><span data-my-nick>…</span></div>
+      <button id="themeToggle" onclick="toggleTheme()"><span id="themeLabel">Modern</span></button>
+      <div class="win-controls">
+        <div class="win-ctrl-btn">_</div>
+        <div class="win-ctrl-btn">[]</div>
+        <div class="win-ctrl-btn" style="font-weight:700">X</div>
       </div>
     </div>
   </div>
 
-  <!-- S2: Hosting / waiting -->
-  <div class="scr" id="s2">
-    <div class="back" onclick="goBackFromHost()">← Back</div>
-    <h2>Room is Open</h2>
-    <p>Share this code with friends to invite them.</p>
-    <div class="codebox">
-      <div class="codetop">Room Code</div>
-      <div class="codeword" data-room-code>...</div>
-      <div class="codecopy" onclick="copyCode()">Copy</div>
-    </div>
-    <div class="waiting"><div class="wdot"></div><div class="wdot"></div><div class="wdot"></div><span>Waiting for people to join...</span></div>
-  </div>
-
-  <!-- S3: Join -->
-  <div class="scr" id="s3">
-    <div class="back" onclick="goBackFromJoin()">← Back</div>
-    <h2>Join a Room</h2>
-    <p>Enter the room code shared by the host.</p>
-    <input id="codeInp" class="cinpbig" placeholder="STORM" maxlength="15"
-      oninput="this.value=this.value.toUpperCase()"
-      onkeydown="if(event.key==='Enter')UI.emit('joinRoom',{code:this.value})"/>
-    <button class="btn b" id="joinBtn" onclick="UI.emit('joinRoom',{code:g('codeInp').value})">Join Room →</button>
-  </div>
-
-  <!-- S5: Friends -->
-  <div class="scr" id="s5">
-    <div class="back" onclick="scr('s1')">← Back</div>
-    <h2>Friends</h2>
-
-    <div id="friendReqSection" style="display:none">
-      <div class="fl-section-hdr">Friend Requests <span class="fl-badge" id="reqBadge">0</span></div>
-      <div id="friendRequests" class="fl-list"></div>
-    </div>
-
-    <div class="fl-section-hdr">My Friends</div>
-    <div id="friendList" class="fl-list"><div class="fl-empty">No friends yet.</div></div>
-
-    <div class="fl-section-hdr">My Friend Code</div>
-    <div class="fl-code-box">
-      <div class="fl-code-val" data-friend-code>----</div>
-      <button class="fl-code-copy" id="friendCodeCopyBtn" onclick="copyFriendCode()">Copy</button>
-    </div>
-
-    <div class="fl-section-hdr">Add Friend</div>
-    <div style="display:flex;gap:6px">
-      <input class="ninp" id="addFriendInp" placeholder="8-char friend code" maxlength="8"
-        autocomplete="off" spellcheck="false"
-        oninput="this.value=this.value.toUpperCase()"/>
-      <button class="btn b" onclick="UI.emit('sendFriendRequest',{code:g('addFriendInp').value})" style="width:auto;padding:0 14px;min-height:0">Add</button>
-    </div>
-  </div>
-
-</div><!-- /#mainCard -->
-
-<!-- ──────────────────────────────────────────────────────────────────────
-     SCREEN: CHAT
-     ────────────────────────────────────────────────────────────────────── -->
-<div data-screen="chat" id="chatCard" class="card">
-
-  <!-- Incoming call banner -->
-  <div class="call-banner" id="callBanner">
-    <div class="call-banner-txt">
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M3.6 1l2.4 3-1.5 1.5c.6 1.4 1.6 2.8 3 4.2 1.4 1.4 2.8 2.4 4.2 3L13.2 11l3 2.4-1.8 1.8C11 14.8 1.2 5 1.8-.4z"/></svg>
-      <span id="callCallerName">Someone</span> is calling...
-    </div>
-    <div class="call-banner-btns">
-      <button class="cbtn ans" onclick="window._onAnswer?.()">Answer</button>
-      <button class="cbtn dec" onclick="window._onDecline?.()">Decline</button>
-    </div>
-  </div>
-
-  <!-- Active call bar -->
-  <div class="call-bar" id="callBar">
-    <div class="call-bar-top">
-      <div style="display:flex;align-items:center;gap:6px">
-        <div class="call-vol" id="callVol"><div class="vol-bar"></div><div class="vol-bar"></div><div class="vol-bar"></div></div>
-        <span class="voice-connected-label">VOICE CONNECTED</span>
-        <span class="call-timer" id="callTimer">0:00</span>
+  <div class="card" id="mainCard">
+    <!-- S1: Home -->
+    <div class="scr on" id="s1">
+      <h2>DIRECT</h2>
+      <p>Signed in as <b data-my-nick></b> &nbsp;·&nbsp;
+         <span style="cursor:pointer;color:var(--bl);font-size:12px" onclick="UI.emit('logout',{})">Sign out</span></p>
+      <input class="ninp" id="nick" placeholder="Change display name…" maxlength="20"
+        onchange="UI.emit('updateNick',{nick:this.value})"/>
+      <div class="row">
+        <button class="btn" id="friendsBtn" onclick="scr('s5')">
+          <span class="fl-notif-dot" id="friendNotifDot" style="display:none">!</span> Friends
+        </button>
+        <button class="btn g" id="startBtn" onclick="UI.emit('startRoom',{})">Start Room</button>
+        <button class="btn b" onclick="scr('s3')">Join Room</button>
       </div>
-      <div style="display:flex;gap:3px">
-        <button class="ctl-btn" id="camBtn"   onclick="UI.emit('toggleCamera',{})"      title="Camera"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M1 4h9a1 1 0 011 1v6a1 1 0 01-1 1H1a1 1 0 01-1-1V5a1 1 0 011-1zm11 2l4-2v6l-4-2V6z"/></svg></button>
-        <button class="ctl-btn" id="shareBtn" onclick="UI.emit('toggleScreenShare',{})" title="Share screen"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="10" rx="1"/><path d="M5 14h6M8 12v2"/></svg></button>
-        <button class="ctl-btn" id="muteBtn"  onclick="UI.emit('toggleMute',{})"        title="Mute"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 16 16"><rect x="5" y="1" width="6" height="8" rx="3" fill="currentColor"/><path d="M3 8a5 5 0 0010 0" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="13" x2="8" y2="15" stroke="currentColor" stroke-width="1.5"/><line x1="6" y1="15" x2="10" y2="15" stroke="currentColor" stroke-width="1.5"/></svg></button>
-        <button class="ctl-btn end" onclick="UI.emit('endCall',{})"                     title="End call"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M8 5.5C5.5 5.5 3.3 6.4 1.6 8L0 6.4C2 4.4 4.9 3 8 3s6 1.4 8 3.4L14.4 8C12.7 6.4 10.5 5.5 8 5.5z" transform="rotate(135,8,8)"/></svg></button>
+
+      <div class="div"><div class="div-line"></div><div class="div-txt">— public rooms —</div><div class="div-line"></div></div>
+      <div id="pubRoomList" class="pub-rooms"></div>
+
+      <div class="row" style="margin-top:4px">
+        <button class="btn sm btn-sm-sub" onclick="scr('s5')">Friends</button>
       </div>
     </div>
-    <div class="call-participants" id="callParticipants"></div>
-    <!-- Video grid -->
-    <div class="video-grid" id="videoGrid" style="display:none">
-      <div class="video-self-wrap">
-        <video id="selfVideo" autoplay playsinline muted style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video>
-        <div class="video-label">You</div>
-        <div class="video-off-overlay" id="selfVideoOff">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 16 16" fill="#808080"><path d="M1 4h9a1 1 0 011 1v6a1 1 0 01-1 1H1a1 1 0 01-1-1V5a1 1 0 011-1zm11 2l4-2v6l-4-2V6z"/></svg>
-        </div>
+
+    <!-- S2: Hosting -->
+    <div class="scr" id="s2">
+      <div class="back" onclick="UI.emit('disc',{})">← Back</div>
+      <h2>Room is Open</h2>
+      <div class="codebox">
+        <div class="codetop">Room Code</div>
+        <div class="codeword" data-room-code>…</div>
+        <div class="codecopy" onclick="copyCode()">Copy</div>
       </div>
-      <div id="remoteVideos" style="display:contents"></div>
+      <div class="waiting"><div class="wdot"></div><div class="wdot"></div><div class="wdot"></div><span>Waiting for people to join…</span></div>
     </div>
-    <!-- Screen share -->
-    <div class="screen-share-view" id="screenView" style="display:none">
-      <div class="screen-share-header">
-        <span id="screenSharerName">Someone</span> is sharing their screen
-        <button class="screen-close-btn" onclick="hideScreenView()">X</button>
+
+    <!-- S3: Join -->
+    <div class="scr" id="s3">
+      <div class="back" onclick="scr('s1')">← Back</div>
+      <h2>Join a Room</h2>
+      <input id="codeInp" class="cinpbig" placeholder="STORM" maxlength="15"
+        oninput="this.value=this.value.toUpperCase()"
+        onkeydown="if(event.key==='Enter')UI.emit('joinRoom',{code:this.value})"/>
+      <button class="btn b" id="joinBtn" onclick="UI.emit('joinRoom',{code:g('codeInp').value})">Join Room →</button>
+    </div>
+
+    <!-- S5: Friends -->
+    <div class="scr" id="s5">
+      <div class="back" onclick="scr('s1')">← Back</div>
+      <h2>Friends</h2>
+
+      <div id="friendReqSection" style="display:none">
+        <div class="fl-section-hdr">Requests <span class="fl-badge" id="reqBadge">0</span></div>
+        <div id="friendRequests" class="fl-list"></div>
       </div>
-      <video id="screenVideo" autoplay playsinline muted style="width:100%;background:#000;display:block;aspect-ratio:16/9;max-height:300px;object-fit:contain"></video>
+
+      <div class="fl-section-hdr">Friends</div>
+      <div id="friendList" class="fl-list"><div class="fl-empty">No friends yet.</div></div>
+
+      <div class="fl-section-hdr">My Friend Code</div>
+      <div class="fl-code-box">
+        <div class="fl-code-val" data-friend-code>────</div>
+        <button class="fl-code-copy" id="friendCodeCopyBtn" onclick="copyFriendCode()">Copy</button>
+      </div>
+
+      <div class="fl-section-hdr">Add Friend</div>
+      <div style="display:flex;gap:6px">
+        <input class="ninp" id="addFriendInp" placeholder="8-char friend code" maxlength="8"
+          autocomplete="off" spellcheck="false" oninput="this.value=this.value.toUpperCase()"/>
+        <button class="btn b" onclick="UI.emit('sendFriendRequest',{code:g('addFriendInp').value})"
+          style="width:auto;padding:0 14px;min-height:0">Add</button>
+      </div>
     </div>
-    <button class="screen-view-btn" id="screenViewBtn" onclick="reopenScreenView()" style="display:none">
-      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="10" rx="1"/><path d="M5 14h6M8 12v2"/></svg>
-      View screen
-    </button>
+  </div><!-- /#mainCard -->
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────────────
+     CHAT SCREEN — sidebar + messages
+     ───────────────────────────────────────────────────────────────────── -->
+<div data-screen="chat" id="chatScreen">
+
+  <!-- Top bar -->
+  <div class="chat-header">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span id="chatTitle">#room</span>
+      <span style="font-size:11px;opacity:.7" id="s-peers">0 online</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:11px;opacity:.7" data-room-code></span>
+      <button onclick="copyCode()" style="font-size:11px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:1px 7px;cursor:pointer;font-family:var(--f)">Copy code</button>
+      <button onclick="UI.emit('disc',{})" style="font-size:11px;background:rgba(248,113,113,.2);border:1px solid #f87171;color:#f87171;padding:1px 8px;cursor:pointer;font-family:var(--f)">Leave</button>
+      <button id="themeToggle2" onclick="toggleTheme()" style="font-size:11px;background:transparent;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.8);padding:1px 7px;cursor:pointer;font-family:var(--f)"><span id="themeLabel2">Modern</span></button>
+    </div>
   </div>
 
-  <!-- Screen share active bar -->
-  <div id="screenShareBar" class="screen-share-bar-active" style="display:none">
-    <span>You are sharing your screen</span>
-    <button onclick="UI.emit('stopScreenShare',{})" class="screen-stop-btn">Stop sharing</button>
-  </div>
-
-  <!-- Peer list -->
-  <div class="peer-list" id="peerList">
-    <span id="pubBadge" style="display:none" class="pub-badge"><span id="pubBadgeName"></span></span>
-  </div>
-
-  <!-- Stats -->
-  <div class="stats">
-    <div class="stk"><div class="slbl">Peers</div><div class="sval sg" id="s-peers">0</div></div>
-    <div class="stk"><div class="slbl">Uptime</div><div class="sval sp" id="s-up">0s</div></div>
-    <div class="stk"><div class="slbl">ICE</div><div class="sval sy" id="s-ice">—</div></div>
-    <div class="stk"><div class="slbl">Relay</div><div class="sval sc" id="s-relay">—</div></div>
-    <div class="stk"><div class="slbl">Code</div><div class="sval sg" id="s-code">—</div></div>
-    <div class="stk"><div class="slbl">Status</div><div class="sval sg" id="s-status">—</div></div>
+  <!-- Sidebar: members -->
+  <div class="chat-sidebar">
+    <div class="sidebar-section">Members</div>
+    <div class="member-list" id="memberList"></div>
+    <div class="sidebar-code">
+      Code: <span data-room-code onclick="copyCode()" title="Click to copy"></span>
+    </div>
+    <div style="padding:6px 8px;border-top:1px solid var(--win-dark)">
+      <button class="btn sm btn-sm-sub" onclick="scr_friends()" style="font-size:11px">Friends</button>
+    </div>
   </div>
 
   <!-- Messages -->
-  <div class="msgs" id="msgs"><div class="sys">Room is open.</div></div>
-  <div class="typi" id="typi"><div class="td"></div><div class="td"></div><div class="td"></div><span id="typiName">Someone</span> is typing...</div>
+  <div class="msgs-area" id="msgs"></div>
+
+  <!-- Typing bar -->
+  <div class="typi-bar" id="typi"><span id="typiName">Someone</span> is typing…</div>
 
   <!-- Input -->
-  <div class="ci">
-    <textarea id="msgIn" placeholder="Type a message... (**bold**, *italic*, `code`)" rows="1" disabled
+  <div class="input-area">
+    <textarea id="msgIn" placeholder="Message… (**bold**, *italic*, `code`)" rows="1" disabled
       onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}"
-      oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px';onType();"></textarea>
-    <div class="cright">
-      <button class="btn g" id="sndBtn" onclick="sendMsg()" disabled style="min-height:34px;padding:0 12px">Send</button>
-      <button class="btn r" id="dscBtn" onclick="UI.emit('disc',{})" disabled style="width:auto;padding:0 8px;height:22px;font-size:12px">Leave</button>
-    </div>
+      oninput="autoResize(this);UI.emit('typing',{})"></textarea>
+    <button class="btn g" id="sndBtn" onclick="sendMsg()" disabled style="height:36px;padding:0 14px;min-height:0;align-self:flex-end">Send</button>
   </div>
 
-</div><!-- /#chatCard -->
-
-<!-- ──────────────────────────────────────────────────────────────────────
-     FULLSCREEN OVERLAY & PiP
-     ────────────────────────────────────────────────────────────────────── -->
-<div id="fullscreenOverlay">
-  <video id="fullscreenVideo" autoplay playsinline muted></video>
-  <div class="fs-label" id="fullscreenLabel"></div>
-  <button class="fs-close" onclick="closeFullscreen()">X</button>
-</div>
-<div id="pipWindow">
-  <div class="pip-header">
-    <span id="pipLabel">Camera</span>
-    <div style="display:flex;gap:4px">
-      <button class="pip-maximize" onclick="pipMaximize()">[ ]</button>
-      <button class="pip-close" onclick="closePip()">X</button>
-    </div>
-  </div>
-  <video id="pipVideo" autoplay playsinline muted></video>
-</div>
-
-</div><!-- /.box -->
+</div><!-- /chat screen -->
 
 <script type="module">
-// ── Bootstrap ─────────────────────────────────────────────────────────────
 import { UI } from './js/ui.js';
 import './js/app.js';
+window.UI  = UI;
+window.g   = id => document.getElementById(id);
 
-// Make UI available globally for inline onclick handlers
-window.UI = UI;
-
-// ── UI events are handled directly in app.js ─────────────────────────────
-// (No re-wiring needed here — app.js registers all listeners)
-
-// ── Helpers for inline HTML handlers ─────────────────────────────────────
-window.g = id => document.getElementById(id);
-
+// ── Send ──────────────────────────────────────────────────────────────────
 window.sendMsg = () => {
-  const inp = g('msgIn');
-  const txt = inp.value.trim();
+  const ta = g('msgIn');
+  const txt = ta.value.trim();
   if (!txt) return;
-  const id  = 'm' + Date.now();
-  UI.emit('send', { text: txt, id });
-  inp.value = ''; inp.style.height = 'auto';
+  UI.emit('send', { text: txt });
+  ta.value = ''; ta.style.height = 'auto';
 };
 
-let _typTimer = null;
-window.onType = () => {
-  UI.emit('typing', {});
-  clearTimeout(_typTimer);
-  _typTimer = setTimeout(() => UI.emit('stopTyping', {}), 2000);
+window.autoResize = el => {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 80) + 'px';
 };
 
+// ── Screen nav ────────────────────────────────────────────────────────────
 window.scr = id => {
   document.querySelectorAll('.scr').forEach(s => s.classList.remove('on'));
   g(id)?.classList.add('on');
 };
+window.scr_friends = () => {
+  UI.showScreen('home'); scr('s5');
+};
 
-window.goJoin        = () => scr('s3');
-window.openFriends   = () => scr('s5');
-window.goBackFromHost = () => { UI.emit('disc', {}); scr('s1'); };
-window.goBackFromJoin = () => scr('s1');
-window.copyCode      = () => {
-  const code = g('[data-room-code]')?.textContent || '';
-  navigator.clipboard.writeText(code).then(() => {
-    const b = document.querySelector('.codecopy');
-    if (b) { const o = b.textContent; b.textContent = 'Copied!'; setTimeout(() => b.textContent = o, 2000); }
-  });
+// ── Auth ──────────────────────────────────────────────────────────────────
+window.authTab = tab => {
+  g('form-login').style.display = tab === 'login' ? 'block' : 'none';
+  g('form-reg').style.display   = tab === 'reg'   ? 'block' : 'none';
+  document.querySelectorAll('.auth-tab').forEach(el =>
+    el.classList.toggle('active', el.id === 'tab-' + tab));
+};
+window.doLogin = () => {
+  UI.clearAuthError?.('login');
+  UI.emit('login', { email: g('loginEmail').value.trim(), password: g('loginPassword').value });
+};
+window.doRegister = () => {
+  const nick = g('regNick').value.trim();
+  if (!nick) { UI.showAuthError('Enter a display name','reg'); return; }
+  UI.emit('register', { nick, email: g('regEmail').value.trim(), password: g('regPassword').value });
+};
+window.doResetPw = () => {
+  const email = g('loginEmail').value.trim();
+  if (!email) { UI.showAuthError('Enter your email first','login'); return; }
+  UI.emit('resetPassword', { email });
+};
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+window.copyCode = () => {
+  const code = document.querySelector('[data-room-code]')?.textContent?.trim();
+  if (!code || code === '…') return;
+  navigator.clipboard.writeText(code).then(() => UI.toast('Code copied!'));
 };
 window.copyFriendCode = () => {
-  const code = document.querySelector('[data-friend-code]')?.textContent || '';
+  const code = document.querySelector('[data-friend-code]')?.textContent?.trim();
+  if (!code || code.includes('─')) return;
   navigator.clipboard.writeText(code).then(() => {
     const b = g('friendCodeCopyBtn');
     if (b) { const o = b.textContent; b.textContent = 'Copied!'; setTimeout(() => b.textContent = o, 2000); }
   });
 };
 
-window.hideScreenView = () => {
-  const view = g('screenView'); if (view) view.style.display = 'none';
-  const btn  = g('screenViewBtn'); if (btn) btn.classList.add('visible');
-};
-window.reopenScreenView = () => {
-  const view = g('screenView'); if (view) view.style.display = 'block';
-  const btn  = g('screenViewBtn'); if (btn) btn.classList.remove('visible');
-  g('screenVideo')?.play().catch(() => {});
-};
-
-// ── Auth helpers ──────────────────────────────────────────────────────────
-window.authTab = (tab) => {
-  g('form-login').style.display = tab === 'login' ? 'block' : 'none';
-  g('form-reg').style.display   = tab === 'reg'   ? 'block' : 'none';
-  document.querySelectorAll('.auth-tab').forEach(el => el.classList.toggle('active', el.id === 'tab-' + tab));
-};
-window.doLogin = () => {
-  const email = g('loginEmail').value.trim();
-  const pw    = g('loginPassword').value;
-  g('loginError').style.display = 'none';
-  UI.emit('login', { email, password: pw });
-};
-window.doRegister = () => {
-  const nick  = g('regNick').value.trim();
-  const email = g('regEmail').value.trim();
-  const pw    = g('regPassword').value;
-  g('regError').style.display = 'none';
-  if (!nick) { g('regError').textContent = 'Enter a display name'; g('regError').style.display = 'block'; return; }
-  UI.emit('register', { nick, email, password: pw });
-};
-window.doResetPw = () => {
-  const email = g('loginEmail').value.trim();
-  if (!email) { g('loginError').textContent = 'Enter your email first'; g('loginError').style.display = 'block'; return; }
-  UI.emit('resetPassword', { email });
-};
-window.doLogout = () => UI.emit('logout', {});
-
-// Hook auth error display
-UI.showAuthError = (msg) => {
-  const isLogin = g('form-login').style.display !== 'none';
-  const errEl = g(isLogin ? 'loginError' : 'regError');
-  if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
-  UI.setAuthLoading(false);
+// ── showScreen override (handle chat layout) ──────────────────────────────
+UI.showScreen = name => {
+  document.querySelectorAll('[data-screen]').forEach(el => el.classList.remove('active'));
+  const t = document.querySelector(`[data-screen="${name}"]`);
+  if (t) t.classList.add('active');
+  if (name === 'home')    scr('s1');
+  if (name === 'hosting') scr('s2');
 };
 
-// ── Screen management (show/hide card) ────────────────────────────────────
-const _origShowScreen = UI.showScreen.bind(UI);
-UI.showScreen = (name) => {
-  const mainCard = g('mainCard');
-  const chatCard = g('chatCard');
-  if (name === 'auth') {
-    document.querySelector('[data-screen="auth"]').classList.add('active');
-    if (mainCard) mainCard.style.display = 'none';
-    if (chatCard) chatCard.style.display = 'none';
-  } else if (name === 'home' || name === 'hosting') {
-    document.querySelector('[data-screen="auth"]').classList.remove('active');
-    if (mainCard) { mainCard.style.display = 'block'; scr('s' + (name === 'hosting' ? '2' : '1')); }
-    if (chatCard) chatCard.style.display = 'none';
-  } else if (name === 'chat') {
-    document.querySelector('[data-screen="auth"]').classList.remove('active');
-    if (mainCard) mainCard.style.display = 'none';
-    if (chatCard) chatCard.style.display = 'block';
+// ── updateMemberList — fix peer count display ─────────────────────────────
+const _origUpdateMemberList = UI.updateMemberList?.bind(UI);
+UI.updateMemberList = (members, myUid, cbs) => {
+  _origUpdateMemberList?.(members, myUid, cbs);
+  const cnt = g('s-peers');
+  if (cnt) {
+    const n = members.filter(m => m.online !== false).length;
+    cnt.textContent = n + (n === 1 ? ' online' : ' online');
   }
-  window._myNick = document.querySelector('[data-my-nick]')?.textContent || 'Me';
 };
 
-// ── Theme toggle ──────────────────────────────────────────────────────────
-let _theme = 'win95';
-window.toggleTheme = () => {
-  _theme = _theme === 'win95' ? 'modern' : 'win95';
-  document.body.classList.toggle('modern', _theme === 'modern');
-  g('themeLabel').textContent = _theme === 'modern' ? 'Win95' : 'Modern';
-  const icon = g('themeIcon');
-  if (icon) icon.innerHTML = _theme === 'modern'
-    ? '<circle cx="8" cy="8" r="3" fill="currentColor"/><path d="M8 2v1M8 13v1M2 8h1M13 8h1M4.2 4.2l.7.7M11.1 11.1l.7.7M4.2 11.8l.7-.7M11.1 4.9l.7-.7" stroke="currentColor" stroke-width="1.5" fill="none"/>'
-    : '<rect x="1" y="2" width="14" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 14h6M8 12v2" stroke="currentColor" stroke-width="1.5"/>';
-};
-
-// ── Fullscreen & PiP ──────────────────────────────────────────────────────
-window.closeFullscreen = () => {
-  const o = g('fullscreenOverlay'); if (o) o.classList.remove('open');
-  const v = g('fullscreenVideo'); if (v) { v.pause(); v.srcObject = null; }
-};
-window.closePip = () => {
-  const p = g('pipWindow'); if (p) p.classList.remove('visible');
-  const v = g('pipVideo'); if (v) { v.pause(); v.srcObject = null; }
-};
-window.pipMaximize = () => {
-  const v = g('pipVideo');
-  if (!v?.srcObject) return;
-  const o = g('fullscreenOverlay'); if (o) o.classList.add('open');
-  const fv = g('fullscreenVideo'); if (fv) { fv.srcObject = v.srcObject; fv.play().catch(()=>{}); }
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFullscreen(); }, { once: true });
-};
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && g('fullscreenOverlay')?.classList.contains('open')) closeFullscreen(); });
+// ── Theme ─────────────────────────────────────────────────────────────────
+let _theme = localStorage.getItem('direct_theme') || 'win95';
+function applyTheme(t) {
+  _theme = t;
+  document.body.classList.toggle('modern', t === 'modern');
+  ['themeLabel','themeLabel2'].forEach(id => { const el = g(id); if (el) el.textContent = t === 'modern' ? 'Win95' : 'Modern'; });
+  localStorage.setItem('direct_theme', t);
+}
+window.toggleTheme = () => applyTheme(_theme === 'win95' ? 'modern' : 'win95');
+applyTheme(_theme);
 </script>
 </body>
 </html>
