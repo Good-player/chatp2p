@@ -165,7 +165,34 @@ body.modern .auth-link{color:#60a5fa}
       </div>
 
       <div class="div"><div class="div-line"></div><div class="div-txt">— public rooms —</div><div class="div-line"></div></div>
-      <div id="pubRoomList" class="pub-rooms"></div>
+      <div id="pubRoomList" class="pub-rooms">
+        <!-- Static fallback — also populated by JS after auth -->
+        <div class="pub-room" onclick="UI.emit('joinPublic',{room:'LOBBY'})">
+          <div class="pub-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1L1 7h2v7h4v-4h2v4h4V7h2z"/></svg></div>
+          <div class="pub-info"><div class="pub-name">Lobby</div><div class="pub-sub">General hangout</div></div>
+          <div class="pub-join">Join →</div>
+        </div>
+        <div class="pub-room" onclick="UI.emit('joinPublic',{room:'GENERAL'})">
+          <div class="pub-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h12v9H9l-3 3v-3H2z"/></svg></div>
+          <div class="pub-info"><div class="pub-name">General</div><div class="pub-sub">Open discussion</div></div>
+          <div class="pub-join">Join →</div>
+        </div>
+        <div class="pub-room" onclick="UI.emit('joinPublic',{room:'RANDOM'})">
+          <div class="pub-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="5" cy="5" r="1.2" fill="currentColor"/><circle cx="11" cy="5" r="1.2" fill="currentColor"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="5" cy="11" r="1.2" fill="currentColor"/><circle cx="11" cy="11" r="1.2" fill="currentColor"/></svg></div>
+          <div class="pub-info"><div class="pub-name">Random</div><div class="pub-sub">Meet strangers</div></div>
+          <div class="pub-join">Join →</div>
+        </div>
+        <div class="pub-room" onclick="UI.emit('joinPublic',{room:'DEV'})">
+          <div class="pub-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 4L1 8l4 4M11 4l4 4-4 4M9 2l-2 12"/></svg></div>
+          <div class="pub-info"><div class="pub-name">Dev</div><div class="pub-sub">Programming talk</div></div>
+          <div class="pub-join">Join →</div>
+        </div>
+        <div class="pub-room" onclick="UI.emit('joinPublic',{room:'GAME'})">
+          <div class="pub-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="4" width="14" height="8" rx="2"/><path d="M5 8h2M6 7v2M10 8h2" stroke="#fff" stroke-width="1.5" fill="none"/></svg></div>
+          <div class="pub-info"><div class="pub-name">Game</div><div class="pub-sub">Gaming chat</div></div>
+          <div class="pub-join">Join →</div>
+        </div>
+      </div>
 
       <div class="row" style="margin-top:4px">
         <button class="btn sm btn-sm-sub" onclick="scr('s5')">Friends</button>
