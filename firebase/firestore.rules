@@ -1,0 +1,52 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── User profiles ─────────────────────────────────────────────────────
+    match /users/{uid} {
+      // Users can read/write their own profile
+      allow read:  if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null && request.auth.uid == uid;
+
+      // Allow reading another user's public fields for friend code lookup
+      allow get: if request.auth != null;
+
+      // ── Friends subcollection ─────────────────────────────────────────
+      match /friends/{friendUid} {
+        allow read:  if request.auth != null && request.auth.uid == uid;
+        allow write: if request.auth != null &&
+                        (request.auth.uid == uid || request.auth.uid == friendUid);
+        allow delete: if request.auth != null &&
+                         (request.auth.uid == uid || request.auth.uid == friendUid);
+      }
+
+      // ── Friend requests ───────────────────────────────────────────────
+      match /friendRequests/{fromUid} {
+        // The recipient can read their own requests
+        allow read:   if request.auth != null && request.auth.uid == uid;
+        // Anyone authenticated can send a request to anyone
+        allow create: if request.auth != null && request.auth.uid == fromUid
+                         && request.resource.data.keys().hasAll(['fromUid','nick','email','friendCode','sentAt']);
+        // The recipient can delete (accept/decline)
+        allow delete: if request.auth != null && request.auth.uid == uid;
+      }
+
+      // ── Room invites ──────────────────────────────────────────────────
+      match /invites/{inviteId} {
+        // Recipient reads their own invites
+        allow read:   if request.auth != null && request.auth.uid == uid;
+        // Any authenticated user can invite any other user
+        allow create: if request.auth != null
+                         && request.resource.data.keys().hasAll(['fromUid','fromNick','roomCode','sentAt'])
+                         && request.resource.data.fromUid == request.auth.uid;
+        // Recipient deletes after viewing
+        allow delete: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    // ── Block everything else ─────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
