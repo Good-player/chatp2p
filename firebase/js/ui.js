@@ -54,7 +54,8 @@ export const UI = {
   renderPublicRooms(rooms, onJoin) {
     const container = _q('#pubRoomList');
     if (!container) return;
-    container.innerHTML = '';
+    // Static buttons already in HTML — only render if container is empty
+    if (container.children.length > 0) return;
     const icons = {
       house: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1L1 7h2v7h4v-4h2v4h4V7h2z"/></svg>',
       chat:  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h12v9H9l-3 3v-3H2z"/></svg>',
