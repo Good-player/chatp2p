@@ -1,49 +1,22 @@
 {
   "rules": {
-    // ── Signaling rooms ──────────────────────────────────────────────────
-    "rooms": {
+    "typing": {
       "$roomCode": {
-        // Host marker: only the host (authenticated user) can write
-        "host": {
-          ".read":  "auth != null",
-          ".write": "auth != null"
-        },
-        // Offers: any authenticated peer can write their own offer by peerId
-        "offers": {
-          ".read":  "auth != null",
-          "$peerId": {
-            ".write": "auth != null",
-            ".validate": "newData.hasChildren(['sdp','nick','uid']) && newData.child('uid').val() === auth.uid"
-          }
-        },
-        // Answers: the host writes answers addressed to specific peerIds
-        "answers": {
-          ".read":  "auth != null",
-          "$peerId": {
-            ".write": "auth != null",
-            ".validate": "newData.hasChildren(['sdp','nick'])"
-          }
-        },
-        // Presence: peers write their own presence by peerId
-        "presence": {
-          ".read":  "auth != null",
-          "$peerId": {
-            ".write": "auth != null",
-            ".validate": "newData.hasChildren(['nick','online'])"
-          }
+        ".read":  "auth != null",
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['nick','ts'])"
         }
       }
     },
-
-    // ── Relay messages (host ↔ peer group messaging) ──────────────────────
-    "relay": {
+    "presence": {
       "$roomCode": {
         ".read":  "auth != null",
-        ".write": "auth != null"
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid"
+        }
       }
     },
-
-    // ── Block everything else ─────────────────────────────────────────────
     ".read":  false,
     ".write": false
   }
