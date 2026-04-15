@@ -1,106 +1,96 @@
-# DIRECT — Firebase Edition
+# DIRECT — Firebase Chat
 
-P2P chat with Firebase backend. No rate limits, no CORS, real-time push.
+Pure Firebase chat app. No WebRTC. Messages via Firestore, typing via Realtime Database.
 
-## Architecture
+## Files
 
 ```
-index.html          — App shell (auth + UI)
-css/app.css         — All styles (Win95 + Modern themes)
-js/
-  firebase-config.js — Firebase init (edit YOUR config here)
-  auth.js            — Email/password login, user profiles
-  signaling.js       — WebRTC signaling via Realtime Database
-  friends.js         — Friends system via Firestore
-  webrtc.js          — WebRTC peer connections (pure, no backend)
-  ui.js              — DOM layer, event bus
-  app.js             — Main controller
-firebase.json       — Hosting + database config
-database.rules.json — Realtime Database security rules
+server.js           — Express server (for App Hosting)
+package.json        — Node deps
+apphosting.yaml     — Firebase App Hosting config
+firebase.json       — Database + Firestore rules config
+database.rules.json — Realtime Database rules (typing indicators)
 firestore.rules     — Firestore security rules
+firestore.indexes.json
+index.html          — App shell
+css/app.css         — Win95 + Modern themes
+js/
+  firebase-config.js  — Firebase init
+  auth.js             — Email/password auth + user profiles
+  chat.js             — All Firestore messaging logic
+  friends.js          — Friends system
+  ui.js               — DOM layer
+  app.js              — Main controller
 ```
 
-## vs ntfy.sh version
+## Setup (do this once)
 
-| Feature | ntfy.sh | Firebase |
-|---|---|---|
-| Rate limit | 60 req/min | Unlimited (Spark: 50K writes/day) |
-| CORS | ❌ Needs text/plain hack | ✅ No CORS ever |
-| Friends | localStorage only | ✅ Firestore, cross-device |
-| Auth | None | ✅ Email/password |
-| Signaling | Polling every 4s | ✅ Push (instant) |
-| Offline | No | ✅ onDisconnect cleanup |
+### 1. Firebase Console — chatp2p-234ce
 
-## Setup
+**Authentication**
+- Authentication → Sign-in method → Email/Password → Enable
 
-### 1. Firebase Console
+**Firestore**
+- Firestore Database → Create database → Start in production mode
+- Rules tab → paste contents of `firestore.rules` → Publish
 
-1. Go to [console.firebase.google.com](https://console.firebase.google.com)
-2. Enable **Authentication** → Email/Password
-3. Enable **Realtime Database** → Start in test mode, then deploy rules
-4. Enable **Firestore** → Start in test mode, then deploy rules
-5. Enable **Hosting**
+**Realtime Database**
+- Realtime Database → Create database → Start in test mode
+- Rules tab → paste contents of `database.rules.json` → Publish
 
-### 2. Install Firebase CLI
+### 2. Fix "Insufficient Permissions" for App Hosting
+
+App Hosting creates a service account that needs Firestore access:
+
+1. Go to **console.cloud.google.com/iam-admin/iam**
+2. Find the service account: `firebase-app-hosting-compute@chatp2p-234ce.iam.gserviceaccount.com`
+3. Click the pencil (edit) icon
+4. Add these roles:
+   - **Cloud Datastore User**
+   - **Firebase Realtime Database Admin**
+5. Save
+
+### 3. Deploy with App Hosting
 
 ```bash
 npm install -g firebase-tools
 firebase login
-```
-
-### 3. Deploy rules
-
-```bash
-cd direct-firebase
 firebase use chatp2p-234ce
+
+# Deploy rules first
 firebase deploy --only database,firestore:rules
+
+# Set up App Hosting (one time)
+firebase apphosting:backends:create --project chatp2p-234ce
+
+# Deploy the app
+firebase deploy --only apphosting
 ```
 
-### 4. Deploy to hosting
+Your app will be live at the URL shown after deploy (e.g. `https://direct-xxxxx-chatp2p-234ce.web.app`)
 
-```bash
-firebase deploy --only hosting
-```
-
-Your app will be live at `https://chatp2p-234ce.web.app`
-
-## Realtime Database structure
+## Firestore Structure
 
 ```
-rooms/
-  {ROOMCODE}/
-    host: { uid, nick, active, ts }
-    offers/
-      {peerId}: { sdp, nick, uid, ts }
-    answers/
-      {peerId}: { sdp, nick, ts }
-    presence/
-      {peerId}: { nick, online, ts }
-relay/
-  {ROOMCODE}/
-    to/
-      {peerId}/
-        msgs/: [...messages]
+rooms/{code}/
+  { name, isPublic, createdAt, createdBy, memberCount }
+  messages/{id}: { uid, nick, text, type, ts, deleted }
+  members/{uid}: { nick, joinedAt, lastSeen, online }
+
+dms/{uid1_uid2}/
+  { members: [uid1, uid2], createdAt }
+  messages/{id}: { uid, nick, text, ts }
+
+users/{uid}/
+  { uid, nick, email, friendCode, createdAt }
+  friends/{uid}: { nick, email, friendCode, addedAt }
+  friendRequests/{uid}: { fromUid, nick, email, friendCode, sentAt }
+  invites/{id}: { fromUid, fromNick, roomCode, sentAt }
 ```
 
-## Firestore structure
+## Realtime Database Structure
 
 ```
-users/
-  {uid}/
-    { uid, nick, email, friendCode, createdAt }
-    friends/
-      {friendUid}: { nick, email, friendCode, addedAt }
-    friendRequests/
-      {fromUid}: { fromUid, nick, email, friendCode, sentAt }
-    invites/
-      {inviteId}: { fromUid, fromNick, roomCode, sentAt }
+typing/{roomCode}/{uid}: { nick, ts }
+presence/{roomCode}/{uid}: { nick, online, ts }
 ```
-
-## Notes
-
-- The old `p2p-chat.html` (ntfy.sh version) is unchanged and still works
-- This is a separate app targeting the same Firebase project
-- WebRTC P2P connections are still direct — Firebase only handles signaling
-- Room codes are random words (STORM, EAGLE, etc) — no account needed to join
-  but you need to be logged in to create/join rooms
