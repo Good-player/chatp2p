@@ -1,0 +1,16 @@
+{
+  "name": "direct-firebase-chat",
+  "version": "1.0.0",
+  "description": "DIRECT — Firebase Chat App",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build": "echo 'No build step needed'"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
