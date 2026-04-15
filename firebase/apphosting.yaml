@@ -1,0 +1,22 @@
+# apphosting.yaml — Firebase App Hosting configuration
+# Docs: https://firebase.google.com/docs/app-hosting/configure
+
+runConfig:
+  # Cloud Run region — pick one close to your users
+  region: us-central1
+  # Scale to 0 when idle (saves cost)
+  minInstances: 0
+  maxInstances: 10
+  # Memory and CPU
+  memory: 512Mi
+  cpu: 1
+  # Request timeout
+  timeoutSeconds: 60
+  # Concurrency per instance
+  concurrency: 80
+
+# Environment variables available to the server
+# (Firebase config is already in firebase-config.js — no secrets needed here)
+env:
+  - variable: NODE_ENV
+    value: production
